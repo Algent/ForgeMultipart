@@ -283,3 +283,19 @@ Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouche
 | --- | --- |
 | `ReferenceHollowClientBase` | `fe39f52cd776ded56adceb27ed011f3f72d405ee363dcb54877717e18de16450` |
 | `ReferenceScalaHollowMicroblockClient` | `5b11e01e3995bc314ffa10d129da7277e386edfe08520370e6b3ee40bdd18c67` |
+
+### `ReferenceScalaTMicroOcclusion`
+
+`scala/codechicken/multipart/compat/ReferenceScalaTMicroOcclusion.scala` freezes a trait implementor with a real
+superclass predecessor. Tests pin super/type-guard ordering, repeated slot reads, signed size overflow, material
+short-circuits, own-receiver edge/corner delegation, getter failures and the two independent edge reads.
+
+Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouched dev jar at `a50ce52`
+(SHA-256 `241e6315ddae2b09bb2baed7f28b545985f1cf329504288cc6de454b25c945fb`). Source SHA-256 is
+`087afdc786c5ac59e70c5152f183bd0cc27e65de1672ece549870fb04f09b4ab`. Frozen class files under
+`src/test/resources/compat/` have these SHA-256s; do not regenerate against the port:
+
+| Class | SHA-256 |
+| --- | --- |
+| `ReferenceMicroOcclusionBase` | `f3c7c10095fd19d6e18edcee345c4ea5e22557b07595e5274e46be36d0edcb1b` |
+| `ReferenceScalaTMicroOcclusion` | `d92b9b9d938e8e85b364193807e878f7eb595c099205a4ded84fb1363e11639d` |
