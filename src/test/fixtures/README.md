@@ -265,3 +265,21 @@ Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouche
 | --- | --- |
 | `ReferenceHollowMicroblockBase` | `a329f86030d4706ba07a478d36a2fe9fd6b4e2bcaac76bd92e128769cd91110e` |
 | `ReferenceScalaHollowMicroblock` | `3df6e92864c984ad973a115c56495deee8fb8a8c4014dbd34786a2caf754c7f6` |
+
+### `ReferenceScalaHollowMicroblockClient`
+
+`scala/codechicken/multipart/compat/ReferenceScalaHollowMicroblockClient.scala` freezes the hollow client
+forwarders and a real recalculation predecessor. Tests observe initialization, mask read/super order, render
+selection, callback dispatch and snapshots, rim geometry/masks, breaking pipelines and highlight commands.
+A child loader redirects only rendering-service calls to record their effects; trait control flow and virtual
+part calls remain intact. This tests drawing commands, not actual GPU output.
+
+Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouched dev jar at `940609b`
+(SHA-256 `04838fb3e100503437092fa018872d324e1765c267d5f8dc83b9831b73e66593`). Source SHA-256 is
+`0dcef588bb0ee808d5ec7fba1716b2d2fd6cc6464e7650d9d29f6400d5673149`. Frozen class files under
+`src/test/resources/compat/` have these SHA-256s; do not regenerate against the port:
+
+| Class | SHA-256 |
+| --- | --- |
+| `ReferenceHollowClientBase` | `fe39f52cd776ded56adceb27ed011f3f72d405ee363dcb54877717e18de16450` |
+| `ReferenceScalaHollowMicroblockClient` | `5b11e01e3995bc314ffa10d129da7277e386edfe08520370e6b3ee40bdd18c67` |
