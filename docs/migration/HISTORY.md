@@ -1239,3 +1239,30 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Next: `TMicroOcclusionClient`; characterize lifecycle super/recalc ordering, packet propagation, bounds copying,
   mask updates and failures. Retain `JMicroShrinkRender` and required Scala metadata/state/super bridges. Actual
   client generation, GPU drawing and full-pack checks remain on the existing manual checklist.
+
+### 2026-09-04 — Micro occlusion client state updates
+
+- Committed six JVM and one Forge characterization tests first as `d69d12b`, against untouched production code.
+  Frozen Scala 2.11.5 forwarders compiled under Java 8 pin the three real superclass predecessors, virtual recalc
+  dispatch, exact part/packet identity (including null), super/recalc failure order and predecessor state changes.
+  Bounds tests cover virtual copying before traversal, mask replacement, clipping, fresh copies on repeated
+  updates, null/copy failures and partially clipped bounds with the old mask after traversal failure. Forge uses
+  the existing hollow client probe with real Stone/Glass materials and factory bounds, checking priority,
+  opacity, neighbor resizing/removal and physical-bounds immutability.
+- Extracted render-state updates to package-private `TMicroOcclusionClientLogic.java`. Scala retains
+  `JMicroShrinkRender`, trait inheritance metadata, mutable state/accessors, initialization and lifecycle bridges.
+  Java source cannot call the synthetic Scala super accessors directly; those three super calls and subsequent
+  virtual recalculation calls retain identical instructions and dispatch. The helper still calls the bounds setter
+  and getter separately before mask publication. No compiler algorithm change or new effective divergence.
+- Evidence in ignored `run/migration-micro-occlusion-client-reference/` includes reference source/jar, frozen
+  fixture compilation, reports and 116 generated dumps. Normal and clean checks after stopping Gradle preserve
+  all 443 original class/member APIs, all 17 ScalaSignature payloads, 3,725 unrelated method bodies and all 116
+  generated names/hashes. Only the Java helper is added: 443 -> 444 packaged classes. Formatting, checkstyle,
+  build and Forge pass with 392 JVM / 235 Forge tests and zero failures/errors/skips. The forced Scala compilation
+  guard and all five packaged `@Mod` versions remain verified. Sources total 224 Java files and 9 Scala files /
+  782 nonblank Scala lines.
+- Next: extract `StackAnalyser` constructor initialization after characterizing receiver/parameter slot setup,
+  virtual `pushL` order, malformed descriptors and duplicate exception-handler precedence. Retain its coordinated
+  Scala shell/models; keep opcode fixes separate. The client manual row now names Stone/Glass covers and
+  ProjectRed Inverted White Lamp microblocks, including a server rejoin. Headless probes do not establish actual
+  client generation, GPU output or full-pack correctness; those checks remain unrecorded release gates.

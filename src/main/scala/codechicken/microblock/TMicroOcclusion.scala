@@ -31,10 +31,8 @@ trait TMicroOcclusionClient extends TMicroOcclusion with JMicroShrinkRender {
     recalcBounds()
   }
 
-  def recalcBounds() {
-    renderBounds = getBounds.copy
-    renderMask = MicroOcclusion$.MODULE$.recalcBounds(this, renderBounds)
-  }
+  def recalcBounds(): Unit =
+    TMicroOcclusionClientLogic.recalcBounds(this)
 
   override def getPriorityClass = 0
 }

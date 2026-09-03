@@ -16,22 +16,23 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**386 plain-JVM tests and 234 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **223 Java
-files and 9 Scala files / 784 nonblank Scala lines**. The packaged inventory has 443 classes.
+**392 plain-JVM tests and 235 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+files and 9 Scala files / 782 nonblank Scala lines**. The packaged inventory has 444 classes.
 
-Latest bounded target: `TMicroOcclusion` delegates its occlusion and edge/corner rules to `TMicroOcclusionLogic.java`.
-Scala retains inheritance metadata, `$class` and the short-circuiting super bridge. Characterization was committed
-first as `c709759`: frozen Scala forwarders pin super/type-guard order, repeated getters, signed overflow,
-material short-circuits, virtual edge/corner delegation and failures. Forge tests generated face/corner/edge pairs
-with matching and different materials. Clean checks preserve all 442 original class/member APIs, all 17
-ScalaSignature payloads, 3,721 unrelated method bodies and all 116 generated dumps. The Java helper is the sole
-added class; no originals are removed. Evidence: `run/migration-micro-occlusion-trait-reference/`.
+Latest bounded target: `TMicroOcclusionClient` delegates bounds copying and mask updates to
+`TMicroOcclusionClientLogic.java`. Scala retains inheritance metadata, mutable state/accessors and the three
+lifecycle super/recalc bridges. Characterization was committed first as `d69d12b`: frozen Scala forwarders pin
+super/recalc order, argument identity, virtual copying, mask replacement and partial publication on failure.
+Forge exercises live Stone/Glass neighbors through the hollow client probe and real factories. Clean checks
+preserve all 443 original class/member APIs, all 17 ScalaSignature payloads, 3,725 unrelated method bodies and
+all 116 generated dumps. Only the Java helper is added. Evidence: `run/migration-micro-occlusion-client-reference/`.
 
-**Next: port `TMicroOcclusionClient` in `microblock/TMicroOcclusion.scala`.** Characterize lifecycle super/recalc
-ordering, packet propagation, render-bounds copying, mask updates and failures before extraction. Retain the
-`JMicroShrinkRender` declaration, Scala inheritance metadata and state/accessor/super bridges as needed.
-The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required; compiler changes
-stay separate. Actual client generation, GPU output and full-pack checks remain manual.
+**Next: extract `StackAnalyser` constructor initialization to its existing Java helper.** Characterize receiver
+and parameter slot setup, virtual `pushL` ordering, malformed descriptors and duplicate exception-handler
+precedence before editing. Keep the Scala class/companion/models, field initialization and default-argument
+bridges; this is an initialization extraction, not a full shell replacement or opcode algorithm fix.
+The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client
+generation, GPU output and full-pack checks remain manual.
 
 Remaining Scala units:
 
@@ -39,10 +40,10 @@ Remaining Scala units:
 | --- | --- |
 | `multipart/asm/ASMMixinCompiler.scala` | Retained nested models, construction callbacks and Scala entry-point shell |
 | `multipart/asm/ScalaSignature.scala` | Named models, primitive/erased bridges and five generic inner-construction branches |
-| `multipart/asm/StackAnalyser.scala` | Class/companion/model shell over Java `StackAnalyserLogic` |
+| `multipart/asm/StackAnalyser.scala` | Class/companion/models over Java `StackAnalyserLogic`; initialization and model queries remain Scala |
 | `microblock/MicroblockTraits.scala`, `FaceMicroblockTraits.scala`, `CornerMicroblockTraits.scala`, `EdgeMicroblockTraits.scala` | Nine retained state/inheritance/bridge shells over Java implementation, including post lifecycle/super dispatch |
 | `microblock/HollowMicroblockTraits.scala` | Hollow server/client inheritance, initializer and super shells over Java behavior |
-| `microblock/TMicroOcclusion.scala` | Occlusion inheritance/super shell and remaining client lifecycle/state implementation |
+| `microblock/TMicroOcclusion.scala` | Occlusion/client inheritance, state/accessor and lifecycle/super shells over Java behavior |
 
 Both generators, both registries, core tile/part classes, ordinary microblock helpers/factories, handlers, networking,
 placement/render helpers and built-in tile traits are Java. The low-risk queue and immediate consumer gate are
