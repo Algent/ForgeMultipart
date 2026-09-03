@@ -1217,3 +1217,25 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   edge/corner bit tests before extraction. Leave `TMicroOcclusionClient` for a separate target. Existing manual checks
   cover AE2 cables and ProjectRed Framed Red Alloy Wire through hollow covers. Recorded rendering commands and
   headless helper tests do not validate actual client generation or GPU/full-pack output.
+
+### 2026-09-04 — Micro occlusion trait implementation
+
+- Committed eight JVM and two Forge characterization tests first as `c709759`. Frozen Scala 2.11.5 forwarders
+  compiled under Java 8 against the untouched jar pin the real super call before null/non-micro guards, repeated
+  getter order, signed size overflow, material short-circuits, own-receiver edge/corner delegation and getter errors.
+  Edge/corner tests cover the full 12-by-8 mapping, independent edge reads and invalid-slot failure order. Forge
+  exercises generated face/corner/edge pairs at size thresholds with Stone/Glass materials in both directions.
+  The existing complete decision-table digest and external Scala-trait fixtures remain unchanged and passing.
+- Extracted two method bodies to package-private `TMicroOcclusionLogic.java`. The Scala shell retains inheritance
+  metadata, `$class`, initializer and the synthetic super call, which Java source cannot invoke directly. Rules still
+  use the original virtual reads and integer arithmetic, including overflow and out-of-range slot behavior; no
+  unrelated fix, compiler change or new effective divergence was introduced. `TMicroOcclusionClient` is untouched.
+- Evidence in ignored `run/migration-micro-occlusion-trait-reference/` includes source/jar, fixture compilation,
+  reports and 116 generated dumps. Normal and clean checks after stopping Gradle preserve all 442 original
+  class/member APIs, all 17 ScalaSignature payloads, 3,721 unrelated method bodies and all 116 dump names/hashes.
+  Only the Java helper is added: 442 -> 443 packaged classes. Formatting, checkstyle, build and Forge pass with
+  386 JVM / 234 Forge tests, zero failures/errors/skips. The forced Scala-compilation guard and all five packaged
+  `@Mod` versions remain verified. Sources total 223 Java files and 9 Scala files / 784 nonblank Scala lines.
+- Next: `TMicroOcclusionClient`; characterize lifecycle super/recalc ordering, packet propagation, bounds copying,
+  mask updates and failures. Retain `JMicroShrinkRender` and required Scala metadata/state/super bridges. Actual
+  client generation, GPU drawing and full-pack checks remain on the existing manual checklist.

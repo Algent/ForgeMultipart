@@ -16,23 +16,22 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**378 plain-JVM tests and 232 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **222 Java
-files and 9 Scala files / 820 nonblank Scala lines**. The packaged inventory has 442 classes.
+**386 plain-JVM tests and 234 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **223 Java
+files and 9 Scala files / 784 nonblank Scala lines**. The packaged inventory has 443 classes.
 
-Latest bounded target: `HollowMicroblockClient` delegates rendering and mask updates to
-`HollowMicroblockClientLogic.java`. Scala retains inheritance metadata, `$class`, initialization and the recalculation
-super bridge. Characterization was committed first as `c22d1ac`: frozen Scala forwarders pin initialization/super
-ordering, render dispatch, rim bounds/masks/callback order, snapshots, breaking pipelines and highlight commands.
-Forge covers real materials, all 42 shapes and live center connectors. Clean checks preserve 439 retained
-class/member APIs, all 17 ScalaSignature payloads, 3,706 unrelated method bodies and all 116 generated dumps.
-Five internal Scala callbacks become two Java callbacks under the shared classfile policy. Evidence:
-`run/migration-hollow-client-reference/`; `clean` preserves it.
+Latest bounded target: `TMicroOcclusion` delegates its occlusion and edge/corner rules to `TMicroOcclusionLogic.java`.
+Scala retains inheritance metadata, `$class` and the short-circuiting super bridge. Characterization was committed
+first as `c709759`: frozen Scala forwarders pin super/type-guard order, repeated getters, signed overflow,
+material short-circuits, virtual edge/corner delegation and failures. Forge tests generated face/corner/edge pairs
+with matching and different materials. Clean checks preserve all 442 original class/member APIs, all 17
+ScalaSignature payloads, 3,721 unrelated method bodies and all 116 generated dumps. The Java helper is the sole
+added class; no originals are removed. Evidence: `run/migration-micro-occlusion-trait-reference/`.
 
-**Next: port `TMicroOcclusion` in `microblock/TMicroOcclusion.scala`.** Characterize super-call short-circuiting,
-size/material/slot constraints, repeated virtual reads and edge/corner bit tests before extraction. Leave
-`TMicroOcclusionClient` lifecycle/state handling for a separate bounded target.
-Retain the Scala inheritance declarations, external ProjectRed Scala-trait fixture and ScalaSignature model bridges;
-compiler changes stay separate. Actual client generation, GPU output and full-pack checks remain manual.
+**Next: port `TMicroOcclusionClient` in `microblock/TMicroOcclusion.scala`.** Characterize lifecycle super/recalc
+ordering, packet propagation, render-bounds copying, mask updates and failures before extraction. Retain the
+`JMicroShrinkRender` declaration, Scala inheritance metadata and state/accessor/super bridges as needed.
+The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required; compiler changes
+stay separate. Actual client generation, GPU output and full-pack checks remain manual.
 
 Remaining Scala units:
 
@@ -43,7 +42,7 @@ Remaining Scala units:
 | `multipart/asm/StackAnalyser.scala` | Class/companion/model shell over Java `StackAnalyserLogic` |
 | `microblock/MicroblockTraits.scala`, `FaceMicroblockTraits.scala`, `CornerMicroblockTraits.scala`, `EdgeMicroblockTraits.scala` | Nine retained state/inheritance/bridge shells over Java implementation, including post lifecycle/super dispatch |
 | `microblock/HollowMicroblockTraits.scala` | Hollow server/client inheritance, initializer and super shells over Java behavior |
-| `microblock/TMicroOcclusion.scala` | Remaining occlusion and client lifecycle implementations; preserve inheritance metadata |
+| `microblock/TMicroOcclusion.scala` | Occlusion inheritance/super shell and remaining client lifecycle/state implementation |
 
 Both generators, both registries, core tile/part classes, ordinary microblock helpers/factories, handlers, networking,
 placement/render helpers and built-in tile traits are Java. The low-risk queue and immediate consumer gate are

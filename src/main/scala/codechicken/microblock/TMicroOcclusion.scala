@@ -2,7 +2,6 @@ package codechicken.microblock
 
 import codechicken.multipart.TMultiPart
 import codechicken.lib.vec.Cuboid6
-import codechicken.multipart.PartMap._
 import codechicken.lib.data.MCDataInput
 
 trait JMicroShrinkRender {
@@ -46,56 +45,13 @@ trait TMicroOcclusion extends TMultiPart {
   def getMaterial: Int
   def getBounds: Cuboid6
 
-  override def occlusionTest(npart: TMultiPart): Boolean = {
-    if (!super.occlusionTest(npart))
-      return false
-
-    if (!npart.isInstanceOf[TMicroOcclusion])
-      return true
-
-    val mpart = npart.asInstanceOf[TMicroOcclusion]
-    val shape1 = MicroOcclusion$.MODULE$.shapePriority(getSlot)
-    val shape2 = MicroOcclusion$.MODULE$.shapePriority(mpart.getSlot)
-
-    if (mpart.getSize + getSize > 8) // intersecting if opposite
-      {
-        if (shape1 == 2 && shape2 == 2)
-          if (mpart.getSlot == (getSlot ^ 1))
-            return false
-
-        if (mpart.getMaterial != getMaterial) {
-          if (shape1 == 1 && shape2 == 1) {
-            val axisMask = (getSlot - 7) ^ (mpart.getSlot - 7)
-            if (axisMask == 3 || axisMask == 5 || axisMask == 6)
-              return false
-          }
-
-          if (shape1 == 0 && shape2 == 1)
-            if (!edgeCornerOcclusionTest(this, mpart))
-              return false
-
-          if (shape1 == 1 && shape2 == 0)
-            if (!edgeCornerOcclusionTest(mpart, this))
-              return false
-
-          if (shape1 == 0 && shape2 == 0) {
-            val e1 = getSlot - 15
-            val e2 = mpart.getSlot - 15
-            if ((e1 & 0xc) == (e2 & 0xc) && ((e1 & 3) ^ (e2 & 3)) == 3)
-              return false
-          }
-        }
-      }
-
-    return true
-  }
+  // Scala retains the synthetic super accessor and trait linearization.
+  override def occlusionTest(npart: TMultiPart): Boolean =
+    super
+      .occlusionTest(npart) && TMicroOcclusionLogic.occlusionTest(this, npart)
 
   def edgeCornerOcclusionTest(
       edge: TMicroOcclusion,
       corner: TMicroOcclusion
-  ): Boolean = {
-    ((corner.getSlot - 7) & edgeAxisMask(edge.getSlot - 15)) == unpackEdgeBits(
-      edge.getSlot - 15
-    )
-  }
+  ): Boolean = TMicroOcclusionLogic.edgeCornerOcclusionTest(edge, corner)
 }
