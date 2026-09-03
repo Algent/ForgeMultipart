@@ -77,6 +77,45 @@ class HollowMicroblockClientFunctionalTest {
         }
     }
 
+    @Test
+    void occlusionClientRefreshesClippingAndMasksWithLiveStoneAndGlassNeighbors() {
+        int stone = MicroMaterialRegistry.materialID("minecraft:stone");
+        int glass = MicroMaterialRegistry.materialID("minecraft:glass");
+        assertNotEquals(stone, glass);
+        ClientProbe part = new ClientProbe(stone);
+        ClientProbe neighbor = new ClientProbe(stone);
+        SlotTile tile = new SlotTile();
+        part.bind(tile);
+        tile.connector.size = 8;
+        part.setShape(2, 4);
+        neighbor.setShape(1, 0);
+        tile.neighbor = neighbor;
+        TMicroOcclusionClient$class.recalcBounds(part);
+        assertEquals(1, part.renderMask());
+        assertEquals(0, part.renderBounds().min.y);
+        Cuboid6 original = part.getBounds().copy();
+        neighbor.setShape(4, 0);
+        part.recalcBounds();
+        assertEquals(8 << 8, part.renderMask());
+        assertEquals(0.5, part.renderBounds().min.y);
+        assertBounds(original, part.getBounds());
+        neighbor.material_$eq(glass);
+        TMicroOcclusionClient$class.recalcBounds(part);
+        assertEquals(0, part.renderMask());
+        assertBounds(original, part.renderBounds());
+        part.material_$eq(glass);
+        neighbor.material_$eq(stone);
+        neighbor.setShape(1, 0);
+        TMicroOcclusionClient$class.recalcBounds(part);
+        assertEquals(0.125, part.renderBounds().min.y);
+        assertEquals(0, part.renderMask());
+        tile.neighbor = null;
+        TMicroOcclusionClient$class.recalcBounds(part);
+        assertNotSame(part.getBounds(), part.renderBounds());
+        assertBounds(original, part.renderBounds());
+        assertEquals(0, part.renderMask());
+    }
+
     private static void assertBounds(Cuboid6 expected, Cuboid6 actual) {
         assertArrayEquals(
                 new double[] { expected.min.x, expected.min.y, expected.min.z, expected.max.x, expected.max.y,
@@ -106,10 +145,11 @@ class HollowMicroblockClientFunctionalTest {
 
         final Connector connector = new Connector();
         boolean connected = true;
+        TMultiPart neighbor;
 
         @Override
         public TMultiPart partMap(int slot) {
-            return slot == 6 && connected ? connector : null;
+            return slot == 0 ? neighbor : slot == 6 && connected ? connector : null;
         }
     }
 

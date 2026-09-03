@@ -299,3 +299,17 @@ Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouche
 | --- | --- |
 | `ReferenceMicroOcclusionBase` | `f3c7c10095fd19d6e18edcee345c4ea5e22557b07595e5274e46be36d0edcb1b` |
 | `ReferenceScalaTMicroOcclusion` | `d92b9b9d938e8e85b364193807e878f7eb595c099205a4ded84fb1363e11639d` |
+
+### `ReferenceScalaTMicroOcclusionClient`
+
+`scala/codechicken/multipart/compat/ReferenceScalaTMicroOcclusionClient.scala` freezes the client trait's
+lifecycle super chain and forwarders. Tests pin argument identity, super/recalc failure order, physical-bounds
+copying, clipping/mask replacement and partial state publication on failure.
+
+Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouched dev jar at `f6d1568`
+(SHA-256 `6949f0c4afb22b3d68ecc42272ca1f88ac1712497556cf5c32c52b2833eb7161`). Source SHA-256 is `ed90e8f184cc4239c69bb6f700283fb25ef2225a59279eb567fc85195ab0f734`. Do not regenerate these class files against the port.
+
+| Class | SHA-256 |
+| --- | --- |
+| `ReferenceMicroOcclusionClientBase` | `017938f169d532f72b0ebcba31a67988b32b9116c2a6dbd558c8da2d1ac8f0bf` |
+| `ReferenceScalaTMicroOcclusionClient` | `f966dc8e807327865c5ca1736f323ed33a5885f5be1dc6f1b964fa8bd3fdb21d` |
