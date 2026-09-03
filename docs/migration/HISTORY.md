@@ -1190,3 +1190,30 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   pass/transparency dispatch, rim geometry/callback order, breaking and highlight behavior before extraction.
   Added a manual hollow-cover interaction/reload check with ProjectRed Framed Red Alloy Wire and Hollow Inverted
   White Lamp Cover examples; actual client generation, GPU output and full-pack validation remain manual gates.
+
+### 2026-09-04 — Hollow microblock client implementation
+
+- Committed eight JVM and one Forge characterization tests first as `c22d1ac`, before changing production code.
+  Frozen Scala 2.11.5 forwarders and a real superclass predecessor pin default-mask initialization, super/read order,
+  arbitrary opening sizes, physical/transparent/opaque render selection, repeated slot reads, callback dispatch,
+  all six ordered rim bounds/masks on every axis, material/coordinate/mask snapshots and failure short-circuiting.
+  A child loader records only rendering-service calls while executing the real method bodies: breaking tests assert
+  translation/icon pipelines and the cuboid callback; highlight tests assert GL state order, world/part transforms,
+  expanded outlines and the original lack of cleanup after failure. Forge exercises real material/bounds factories,
+  all 42 supported shapes and live center-connector sizes through the client helpers.
+- Extracted five method bodies to package-private `HollowMicroblockClientLogic.java`; retained Scala inheritance,
+  `$class`, initializer and the synthetic recalculation super call. The Java helper accepts an existential `Function5`
+  so the retained Scala method keeps its primitive function signature. Two named Java callbacks replace five internal
+  Scala callbacks under the existing shared classfile policy. No new effective divergence or compiler algorithm fix
+  was introduced; opening sizes, callback order and highlight failure behavior remain unchanged.
+- Saved source/reference jar, fixture compilation, reports and 116 generated dumps under ignored
+  `run/migration-hollow-client-reference/`. Normal and clean verification after stopping Gradle preserve all 439
+  retained class/member APIs, all 17 ScalaSignature payloads, 3,706 unrelated method bodies and all 116 generated
+  names/hashes. The helper and two callbacks replace five Scala callbacks: 444 -> 442 packaged classes. Formatting,
+  checkstyle, build and Forge pass with 378 JVM / 232 Forge tests, zero failures/errors/skips. The forced Scala
+  compilation guard and all five packaged `@Mod` versions remain verified. Sources total 222 Java files and
+  9 Scala files / 820 nonblank Scala lines.
+- Next: `TMicroOcclusion`; characterize super short-circuiting, size/material/slot constraints, repeated reads and
+  edge/corner bit tests before extraction. Leave `TMicroOcclusionClient` for a separate target. Existing manual checks
+  cover AE2 cables and ProjectRed Framed Red Alloy Wire through hollow covers. Recorded rendering commands and
+  headless helper tests do not validate actual client generation or GPU/full-pack output.
