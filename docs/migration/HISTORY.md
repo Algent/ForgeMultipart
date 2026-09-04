@@ -1457,3 +1457,21 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   final builds use the committed Git version. Source totals are 224 Java files and nine Scala files / 762 nonblank
   lines. Next candidate: `ScalaSignature.TypeRef.jDesc`, preserving primitive/array cases, virtual fallback and
   failure order while retaining the model overrides and trait bridges.
+
+### 2026-09-04 — ScalaSignature type descriptors
+
+- Committed seven JVM characterization cases first as `b3b3f10` against the untouched `TypeRef.jDesc`. They pin
+  exact primitive/array matching, legacy reference descriptors (including Char), virtual fallback and repeated
+  symbol reads, null/failure order, SingleType/NoType behavior, TypeRefType's first array argument and the static
+  trait helper with an independent proxy consumer.
+- Extracted conversion into `ScalaSignatureParser.typeDescriptor(Object)`, keeping path-dependent types inside
+  Java method bodies. Literal equality retains the null-name fallback, and `jName()` remains virtual and lazy.
+  Scala declarations, array override, super dispatch and serialization shapes remain unchanged.
+- Normal and clean validation pass 449 JVM tests, 449 frozen consumers and 237 Java 8 Forge tests with zero
+  failures/errors/skips. Both jars contain 443 Java 8 classes and matching packaged sources. Comparison preserves
+  442 retained class/member APIs, all 17 ScalaSignature payloads, 3,734 unrelated method bodies and all 116 generated
+  dumps. Only one package-private helper method is added; there is no class inventory change or new divergence.
+- Evidence is under ignored `run/migration-type-descriptor-reference/`, including the reference jar, compiled tests,
+  resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the committed version.
+  Source totals are 224 Java files and nine Scala files / 751 nonblank lines. Next: `TMethodType.jDesc` assembly,
+  preserving parameter/return lookup order, nulls, failures and the retained trait/models.

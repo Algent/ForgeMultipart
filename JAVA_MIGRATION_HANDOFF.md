@@ -16,24 +16,23 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**442 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
-files and 9 Scala files / 762 nonblank Scala lines**. The packaged inventory has 443 classes.
+**449 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+files and 9 Scala files / 751 nonblank Scala lines**. The packaged inventory has 443 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
 virtual tile accessor dispatch throughout `TMultiPart`, and null-safe equality for scheduled-tick deduplication.
 Six JVM and two Forge regression cases cover the fixes. Callable signatures remain unchanged; the packet traversal
 callback adds one anonymous class. See the latest history entries for the individual fixes and validation.
 
-Latest bounded target: `ScalaSignature.TypeRef.jName` delegates normalization to `ScalaSignatureParser.typeName`.
-Seven characterization tests were committed first as `ac1182e`. They pin dot-to-slash conversion, exact Any/AnyRef
-aliases, string identity, virtual name/symbol reads, nulls and failures, the static trait helper and SingleType's
-super dispatch. Scala reads `name` once and passes only a String to Java; the path-dependent trait/models and
-serialization shapes remain intact. All 442 frozen JVM consumers pass; checks preserve 442 retained class/member
-APIs, all 17 ScalaSignature payloads, 3,733 unrelated method bodies and all 116 generated dumps.
-Evidence: `run/migration-type-name-reference/`.
+Latest bounded target: `ScalaSignature.TypeRef.jDesc` delegates to `ScalaSignatureParser.typeDescriptor`.
+Seven characterization tests were committed first as `b3b3f10`. They pin primitive/array matches, unmatched names
+(including the legacy Char descriptor), virtual name/jName lookup, repeated symbol reads, nulls, failures and the
+static trait helper. TypeRefType's array override and SingleType's super shell remain Scala. All 449 frozen JVM
+consumers pass; checks preserve 442 retained class/member APIs, all 17 ScalaSignature payloads, 3,734 unrelated
+method bodies and all 116 generated dumps. Evidence: `run/migration-type-descriptor-reference/`.
 
-**Next bounded candidate: `ScalaSignature.TypeRef.jDesc`.** Characterize primitive/array cases, unmatched names,
-virtual `jName` fallback and null/failure order. Keep TypeRefType's array override and SingleType's super shell.
+**Next bounded candidate: `ScalaSignature.TMethodType.jDesc`.** Characterize ordered parameter info/return-type
+reads, descriptor concatenation, nulls, failures and the static trait helper before extracting method assembly.
 Keep case-class/product/serialization shapes and simple model accessors. Broader shell replacement and opcode
 algorithm fixes remain separate work.
 The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client

@@ -126,18 +126,7 @@ class ScalaSignature(val bytes: Bytes) {
 
     def jName = ScalaSignatureParser.typeName(name)
 
-    def jDesc = name match {
-      case "scala.Array"   => null
-      case "scala.Long"    => "J"
-      case "scala.Int"     => "I"
-      case "scala.Short"   => "S"
-      case "scala.Byte"    => "B"
-      case "scala.Double"  => "D"
-      case "scala.Float"   => "F"
-      case "scala.Boolean" => "Z"
-      case "scala.Unit"    => "V"
-      case _               => "L" + jName + ";"
-    }
+    def jDesc = ScalaSignatureParser.typeDescriptor(this)
   }
 
   case class TypeRefType(owner: TypeRef, sym: SymbolRef, typArgs: List[TypeRef])

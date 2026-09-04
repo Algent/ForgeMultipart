@@ -26,6 +26,21 @@ final class ScalaSignatureParser {
         return internalName;
     }
 
+    static String typeDescriptor(Object value) {
+        ScalaSignature.TypeRef ref = (ScalaSignature.TypeRef) value;
+        String name = ref.name();
+        if ("scala.Array".equals(name)) return null;
+        if ("scala.Long".equals(name)) return "J";
+        if ("scala.Int".equals(name)) return "I";
+        if ("scala.Short".equals(name)) return "S";
+        if ("scala.Byte".equals(name)) return "B";
+        if ("scala.Double".equals(name)) return "D";
+        if ("scala.Float".equals(name)) return "F";
+        if ("scala.Boolean".equals(name)) return "Z";
+        if ("scala.Unit".equals(name)) return "V";
+        return "L" + ref.jName() + ";";
+    }
+
     static byte[] section(Bytes bytes) {
         byte[] array = bytes.arr();
         int start = bytes.pos();
