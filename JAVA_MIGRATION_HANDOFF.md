@@ -16,25 +16,24 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**463 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
-files and 9 Scala files / 749 nonblank Scala lines**. The packaged inventory has 443 classes.
+**470 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+files and 9 Scala files / 748 nonblank Scala lines**. The packaged inventory has 443 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
 virtual tile accessor dispatch throughout `TMultiPart`, and null-safe equality for scheduled-tick deduplication.
 Six JVM and two Forge regression cases cover the fixes. Callable signatures remain unchanged; the packet traversal
 callback adds one anonymous class. See the latest history entries for the individual fixes and validation.
 
-Latest bounded target: `ScalaSignature.ClassSymbolRef.jInterfaces` delegates to `ScalaSignatureParser.interfaceNames`.
-Seven characterization tests were committed first as `6ccb83f`, including a frozen Scala caller and subclasses
-compiled against `240a788`. They pin virtual info/interfaces/jName reads, ordered mapping, duplicates, empty-list
-and string identities, repeated queries, nulls, failures and the static trait helper. The Java callback retains the
-Scala List builder and result contract. All 463 frozen JVM consumers pass; checks preserve 441 retained class/member
-APIs, all 17 ScalaSignature payloads, 3,733 unrelated method bodies and all 116 generated dumps. One unreferenced
-Scala callback is replaced by a Java callback; the total stays 443 classes.
-Evidence: `run/migration-interface-names-reference/`; fixture provenance is in `src/test/fixtures/README.md`.
+Latest bounded target: `ScalaSignature.ClassSymbolRef.toString` delegates formatting to
+`ScalaSignatureParser.classSymbolString`. Seven characterization tests were committed first as `1234112`. They pin
+concrete and anonymous runtime-name trimming, literal/null values, two's-complement hexadecimal flags, repeated
+virtual getter order, owner formatting and failures, and the static trait helper. All 470 frozen JVM consumers pass;
+checks preserve 442 retained class/member APIs, all 17 ScalaSignature payloads, 3,737 unrelated method bodies and all
+116 generated dumps. No class is added or removed; the total stays 443 classes.
+Evidence: `run/migration-class-symbol-string-reference/`.
 
-**Next bounded candidate: `ScalaSignature.ClassSymbolRef.toString`.** Characterize class-name trimming, hexadecimal
-flags, virtual name/owner/infoId reads and null/failure order while retaining the trait and case-class declarations.
+**Next bounded candidate: `ScalaSignature.MethodSymbol.toString`.** Characterize exact formatting, hexadecimal flags,
+virtual name/owner/infoId reads and null/failure order while retaining the case-class declaration and bridges.
 Keep case-class/product/serialization shapes and simple model accessors. Broader shell replacement and opcode
 algorithm fixes remain separate work.
 The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client

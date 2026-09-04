@@ -1520,3 +1520,23 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   frozen tests/resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the
   committed version. Sources remain 224 Java files and nine Scala files / 749 nonblank lines. Next:
   `ClassSymbolRef.toString`, preserving formatting, virtual reads and failure order.
+
+### 2026-09-04 — ScalaSignature class-symbol strings
+
+- Committed seven JVM characterization cases first as `1234112` against the untouched
+  `ClassSymbolRef.toString`. They cover concrete ClassSymbol/ObjectSymbol runtime names, anonymous suffix trimming,
+  punctuation and nulls, lowercase two's-complement hexadecimal flags, negative/limit info IDs, repeated virtual
+  reads, owner formatting and every getter/failure boundary. A proxy exercises the exact static trait-helper
+  descriptor without needing an outer ScalaSignature instance.
+- Extracted formatting into `ScalaSignatureParser.classSymbolString(Object)`. Java retains the original greedy
+  class-name regular expression, left-to-right virtual getter order, object-to-string conversion and hexadecimal
+  representation. Scala keeps the inferred return type, trait/case-class declarations, forwarders, products and
+  serialization shapes.
+- Normal and clean validation pass 470 JVM tests, 470 frozen consumers and 237 Java 8 Forge tests with zero
+  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
+  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,737 unrelated method
+  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Evidence is under ignored `run/migration-class-symbol-string-reference/`, including the reference jar, frozen
+  tests/resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the committed
+  version. Source totals are 224 Java files and nine Scala files / 748 nonblank lines. Next:
+  `MethodSymbol.toString`, preserving formatting, virtual reads and failure order.

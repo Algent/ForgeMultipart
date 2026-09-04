@@ -71,6 +71,19 @@ final class ScalaSignatureParser {
                 }, List$.MODULE$.canBuildFrom());
     }
 
+    static String classSymbolString(Object value) {
+        ScalaSignature.ClassSymbolRef symbol = (ScalaSignature.ClassSymbolRef) value;
+        return symbol.getClass().getName().replaceAll(".+\\$", "") + "("
+                + symbol.name()
+                + ","
+                + symbol.owner()
+                + ","
+                + Integer.toHexString(symbol.flags())
+                + ","
+                + symbol.infoId()
+                + ")";
+    }
+
     static byte[] section(Bytes bytes) {
         byte[] array = bytes.arr();
         int start = bytes.pos();

@@ -50,8 +50,7 @@ class ScalaSignature(val bytes: Bytes) {
     def infoId: Int
 
     def full = owner.full + "." + name
-    override def toString = getClass.getName.replaceAll(".+\\$", "") +
-      "(" + name + "," + owner + "," + flags.toHexString + "," + infoId + ")"
+    override def toString = ScalaSignatureParser.classSymbolString(this)
 
     def isObject = false
     def info: ClassType = evalT(infoId)
