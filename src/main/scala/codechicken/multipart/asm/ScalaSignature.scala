@@ -132,10 +132,7 @@ class ScalaSignature(val bytes: Bytes) {
 
     def returnType = this
 
-    override def jDesc = name match {
-      case "scala.Array" => "[" + typArgs(0).jDesc
-      case _             => super.jDesc
-    }
+    override def jDesc = ScalaSignatureParser.appliedTypeDescriptor(this)
   }
 
   case class ThisType(sym: SymbolRef) extends TypeRef

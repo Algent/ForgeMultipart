@@ -44,6 +44,12 @@ final class ScalaSignatureParser {
         return "L" + ref.jName() + ";";
     }
 
+    static String appliedTypeDescriptor(Object value) {
+        ScalaSignature.TypeRefType ref = (ScalaSignature.TypeRefType) value;
+        if ("scala.Array".equals(ref.name())) return "[" + ref.typArgs().apply(0).jDesc();
+        return typeDescriptor(ref);
+    }
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     static String methodDescriptor(Object value) {
         ScalaSignature.TMethodType method = (ScalaSignature.TMethodType) value;

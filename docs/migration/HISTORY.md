@@ -1558,3 +1558,25 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   tests/resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the committed
   version. Source totals are 224 Java files and nine Scala files / 747 nonblank lines. Next:
   `TypeRefType.jDesc`, preserving array/super routing, virtual reads and malformed-input behavior.
+
+### 2026-09-04 — ScalaSignature applied-type descriptors
+
+- Committed seven JVM characterization cases first as `5493086` against the untouched `TypeRefType.jDesc`. They pin
+  the array branch's first argument descriptor, fallback routing through `TypeRef.jDesc` and `jName`, two/three
+  virtual name reads, repeated uncached queries, malformed/null argument lists, null descriptors, failure boundaries
+  and the retained `TMethodType` parameter/return view.
+- Added `ReferenceScalaAppliedTypeDescriptor`, compiled once with Scala 2.11.5 under Java 8 against the unchanged dev
+  jar at `d5bf16f`. Its frozen Scala caller and `TypeRefType` subclass preserve the old method descriptor and virtual
+  override dispatch. Source, encoded classes and SHA-256 provenance are committed under `src/test/fixtures/` and
+  `src/test/resources/compat/`; do not regenerate them against the port.
+- Extracted the applied-type branch into `ScalaSignatureParser.appliedTypeDescriptor(Object)`. The array path reads
+  only the first type argument; the fallback reuses `typeDescriptor`, preserving its virtual name and `jName` order.
+  Scala retains the inferred return type, case class, method-type mixin, product members and serialization shape.
+- Normal and clean validation pass 484 JVM tests, all 484 frozen consumers and 237 Java 8 Forge tests with zero
+  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
+  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,739 unrelated method
+  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Evidence is under ignored `run/migration-applied-type-descriptor-reference/`, including the reference/fixture jars,
+  frozen tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
+  committed version. Source totals are 224 Java files and nine Scala files / 744 nonblank lines. Next:
+  `ClassSymbolRef.full`, preserving owner/name concatenation, virtual reads and failure order.
