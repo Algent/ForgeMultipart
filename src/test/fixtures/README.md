@@ -313,3 +313,20 @@ Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouche
 | --- | --- |
 | `ReferenceMicroOcclusionClientBase` | `017938f169d532f72b0ebcba31a67988b32b9116c2a6dbd558c8da2d1ac8f0bf` |
 | `ReferenceScalaTMicroOcclusionClient` | `f966dc8e807327865c5ca1736f323ed33a5885f5be1dc6f1b964fa8bd3fdb21d` |
+
+### `ReferenceScalaInterfaceNames`
+
+`scala/codechicken/multipart/compat/ReferenceScalaInterfaceNames.scala` freezes a Scala caller of
+`ClassSymbolRef.jInterfaces` and subclasses that override the path-dependent `ClassType.interfaces` and
+`ClassSymbol.info` members. Suppliers expose ordered reads, changing results and failures to JVM tests.
+
+Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouched dev jar at `240a788`
+(SHA-256 `03b3fdc1400d6c9a5d23cfa2a17837a20b48f7b014a02f13366b0c0dcb876e06`). Source SHA-256 is
+`43f0451ae9e5540748f24ff8f4333d76e0d36040bd74cdfcd08d20a95fd68df3`. Frozen class files are stored under
+`src/test/resources/compat/`; do not regenerate them against the port.
+
+| Class | SHA-256 |
+| --- | --- |
+| `ReferenceScalaInterfaceNames` | `996493c5c2dbab7d71e4ecf6c5598d8bf371bd9af182f1f3ee57a8eea2c1c9e1` |
+| `ReferenceScalaInterfaceNames$$anon$1` | `448774963acc6afc1641d039ec79fc82b9e825de3cee65fc44e7fc4b6a238315` |
+| `ReferenceScalaInterfaceNames$$anon$2` | `ecf0adc32ca5cab232a8fcbed45acad8bda8091dd5ecdf10213e9ddfc13f8217` |
