@@ -54,6 +54,22 @@ final class StackAnalyserLogic {
 
     private StackAnalyserLogic() {}
 
+    static Type constType(Const constant) {
+        Object value = constant.c();
+        if (value instanceof Byte) return BYTE_TYPE;
+        if (value instanceof Short) return SHORT_TYPE;
+        if (value instanceof Integer) return INT_TYPE;
+        if (value instanceof Long) return LONG_TYPE;
+        if (value instanceof Float) return FLOAT_TYPE;
+        if (value instanceof Double) return DOUBLE_TYPE;
+        if (value instanceof Character) return CHAR_TYPE;
+        if (value instanceof Boolean) return BOOLEAN_TYPE;
+        if (value instanceof String) return getObjectType("java/lang/String");
+        if (value == null) return getObjectType("java/lang/Object");
+        // The failure message rereads the virtual accessor after classification.
+        throw new IllegalArgumentException("Unknown const " + constant.c());
+    }
+
     static void initialize(StackAnalyser a, Type owner, MethodNode method,
             Function1<TryCatchBlockNode, Option<TryCatchBlockNode>> addHandler) {
         if ((method.access & ACC_STATIC) == 0) a.pushL(new This(owner));

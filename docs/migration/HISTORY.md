@@ -1339,3 +1339,30 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   Scala files / 779 nonblank lines. Next bounded candidate: `StackAnalyser.Const.getType`, preserving its
   case-class, product and serialization contracts. The simple model getters and full Scala shell replacement
   remain separate from useful behavior extraction.
+
+### 2026-09-04 — StackAnalyser constant types
+
+- Committed eight JVM characterization cases first as `89f31e3`, against the untouched Scala `Const.getType`.
+  They cover all eight boxed primitive classes without numeric coercion, fresh object types for null and strings,
+  unsupported numbers/ASM types/unit/arrays/string-like objects, virtual accessor read counts, message formatting
+  and unwrapped accessor/formatting failures. The unsupported branch reads `c` a second time for its message;
+  even a supported second value is formatted without reclassification. A null-returning `toString` prints `null`.
+- Extracted classification into the existing package-private `StackAnalyserLogic.constType`, using direct type
+  checks and a second virtual accessor call only for failures. Scala retains the entire case class, companion,
+  product/copy methods and serialization shape. The scoped modern Java build is reused without configuration or
+  dependency changes; the only extra compiler method handles the failure string concatenation.
+- The build, formatting, checkstyle, frozen-consumer lane and Java 8 Forge tests pass, including verification from
+  a clean build after stopping the Gradle daemon: 415 JVM tests, 415 frozen JVM consumers and 237 Forge tests, with
+  zero failures/errors/skips. All 116 generated ASM dump names and hashes match. Both jars contain 444 Java 8
+  classes, their five `@Mod` versions match their filenames, and both edited sources match the source jar.
+- Preserved all 443 retained class/member APIs, all 17 ScalaSignature payloads and 3,731 unrelated method bodies.
+  The helper retains every previous member and adds only `constType` and its private synthetic concatenation
+  method. No class is added or removed, no JVM Downgrader runtime-stub reference is introduced, and there is no new
+  effective compatibility divergence. The consumer source scan found no direct `StackAnalyser` references.
+- Baseline jar/sources, frozen compiled tests/resources, JVM/Forge reports, generated dumps, comparison tools and
+  build logs are saved under ignored `run/migration-stack-const-reference/`. Rerun `frozen-consumers.gradle` with
+  `VERSION` from `version.txt` to preserve the two existing frozen tests' inlined version assertions; ordinary final
+  builds still use the actual Git version. `verify.py`, `Compare.java` and `VerifyVersions.java` check the artifacts.
+- Sources now total 224 Java files and nine Scala files / 767 nonblank lines. The next bounded candidate is
+  `ASMMixinCompiler.FieldMixin.accessName`: characterize private-flag selection, owner mangling, null behavior and
+  virtual accessor/failure ordering while retaining the case-class model.

@@ -29,19 +29,7 @@ object StackAnalyser {
   }
 
   case class Const(c: Any)(implicit insn: AbstractInsnNode) extends StackEntry {
-    def getType = c match {
-      case o: Byte    => BYTE_TYPE
-      case o: Short   => SHORT_TYPE
-      case o: Int     => INT_TYPE
-      case o: Long    => LONG_TYPE
-      case o: Float   => FLOAT_TYPE
-      case o: Double  => DOUBLE_TYPE
-      case o: Char    => CHAR_TYPE
-      case o: Boolean => BOOLEAN_TYPE
-      case o: String  => getObjectType("java/lang/String")
-      case null       => getObjectType("java/lang/Object")
-      case _ => throw new IllegalArgumentException("Unknown const " + c)
-    }
+    def getType: Type = StackAnalyserLogic.constType(this)
   }
   case class Load(e: LocalEntry)(implicit insn: AbstractInsnNode)
       extends StackEntry {

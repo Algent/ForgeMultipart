@@ -26,8 +26,9 @@ No trustworthy tool will produce a maintainable Java port automatically. A decom
 Work continues on `algent/java`. The low-coupling queue, core part/tile types, registries, handlers, factories,
 placement/render helpers, both generators and all built-in tile traits are Java. Common, face, corner, edge, post,
 hollow and occlusion microblock traits retain Scala inheritance/state/super declarations over Java behavior,
-including client bounds/mask updates. The next bounded target is `StackAnalyser` constructor initialization;
-retain the coordinated Scala class/companion/models and characterize initialization before extraction.
+including client bounds/mask updates. `StackAnalyser` initialization and constant-type classification delegate to
+Java; retain its coordinated Scala class/companion/models. The next bounded candidate is
+`ASMMixinCompiler.FieldMixin.accessName`, with characterization before extraction.
 Java-trait rewriting and compiler startup also delegate to Java helpers. Abstract Java mixins and Java-path
 side-only filtering are complete; multiple Scala-trait inheritance still needs its metadata. Retain trait
 state/accessor/super bridges and the compiler/signature/analyser model shells.

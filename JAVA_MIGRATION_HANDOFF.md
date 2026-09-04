@@ -16,32 +16,32 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**407 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
-files and 9 Scala files / 779 nonblank Scala lines**. The packaged inventory has 444 classes.
+**415 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+files and 9 Scala files / 767 nonblank Scala lines**. The packaged inventory has 444 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
 virtual tile accessor dispatch throughout `TMultiPart`, and null-safe equality for scheduled-tick deduplication.
 Six JVM and two Forge regression cases cover the fixes. Callable signatures remain unchanged; the packet traversal
 callback adds one anonymous class. See the latest history entries for the individual fixes and validation.
 
-Latest bounded target: `StackAnalyser` delegates constructor control flow to `StackAnalyserLogic.initialize`.
-Nine characterization tests were committed first as `929a704`. They pin constructor argument use, virtual
-`pushL`/`setL` ordering, descriptor mutation/parsing failures, wide slots, partial publication and handler behavior.
-Scala retains the class/companion/models, field initialization, default-argument bridges and a handler callback
-that preserves its mangled virtual map accessor. Handler traversal retains Scala-backed buffers' `foreach` dispatch.
-All 407 frozen JVM consumers pass; checks preserve 443 retained class/member APIs, all 17 ScalaSignature payloads,
-3,727 unrelated method bodies and all 116 generated dumps. The obsolete parameter-loop closure disappears;
-the handler callback changes only its compiler number. Evidence: `run/migration-stack-initialization-reference/`.
+Latest bounded target: `StackAnalyser.Const.getType` delegates to `StackAnalyserLogic.constType`.
+Eight characterization tests were committed first as `89f31e3`. They pin every boxed primitive, fresh null/String
+types, unsupported values, repeated virtual `c` access and accessor/formatting failures. Success reads `c` once;
+failure rereads it for the message without reclassifying the second value. Scala retains the complete case class,
+companion, product/copy methods and serialization shape. All 415 frozen JVM consumers pass; checks preserve 443
+retained class/member APIs, all 17 ScalaSignature payloads, 3,731 unrelated method bodies and all 116 generated
+dumps. Only the package-private helper method and its private string-concatenation helper are added.
+Evidence: `run/migration-stack-const-reference/`.
 
-**Next bounded candidate: `StackAnalyser.Const.getType`.** Characterize boxed constant classification, null/String
-handling, unsupported-value formatting/failure and virtual `c` access before extracting to the existing helper.
+**Next bounded candidate: `ASMMixinCompiler.FieldMixin.accessName`.** Characterize private-flag selection, owner
+mangling, null handling and virtual accessor/failure ordering before extracting its body to an existing Java helper.
 Keep case-class/product/serialization shapes and simple model accessors. Broader shell replacement and opcode
 algorithm fixes remain separate work.
 The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client
 generation, GPU output and full-pack checks remain manual.
 
 The JVM Downgrader checkpoint now supports Java 21 method-body syntax in `StackAnalyserLogic` while retaining
-Scala 2.11.5 on Java 8. The constructor extraction uses that existing build stage; it adds no build configuration
+Scala 2.11.5 on Java 8. The constant-type extraction uses that existing build stage; it adds no build configuration
 or runtime dependencies. See `JVM_DOWNGRADER_HANDOFF.md` for the original 398-test integration checkpoint.
 Finish the remaining useful behavior extractions and define the retained compilation boundary before a broad
 modern-syntax pass. Removing every remaining Scala declaration still requires the documented consumer/ABI work.
@@ -227,7 +227,8 @@ three options: leave it in Scala, invent a Java type to hold its members, or inl
 Scala either way; it is a method on `RenderBlocks` and Java needs the parentheses. It fails at compile time rather than
 silently, but expect it in every remaining renderer conversion.
 
-**Java 8 target.** No `List.of`, no `var`, no switch expressions in main or test sources.
+**Java 8 target.** Joint main sources and tests cannot use `List.of`, `var` or switch expressions. The scoped
+`StackAnalyserLogic` stage supports verified Java 21 method bodies; its packaged output must still target Java 8.
 
 **Two test classes sharing global registry state** must guard their registrations, and the registries' error paths call
 a logger that is null until `preInit`, so they cannot run headless at all.
