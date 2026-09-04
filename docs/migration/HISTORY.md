@@ -1580,3 +1580,24 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   frozen tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
   committed version. Source totals are 224 Java files and nine Scala files / 744 nonblank lines. Next:
   `ClassSymbolRef.full`, preserving owner/name concatenation, virtual reads and failure order.
+
+### 2026-09-04 — ScalaSignature class-symbol full names
+
+- Committed seven JVM characterization cases first as `05c2792` against the untouched `ClassSymbolRef.full`. They
+  pin concrete class/object names, punctuation, literal null full/name results, repeated owner/full/name read order,
+  null-owner and getter failure boundaries, unused symbol members and the exact static trait-helper descriptor.
+- Added `ReferenceScalaClassSymbolFull`, compiled once with Scala 2.11.5 under Java 8 against the unchanged dev jar
+  at `24c7723`. Its frozen Scala caller and direct `ClassSymbolRef` implementation preserve the old `$class.full`
+  forwarder and virtual overrides. Source, encoded classes and SHA-256 provenance are committed under
+  `src/test/fixtures/` and `src/test/resources/compat/`; do not regenerate them against the port.
+- Extracted concatenation into `ScalaSignatureParser.classSymbolFull(Object)`. Java retains owner getter, virtual
+  owner `full()` and name getter order plus Java/Scala null string conversion. Scala keeps the inferred return type,
+  trait helper, case-class forwarders, path-dependent declarations, products and serialization shapes.
+- Normal and clean validation pass 491 JVM tests, all 491 frozen consumers and 237 Java 8 Forge tests with zero
+  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
+  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,740 unrelated method
+  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Evidence is under ignored `run/migration-class-symbol-full-reference/`, including the reference/fixture jars,
+  frozen tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
+  committed version. Sources remain 224 Java files and nine Scala files / 744 nonblank lines. Next:
+  `MethodSymbol.full`, preserving owner/name concatenation, virtual reads and failure order.

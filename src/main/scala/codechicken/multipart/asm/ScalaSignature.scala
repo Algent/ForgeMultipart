@@ -49,7 +49,7 @@ class ScalaSignature(val bytes: Bytes) {
     def flags: Int
     def infoId: Int
 
-    def full = owner.full + "." + name
+    def full = ScalaSignatureParser.classSymbolFull(this)
     override def toString = ScalaSignatureParser.classSymbolString(this)
 
     def isObject = false

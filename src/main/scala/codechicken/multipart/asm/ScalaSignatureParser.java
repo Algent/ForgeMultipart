@@ -77,6 +77,11 @@ final class ScalaSignatureParser {
                 }, List$.MODULE$.canBuildFrom());
     }
 
+    static String classSymbolFull(Object value) {
+        ScalaSignature.ClassSymbolRef symbol = (ScalaSignature.ClassSymbolRef) value;
+        return symbol.owner().full() + "." + symbol.name();
+    }
+
     static String classSymbolString(Object value) {
         ScalaSignature.ClassSymbolRef symbol = (ScalaSignature.ClassSymbolRef) value;
         return symbol.getClass().getName().replaceAll(".+\\$", "") + "("
