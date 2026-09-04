@@ -117,6 +117,11 @@ final class ScalaSignatureParser {
         return symbol.owner().full() + "." + symbol.name();
     }
 
+    static String methodSymbolDescriptor(Object value) {
+        ScalaSignature.MethodSymbol symbol = (ScalaSignature.MethodSymbol) value;
+        return symbol.info().jDesc();
+    }
+
     static byte[] section(Bytes bytes) {
         byte[] array = bytes.arr();
         int start = bytes.pos();

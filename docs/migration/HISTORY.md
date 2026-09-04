@@ -1644,3 +1644,23 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
   committed version. Sources remain 224 Java files and nine Scala files / 744 nonblank lines. Next:
   `MethodSymbol.jDesc`, preserving info/descriptor lookup order and failures.
+
+### 2026-09-04 — ScalaSignature method-symbol descriptors
+
+- Committed seven JVM characterization cases first as `16f4568` against the untouched `MethodSymbol.jDesc`. They pin
+  literal and null descriptors, repeated virtual info/descriptor read order, changing uncached info results, null info,
+  both failure boundaries, unused method shape/symbol members and a frozen Scala caller's descriptor/null behavior.
+- Added `ReferenceScalaMethodSymbolDescriptor`, compiled once with Scala 2.11.5 under Java 8 against the unchanged dev
+  jar at `27863b4`. Its frozen Scala caller and `MethodSymbol` subclass preserve the original descriptor and virtual
+  info override. Source, encoded classes and SHA-256 provenance are committed under `src/test/fixtures/` and resources.
+- Extracted the lookup into `ScalaSignatureParser.methodSymbolDescriptor(Object)`. Java retains virtual info and
+  `jDesc` order and passes through a null descriptor. Scala keeps the inferred return type, case class, path-dependent
+  declaration, products and serialization shape.
+- Normal and clean validation pass 512 JVM tests, all 512 frozen consumers and 237 Java 8 Forge tests with zero
+  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
+  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,743 unrelated method
+  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Evidence is under ignored `run/migration-method-symbol-descriptor-reference/`, including the reference/fixture jars,
+  frozen tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
+  committed version. Sources remain 224 Java files and nine Scala files / 744 nonblank lines. Next:
+  `MethodSymbol.info`, preserving info-id/evaluation lookup order, casts and failures.

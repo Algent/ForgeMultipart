@@ -84,7 +84,7 @@ class ScalaSignature(val bytes: Bytes) {
     def full = ScalaSignatureParser.methodSymbolFull(this)
 
     def info: TMethodType = evalT(infoId)
-    def jDesc = info.jDesc
+    def jDesc = ScalaSignatureParser.methodSymbolDescriptor(this)
   }
 
   case class ExternalSymbol(name: String) extends SymbolRef {
