@@ -18,3 +18,4 @@ Implementation of all parts of the API should be clean and easy in Java. The min
 Java API migration guides:
 
 * [Enumerating microblock materials](docs/api/MATERIAL_ENUMERATION.md), including a compiling example and legacy API replacements.
+* [Reading and visiting multipart parts](docs/api/PART_TRAVERSAL.md), including collection ownership, callback behavior and legacy overrides.

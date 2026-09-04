@@ -491,14 +491,20 @@ behavior:
 ## Java API adoption ledger
 
 This ledger tracks migration of a specific legacy contract, not completion of an entire consumer's migration.
-The FMP material-enumeration addition is implemented on `algent/java`, with the
-[documented Java replacement](docs/api/MATERIAL_ENUMERATION.md) and a compiling example. It is not yet a released
-minimum dependency version. Unlisted contracts remain governed by the inventories above.
+Material enumeration and tile collection/traversal access are implemented on `algent/java`, with
+[material](docs/api/MATERIAL_ENUMERATION.md) and [part traversal](docs/api/PART_TRAVERSAL.md) guides and compiling Java
+examples. Neither addition is yet tied to a released minimum dependency version. Unlisted contracts remain governed
+by the inventories above.
 
 | Legacy contract | Consumer and inspected source | Supported replacement | Consumer migration/release | Target-pack adoption and removal gate |
 | --- | --- | --- | --- | --- |
 | `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | UtilitiesInExcess `3e107a1fe9bc15fcb6a808242ffda1354dac7c3a`: `FMPRecipeLoader.run`, `UEMultipartItem.getSubItems` | `materialCount()` with `materialName(int)` and, when needed, `getMaterial(int)` | Source patch and first released version pending; checkout used as reference only | No migrated pack version verified; retain the bridge |
 | `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | Extra Utilities 1.2.12 decompiled reference: both NEI microblock handlers and `multipart.microblock.ItemMicroBlock` | Same ID-based Java enumeration | No editable upstream consumer in scope; retirement/replacement remains pending | Verify Extra Utilities is absent and its replacement uses the new API before retiring this dependency |
+| `TileMultipart.partList(): scala.collection.Seq` | ProjectRed `e173952e96a4`: illumination aggregation, packet indices and rendered-part lookup | `jPartList()` with unchanged indices, filters and aggregation | Source patch and release pending; Scala consumer code may remain Scala | No migrated pack version verified; retain the getter and external trait support |
+| `TileMultipart.partList(): scala.collection.Seq` | OpenComputers `2c00f79be24b`: cable/print/network searches and aggregation | `jPartList()` with the same search/aggregation semantics | Source patch and release pending | No migrated pack version verified; retain the getter |
+| `TileMultipart.partList(): scala.collection.Seq` | AE2 `87f2b3817c2a`: `FMPPlacementHelper.getPart` and `removePart` | Iterate `jPartList()`; retain last-match lookup and removal/break behavior | Source patch and release pending | No migrated pack version verified; retain the getter |
+| `TileMultipart.partList(): scala.collection.Seq` | Extra Utilities 1.2.12: multipart renderer iterators | Iterate `jPartList()` without adding detached-part filtering | Retirement/replacement pending | Confirm absence or migration in the target pack before retiring the getter |
+| `TileMultipart.partList(): scala.collection.Seq` plus reflective getter/setter/loading | GuideNH `7d8fb44e77b9`: `Ae2ForgeMultipartBridge`, `ForgeMultipartHelpers` | `jPartList()` for reads; Java setter/loading replacements still pending | Read migration alone does not migrate client-tile reconstruction | Retain `partList`, `partList_$eq` and `loadParts` until their separate gates pass |
 
 Evidence for the FMP addition is under ignored `run/migration-material-enumeration-reference/`. The original
 reference-compiled Scala consumer still exercises the companion and tuple-array descriptor. The new compiling Java
@@ -507,6 +513,23 @@ they do not establish that an updated UtilitiesInExcess release has shipped or e
 
 FMP's own `ItemMicroPart` and `MicroRecipe$` still use the legacy array internally. Their migration, any additional
 retained companion users, and the other Scala-facing contracts remain separate removal gates.
+
+Tile traversal evidence is under ignored `run/migration-part-traversal-reference/`. Re-scanning the supplied Java/Scala
+sources found no FMP `operate` calls/overrides or `forEachPart` name collisions; two unrelated no-argument renderer
+`operate()` implementations were excluded. The existing `operate(Function1)` override hook nevertheless remains
+supported. The Java convenience delegates through it, while lifecycle callbacks continue calling it directly.
+Deprecation is caller guidance, not permission to remove or bypass existing overrides. All 538 frozen pre-change JVM
+tests, including the legacy getter/callback subclass cases, run against the addition without recompilation.
+
+Existing `jPartList()` consumers such as ProjectBlue, BuildCraftCompat, GT5U, WitchingGadgets, MatterManipulator and
+UtilitiesInExcess already have Java collection access. They need no rename for this contract. The new `forEachPart`
+convenience is not a blanket replacement for their loops: its detached-part filtering can change read/query behavior.
+The reference checkouts were not edited, built or counted as released migrations.
+
+The installed GTNH daily `2026-09-04+719` rescan scanned 241 jars and excluded one FMP jar. Its 27 consumers still
+reference the exact same 35 inherited types, 255 members, 76 other types and 20 reflection strings as the frozen
+`+678` inventory, compared by full row rather than counts alone. The report is archived with the traversal evidence;
+source revisions above remain the inspected checkout revisions, not a claim of source parity with every newer jar.
 
 ## Practical priority for the current branch
 

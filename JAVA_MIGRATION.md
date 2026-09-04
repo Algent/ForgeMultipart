@@ -522,15 +522,15 @@ changes separate from mechanical compiler extraction, and do not add a deprecati
 
 #### 9.1 — Scala-typed signatures
 
-Each row keeps its existing descriptor for binary compatibility and gains a Java-shaped sibling. Two rows already have
-their sibling and only need the annotation and javadoc.
+Each row keeps its existing descriptor for binary compatibility and gains a Java-shaped sibling. The registry
+`registerParts` sibling already exists and still needs the annotation and javadoc.
 
 | Deprecate | Java-shaped replacement | Notes |
 | --- | --- | --- |
-| `TileMultipart.partList(): scala.collection.Seq` | `jPartList(): java.util.List` | Sibling already exists |
+| `TileMultipart.partList(): scala.collection.Seq` | `jPartList(): java.util.List` | Getter deprecated; captured-sequence view documented in the [guide and compiling example](docs/api/PART_TRAVERSAL.md). Setter/loading migrations remain separate |
 | `MultiPartRegistry.registerParts(IPartFactory2, scala.collection.Seq)` | `registerParts(IPartFactory2, String...)` | Sibling already exists |
 | `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | `materialCount(): int` plus existing `materialName(int)` and `getMaterial(int)` | Implemented with static/companion deprecation; [guide and compiling example](docs/api/MATERIAL_ENUMERATION.md). Consumer release/adoption remains pending |
-| `TileMultipart.operate(scala.Function1<TMultiPart, BoxedUnit>)` | `forEachPart(java.util.function.Consumer<TMultiPart>)` | Preserve the existing skip-unbound-part behavior |
+| `TileMultipart.operate(scala.Function1<TMultiPart, BoxedUnit>)` | `forEachPart(java.util.function.Consumer<TMultiPart>)` | Implemented through the legacy virtual hook; preserves captured traversal, detached-part filtering and callback failures. Lifecycle still calls `operate` |
 | `TileMultipart.occlusionTest(scala.collection.Seq, TMultiPart)` | `occlusionTest(Collection<TMultiPart>, TMultiPart)` | |
 | `TileMultipart.loadParts(scala.collection.Iterable)` | `loadParts(Collection<TMultiPart>)` | Schematica and GuideNH reflect the Scala descriptor; see Phase 10 |
 | `TileMultipart.partList_$eq(scala.collection.Seq)` | `setPartList(List<TMultiPart>)` | GuideNH reflects the `_$eq` name; see Phase 10 |
@@ -545,6 +545,8 @@ same-name overload there invites a silent wrong-overload bind.
 - [ ] Add the missing Java-shaped siblings over shared behavior, preserving legacy override dispatch and avoiding
   recursive forwarding as required by the API migration design.
 - [x] Add and document `materialCount()` with existing indexed lookups; retain and deprecate both `getIdMap()` entries.
+- [x] Document `jPartList()` and add `forEachPart(Consumer)`; deprecate the legacy getter/callback entries while retaining
+  their override dispatch. JVM and generated-tile Forge cases cover the [documented contract](docs/api/PART_TRAVERSAL.md).
 - [ ] Mark all nine rows `@Deprecated` with javadoc naming the replacement.
 - [ ] Confirm every original descriptor still exists in the ABI fixture after the change.
 - [ ] Document the supported API with compiling usage examples and an old-to-new migration guide. Validate Java
@@ -560,8 +562,12 @@ deprecation, and no new dependency for a marker annotation.
 Verified against all 28 consumer checkouts as having **zero external callers**:
 
 `TileMultipart.addPart_impl`, `addPart_do`, `remPart_impl`, `writeAddPart`, `partAdded`, `partRemoved`, `from`,
-`copyFrom`, `loadFrom`, `setValid`, `getOrConvertTile2`, `operate`; `MicroMaterialRegistry.setupIDMap`,
+`copyFrom`, `loadFrom`, `setValid`, `getOrConvertTile2`; `MicroMaterialRegistry.setupIDMap`,
 `calcMaxCuttingStrength`, `loadIcons`, `writeIDMap`, `readIDMap`.
+
+`TileMultipart.operate` also has no audited external callers, but remains a supported legacy override hook. It is
+deprecated for callers in favor of `forEachPart`; lifecycle dispatch still uses it. Keep that explicit contract rather
+than applying the internal-only marker to it. The new convenience method does not replace the lifecycle override hook.
 
 Two similar-looking members **are** externally load-bearing and must not be marked internal:
 

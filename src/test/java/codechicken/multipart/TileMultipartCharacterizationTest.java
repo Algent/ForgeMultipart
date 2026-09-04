@@ -21,6 +21,7 @@ import net.minecraft.util.Vec3;
 import org.junit.jupiter.api.Test;
 
 import codechicken.lib.raytracer.ExtendedMOP;
+import codechicken.multipart.examples.PartTraversalExample;
 import scala.Function1;
 import scala.Tuple2;
 import scala.collection.JavaConversions;
@@ -330,6 +331,98 @@ class TileMultipartCharacterizationTest {
             throw failure;
         }))));
         assertEquals(Arrays.asList("rebound"), visited);
+    }
+
+    @Test
+    void javaTraversalKeepsAccessorDispatchAndCallbackMutationSemantics() {
+        AccessorTile tile = new AccessorTile();
+        CountingPart first = new CountingPart("first");
+        CountingPart removed = new CountingPart("removed");
+        CountingPart rebound = new CountingPart("rebound");
+        CountingPart added = new CountingPart("added");
+        tile.parts = seq(first, removed, rebound);
+        tile.loadFrom(new TileMultipart());
+        List<String> visited = new ArrayList<>();
+        List<String> nested = new ArrayList<>();
+
+        tile.forEachPart(part -> {
+            visited.add(part.getType());
+            if (part == first) {
+                tile.partList_$eq(seq(first, rebound, added));
+                removed.bind(null);
+                rebound.bind(new TileMultipart());
+                added.bind(tile);
+                tile.forEachPart(p -> nested.add(p.getType()));
+            }
+        });
+
+        assertEquals(Arrays.asList("first", "rebound"), visited);
+        assertEquals(Arrays.asList("first", "rebound", "added"), nested);
+    }
+
+    @Test
+    void javaTraversalUsesTheLegacyOverrideAndDoesNotReplaceItsLifecycleHook() {
+        CountingPart supplied = new CountingPart("supplied");
+        List<String> calls = new ArrayList<>();
+        TileMultipart tile = new TileMultipart() {
+
+            @Override
+            public void operate(Function1<TMultiPart, BoxedUnit> f) {
+                calls.add("operate");
+                f.apply(supplied);
+            }
+
+            @Override
+            public void forEachPart(Consumer<TMultiPart> consumer) {
+                calls.add("forEachPart");
+                super.forEachPart(consumer);
+            }
+        };
+        List<TMultiPart> visited = new ArrayList<>();
+        tile.forEachPart(visited::add);
+        tile.onChunkLoad();
+
+        assertEquals(Arrays.asList("forEachPart", "operate", "operate"), calls);
+        assertEquals(Arrays.asList(supplied), visited);
+        assertEquals(1, supplied.chunkLoads);
+    }
+
+    @Test
+    void javaTraversalRetainsMutableSequenceAndCallbackFailureBehavior() {
+        TileMultipart tile = new TileMultipart();
+        tile.forEachPart(null);
+        CountingPart detached = new CountingPart("detached");
+        tile.partList_$eq(seq(detached));
+        tile.forEachPart(null);
+        detached.bind(tile);
+        assertThrows(NullPointerException.class, () -> tile.forEachPart(null));
+
+        CountingPart last = new CountingPart("last");
+        last.bind(tile);
+        tile.partList_$eq(JavaConversions.asScalaBuffer(new ArrayList<>(Arrays.asList(detached, last))));
+        List<TMultiPart> visited = new ArrayList<>();
+        tile.forEachPart(visited::add);
+        assertEquals(Arrays.asList(detached, last), visited);
+        visited.clear();
+        IllegalStateException failure = new IllegalStateException("callback failed");
+        assertSame(failure, assertThrows(IllegalStateException.class, () -> tile.forEachPart(part -> {
+            visited.add(part);
+            throw failure;
+        })));
+        assertEquals(Arrays.asList(detached), visited);
+    }
+
+    @Test
+    void javaExamplesDistinguishCollectionAccessFromBoundPartTraversal() {
+        TileMultipart tile = new TileMultipart();
+        CountingPart first = new CountingPart("first");
+        CountingPart detached = new CountingPart("detached");
+        tile.addPart_do(first);
+        tile.addPart_do(detached);
+        detached.bind(null);
+
+        assertEquals(Arrays.asList("first", "detached"), PartTraversalExample.partTypes(tile));
+        assertEquals(Arrays.asList("first"), PartTraversalExample.boundPartTypes(tile));
     }
 
     @Test

@@ -44,6 +44,11 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
 
     private boolean doesTick = false;
 
+    /**
+     * @deprecated Use {@link #jPartList()} for Java collection access. Retained as the virtual storage accessor for
+     *             existing subclasses and binaries.
+     */
+    @Deprecated
     public Seq<TMultiPart> partList() {
         return partList;
     }
@@ -82,9 +87,41 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         return null;
     }
 
-    /** Implicit java conversion of part list. */
+    /**
+     * Returns an ordered Java view of the sequence returned by {@link #partList()} at this call. Includes detached
+     * parts; replacing the tile's sequence does not update an existing view. Normally the sequence is immutable, but a
+     * mutable sequence supplied through the legacy setter remains live through this view.
+     *
+     * <p>
+     * Treat the view as read-only: list edits do not perform multipart binding, notifications or synchronization. Use
+     * {@link #addPart(World, BlockCoord, TMultiPart)} and {@link #remPart(TMultiPart)} for world changes. Copy into an
+     * {@link ArrayList} when independent list storage is needed; the parts themselves remain shared.
+     *
+     * @return a view of the captured sequence, with its original order and part identities
+     */
     public List<TMultiPart> jPartList() {
         return JavaConversions.seqAsJavaList(partList());
+    }
+
+    /**
+     * Visits parts in sequence order, skipping those whose {@link TMultiPart#tile()} is null when reached. Delegates
+     * through the legacy {@link #operate(Function1)} hook, so existing overrides still control traversal.
+     *
+     * <p>
+     * The default hook captures {@link #partList()} once. Normal additions publish a new sequence and are not visited
+     * by the current call; parts detached by an earlier callback are skipped. A part rebound to another tile is still
+     * visited. Legacy mutable sequences retain their own iterator behavior and must not be structurally edited during
+     * traversal. Each nested call captures its own sequence. Callback exceptions propagate immediately, stopping the
+     * current traversal.
+     *
+     * <p>
+     * Call on the game thread. Lifecycle callbacks continue to dispatch through {@code operate}, not through overrides
+     * of this convenience method. With the default hook, a null callback fails only when a bound part is visited.
+     *
+     * @param consumer action to apply to each visited part
+     */
+    public void forEachPart(Consumer<TMultiPart> consumer) {
+        operate(action(consumer));
     }
 
     @Override
@@ -92,6 +129,13 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         return doesTick;
     }
 
+    /**
+     * Legacy traversal hook, also used by multipart lifecycle callbacks.
+     *
+     * @deprecated Call {@link #forEachPart(Consumer)} from Java. Existing overrides remain supported and intercept both
+     *             that API and lifecycle callbacks; keep such overrides here while this compatibility hook is retained.
+     */
+    @Deprecated
     // Direct list traversal avoids measured iterator/wrapper allocations; the setter also accepts other Seq types.
     @SuppressWarnings("unchecked")
     public void operate(Function1<TMultiPart, BoxedUnit> f) {

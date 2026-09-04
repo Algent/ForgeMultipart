@@ -27,6 +27,7 @@ class TileMultipartLifecycleFunctionalTest {
     private static final BlockCoord ADD_REMOVE_POS = new BlockCoord(32, 200, 32);
     private static final BlockCoord MOVE_FROM = new BlockCoord(34, 200, 32);
     private static final BlockCoord MOVE_TO = new BlockCoord(36, 200, 32);
+    private static final BlockCoord TRAVERSAL_POS = new BlockCoord(38, 200, 32);
 
     @Test
     void addAndRemovePreserveOrderSlotsAndPartCallbackOrder() {
@@ -118,6 +119,41 @@ class TileMultipartLifecycleFunctionalTest {
         } finally {
             clear(world, MOVE_FROM);
             clear(world, MOVE_TO);
+        }
+    }
+
+    @Test
+    void javaTraversalSurvivesRealPartRemovalAndAdditionOnAGeneratedTile() {
+        World world = world();
+        clear(world, TRAVERSAL_POS);
+        List<String> events = new ArrayList<>();
+        RecordingPart first = new RecordingPart("first", 2, events);
+        RecordingPart removed = new RecordingPart("removed", 7, events);
+        RecordingPart added = new RecordingPart("added", 8, events);
+
+        try {
+            TileMultipart.addPart(world, TRAVERSAL_POS, first);
+            TileMultipart tile = TileMultipart.addPart(world, TRAVERSAL_POS, removed);
+            List<TMultiPart> captured = tile.jPartList();
+            List<TMultiPart> visited = new ArrayList<>();
+            tile.forEachPart(part -> {
+                visited.add(part);
+                if (part == first) {
+                    assertSame(tile, tile.remPart(removed));
+                    assertSame(tile, TileMultipart.addPart(world, TRAVERSAL_POS, added));
+                }
+            });
+
+            assertTrue(tile instanceof TSlottedTile);
+            assertEquals(Arrays.asList(first), visited);
+            assertEquals(Arrays.asList(first, removed), captured);
+            assertEquals(Arrays.asList(first, added), tile.jPartList());
+            assertNull(removed.tile());
+            assertNull(tile.partMap(7));
+            assertSame(added, tile.partMap(8));
+            assertSame(tile, added.tile());
+        } finally {
+            clear(world, TRAVERSAL_POS);
         }
     }
 

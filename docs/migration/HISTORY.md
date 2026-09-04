@@ -1741,3 +1741,25 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Added the material-enumeration guide and the first consumer adoption ledger rows. UtilitiesInExcess's two source
   call sites and Extra Utilities' tuple-array readers have supported replacements; consumer changes, releases and
   pack adoption remain pending. Evidence is under ignored `run/migration-material-enumeration-reference/`.
+
+### 2026-09-04 — Java tile collection and traversal API
+
+- Committed three baseline cases first as `5c1e760`, pinning captured Java views, lifecycle override dispatch,
+  non-null binding checks and callback failure propagation. Saved the pre-API jar, source, reports, generated dumps
+  and all 538 compiled JVM tests before implementation.
+- Added `TileMultipart.forEachPart(Consumer<TMultiPart>)` through the existing adapter and virtual `operate` hook.
+  Documented the existing `jPartList()` view and deprecated `partList()`/`operate(Function1)` for callers, retaining
+  their descriptors, bodies and override contracts. Lifecycle still calls `operate` directly; no new lifecycle hook
+  or independently maintained traversal was introduced.
+- Added four JVM cases, a compiling Java example and one Forge generated-tile case that removes/adds real parts
+  during traversal. Normal/clean style and build checks pass: 542 JVM tests, 239 Java 8 Forge tests and all 538 frozen
+  pre-change tests. The example also compiles with Scala excluded from its classpath and has no Scala bytecode references.
+- Binary comparison retains all 443 class APIs with exactly one new public instance method and two deprecations.
+  All 17 ScalaSignature payloads, 3,747 existing method bodies and 116 generated dumps are unchanged, allowing only
+  the expected deprecation metadata and build-version literals. No production class or dependency was added.
+- Added the traversal guide and consumer ledger entries for ProjectRed, OpenComputers, AE2, Extra Utilities and
+  GuideNH. Getter migration does not cover GuideNH's reflective setter/loading contracts. The supplied source search
+  found no FMP `operate` overrides or `forEachPart` collisions; existing override support remains required.
+- Rescanned the installed GTNH daily `2026-09-04+719`: 241 jars scanned, one FMP jar excluded, 27 consumers. All
+  386 member/type/reflection rows match the frozen `+678` inventory; consumer version changes do not permit bridge
+  removal. Reference checkouts were not modified. Evidence: `run/migration-part-traversal-reference/`.
