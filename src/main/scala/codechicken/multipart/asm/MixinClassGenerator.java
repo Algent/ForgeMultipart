@@ -39,6 +39,12 @@ final class MixinClassGenerator {
 
     private MixinClassGenerator() {}
 
+    static Seq<MixinInfo> linearise(MixinInfo info) {
+        Object parents = ((TraversableLike) info.parentTraits())
+                .flatMap(fn(MixinInfo::linearise), Seq$.MODULE$.canBuildFrom());
+        return (Seq<MixinInfo>) ((scala.collection.SeqLike) parents).$colon$plus(info, Seq$.MODULE$.canBuildFrom());
+    }
+
     static String fieldAccessName(FieldMixin field, String owner) {
         if ((field.access() & ACC_PRIVATE) != 0) return owner.replace('/', '$') + "$$" + field.name();
         return field.name();

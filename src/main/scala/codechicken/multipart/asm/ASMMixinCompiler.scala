@@ -53,7 +53,7 @@ object ASMMixinCompiler {
       methods: Seq[MethodNode],
       supers: Seq[String]
   ) {
-    def linearise: Seq[MixinInfo] = parentTraits.flatMap(_.linearise) :+ this
+    def linearise: Seq[MixinInfo] = MixinClassGenerator.linearise(this)
     def tname = name + "$class"
   }
 

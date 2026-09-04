@@ -16,32 +16,31 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**422 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
-files and 9 Scala files / 765 nonblank Scala lines**. The packaged inventory has 444 classes.
+**429 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+files and 9 Scala files / 765 nonblank Scala lines**. The packaged inventory has 443 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
 virtual tile accessor dispatch throughout `TMultiPart`, and null-safe equality for scheduled-tick deduplication.
 Six JVM and two Forge regression cases cover the fixes. Callable signatures remain unchanged; the packet traversal
 callback adds one anonymous class. See the latest history entries for the individual fixes and validation.
 
-Latest bounded target: `ASMMixinCompiler.FieldMixin.accessName` delegates to `MixinClassGenerator.fieldAccessName`.
-Seven characterization tests were committed first as `ddeed27`. They pin private-bit selection, literal owner/name
-mangling, null handling, virtual accessor order and failures. The private branch transforms the owner before reading
-the name; the other branch ignores the owner and returns the name directly. Scala retains the complete case class,
-companion, inferred return type, product/copy methods and serialization shape. All 422 frozen JVM consumers pass;
-checks preserve 443 retained class/member APIs, all 17 ScalaSignature payloads, 3,733 unrelated method bodies and all
-116 generated dumps. Only one package-private Java helper method is added.
-Evidence: `run/migration-field-access-reference/`.
+Latest bounded target: `ASMMixinCompiler.MixinInfo.linearise` delegates to `MixinClassGenerator.linearise`.
+Seven characterization tests were committed first as `d93b09d`. They pin recursive parent order and duplicates,
+collection builders, mutable parents, virtual parent/collection dispatch, erased casts and failure order. Flattening
+retains its `SeqLike` intermediate before append returns a `Seq`. Scala keeps the model/companion and all bridges.
+All 429 frozen JVM consumers pass; checks preserve 442 retained class/member APIs, all 17 ScalaSignature payloads,
+3,731 unrelated method bodies and all 116 generated dumps. The obsolete Scala traversal closure disappears;
+the Java helper reuses the existing callback adapter. Evidence: `run/migration-linearise-reference/`.
 
-**Next bounded candidate: `ASMMixinCompiler.MixinInfo.linearise`.** Characterize recursive parent order, repeated
-and diamond parents, virtual collection/parent dispatch and null/failure behavior before extracting its body.
+**Next bounded candidate: `ScalaSignature.Bytes.section`.** Characterize clamped array slicing, fresh result arrays,
+virtual getter order, mutations during getter calls and null/failure behavior before extracting its body.
 Keep case-class/product/serialization shapes and simple model accessors. Broader shell replacement and opcode
 algorithm fixes remain separate work.
 The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client
 generation, GPU output and full-pack checks remain manual.
 
 The JVM Downgrader checkpoint now supports Java 21 method-body syntax in `StackAnalyserLogic` while retaining
-Scala 2.11.5 on Java 8. The field-name extraction stays in ordinary Java 8 joint compilation and adds no build
+Scala 2.11.5 on Java 8. The model extractions stay in ordinary Java 8 joint compilation and add no build
 configuration or runtime dependencies. See `JVM_DOWNGRADER_HANDOFF.md` for the original 398-test integration checkpoint.
 Finish the remaining useful behavior extractions and define the retained compilation boundary before a broad
 modern-syntax pass. Removing every remaining Scala declaration still requires the documented consumer/ABI work.

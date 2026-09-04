@@ -1394,3 +1394,22 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Sources remain 224 Java files and nine Scala files / 765 nonblank lines. Next candidate:
   `ASMMixinCompiler.MixinInfo.linearise`, with characterization of recursive parent order, repeated/diamond parents,
   virtual collection/parent dispatch and null/failure behavior before extraction.
+
+### 2026-09-04 — MixinInfo linearisation
+
+- Committed seven JVM characterization cases first as `d93b09d`, against the untouched Scala method. They cover
+  depth-first parent order, duplicate/diamond ancestors, identity, mutable and immutable collection builders,
+  virtual parent results, nulls, callback failures and erased collection casts. A custom `flatMap` can return only
+  `SeqLike`; its virtual append supplies the final `Seq`, including a null result. Preserve that intermediate cast.
+- Extracted traversal into `MixinClassGenerator.linearise`, reusing its Java callback adapter while keeping Scala
+  `flatMap`, append and `Seq.canBuildFrom` dispatch. Recursion still invokes each parent's virtual `linearise`.
+  Deduplication stays in composite generation, after traversal. Model, companion, product and serialization APIs
+  remain Scala. The unreferenced `MixinInfo$$anonfun$linearise$1` class disappears under the existing compiler-artifact
+  ledger entry; no new effective divergence or dependency is introduced.
+- Normal and clean builds pass formatting/checkstyle, 429 JVM tests, all 429 frozen JVM consumers and 237 Java 8
+  Forge tests, with zero failures/errors/skips. All 116 generated dump names and hashes match. Checks preserve 442
+  retained class/member APIs, all 17 ScalaSignature payloads and 3,731 unrelated method bodies. Both jars contain
+  443 Java 8 classes, with matching packaged sources. Evidence, frozen consumers and reproducible comparison tools
+  are under ignored `run/migration-linearise-reference/`; use its `version.txt` for frozen version assertions.
+- Source totals remain 224 Java files and nine Scala files / 765 nonblank lines. The next candidate is
+  `ScalaSignature.Bytes.section`, preserving clamping, copy boundaries and virtual getter/failure ordering.
