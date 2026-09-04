@@ -62,12 +62,12 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
      * automatically generated on java tile traits with fields if it is not overridden.
      */
     public void copyFrom(TileMultipart that) {
-        partList = that.partList;
+        partList_$eq(that.partList());
         doesTick = that.doesTick;
     }
 
     public void loadFrom(TileMultipart that) {
-        Iterator<TMultiPart> iterator = partList.iterator();
+        Iterator<TMultiPart> iterator = partList().iterator();
         while (iterator.hasNext()) {
             iterator.next().bind(this);
         }
@@ -84,7 +84,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
 
     /** Implicit java conversion of part list. */
     public List<TMultiPart> jPartList() {
-        return JavaConversions.seqAsJavaList(partList);
+        return JavaConversions.seqAsJavaList(partList());
     }
 
     @Override
@@ -95,7 +95,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
     // Direct list traversal avoids measured iterator/wrapper allocations; the setter also accepts other Seq types.
     @SuppressWarnings("unchecked")
     public void operate(Function1<TMultiPart, BoxedUnit> f) {
-        Seq<TMultiPart> current = partList;
+        Seq<TMultiPart> current = partList();
         if (!(current instanceof scala.collection.immutable.List)) {
             scala.collection.Iterator<TMultiPart> iterator = current.iterator();
             while (iterator.hasNext()) {
@@ -150,7 +150,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         if (!isInvalid()) {
             super.invalidate();
             if (worldObj != null) {
-                Iterator<TMultiPart> iterator = partList.iterator();
+                Iterator<TMultiPart> iterator = partList().iterator();
                 while (iterator.hasNext()) {
                     iterator.next().onWorldSeparate();
                 }
@@ -221,8 +221,11 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
 
     @SuppressWarnings("unchecked")
     public int getLightValue() {
+        if (partList().isEmpty()) {
+            return 0;
+        }
         int max = 0;
-        Seq<TMultiPart> current = partList;
+        Seq<TMultiPart> current = partList();
         if (!(current instanceof scala.collection.immutable.List)) {
             Iterator<TMultiPart> iterator = current.iterator();
             while (iterator.hasNext()) {
@@ -240,12 +243,13 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
     }
 
     public float getExplosionResistance(Entity entity) {
-        if (partList.isEmpty()) {
+        Seq<TMultiPart> current = partList();
+        if (current.isEmpty()) {
             // Matches the reference, where max on an empty view throws.
             throw new UnsupportedOperationException("empty.max");
         }
         float max = Float.NEGATIVE_INFINITY;
-        Iterator<TMultiPart> iterator = partList.iterator();
+        Iterator<TMultiPart> iterator = current.iterator();
         while (iterator.hasNext()) {
             max = Math.max(max, iterator.next().explosionResistance(entity));
         }
@@ -291,7 +295,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
     }
 
     public boolean canPlaceTorchOnTop() {
-        Iterator<TMultiPart> iterator = partList.iterator();
+        Iterator<TMultiPart> iterator = partList().iterator();
         while (iterator.hasNext()) {
             if (iterator.next().canPlaceTorchOnTop()) {
                 return true;
@@ -317,8 +321,8 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
 
     /** Returns true if part can be added to this space. */
     public boolean canAddPart(TMultiPart part) {
-        return compatibilityAllows(worldObj, xCoord, yCoord, zCoord) && !partList.contains(part)
-                && occlusionTest(partList, part);
+        return compatibilityAllows(worldObj, xCoord, yCoord, zCoord) && !partList().contains(part)
+                && occlusionTest(partList(), part);
     }
 
     /**
@@ -331,7 +335,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
      */
     public boolean canReplacePart(TMultiPart opart, TMultiPart npart) {
         List<TMultiPart> olist = new ArrayList<>();
-        Iterator<TMultiPart> iterator = partList.iterator();
+        Iterator<TMultiPart> iterator = partList().iterator();
         while (iterator.hasNext()) {
             TMultiPart part = iterator.next();
             if (part == null ? opart != null : !part.equals(opart)) {
@@ -358,7 +362,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
 
     /** Get the write stream for updates to part. */
     public MCDataOutput getWriteStream(TMultiPart part) {
-        return writeStream().writeByte(partList.indexOf(part));
+        return writeStream().writeByte(partList().indexOf(part));
     }
 
     private MCDataOutput writeStream() {
@@ -386,14 +390,14 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
     }
 
     public void addPart_do(TMultiPart part) {
-        if (partList.size() >= 250) {
+        if (partList().size() >= 250) {
             throw new AssertionError(
                     "assertion failed: Tried to add more than 250 parts to the one tile. You're doing it wrong");
         }
 
         List<TMultiPart> next = mutablePartsSnapshot();
         next.add(part);
-        partList = toSeq(next);
+        partList_$eq(toSeq(next));
         bindPart(part);
         part.bind(this);
 
@@ -434,7 +438,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
     }
 
     private int remPart_do(TMultiPart part, boolean sendPacket) {
-        int r = partList.indexOf(part);
+        int r = partList().indexOf(part);
         if (r < 0) {
             throw new IllegalArgumentException("Tried to remove a non-existant part");
         }
@@ -444,7 +448,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         part.preRemove();
         List<TMultiPart> current = mutablePartsSnapshot();
         current.removeIf(p -> p == null ? part == null : p.equals(part));
-        partList = toSeq(current);
+        partList_$eq(toSeq(current));
 
         if (sendPacket) {
             writeStream().writeByte(254).writeByte(r);
@@ -454,11 +458,11 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         part.onRemoved();
         part.tile_$eq(null);
 
-        if (partList.isEmpty()) {
+        if (partList().isEmpty()) {
             worldObj.setBlockToAir(xCoord, yCoord, zCoord);
         } else if (part.doesTick() && doesTick) {
             boolean ntick = false;
-            Iterator<TMultiPart> iterator = partList.iterator();
+            Iterator<TMultiPart> iterator = partList().iterator();
             while (iterator.hasNext()) {
                 ntick |= iterator.next().doesTick();
             }
@@ -488,13 +492,13 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
 
     /** Remove all parts from internal cache. Provided for trait overrides, do not call externally. */
     public void clearParts() {
-        partList = emptyParts();
+        partList_$eq(emptyParts());
     }
 
     /** Writes the description of this tile, and all parts composing it, to packet. */
     public void writeDesc(MCDataOutput packet) {
-        packet.writeByte(partList.size());
-        Iterator<TMultiPart> iterator = partList.iterator();
+        packet.writeByte(partList().size());
+        Iterator<TMultiPart> iterator = partList().iterator();
         while (iterator.hasNext()) {
             TMultiPart part = iterator.next();
             MultiPartRegistry.writePartID(packet, part);
@@ -505,7 +509,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
     /** Perform a raytrace returning all intersecting parts sorted nearest to farthest. */
     public Iterable<ExtendedMOP> rayTraceAll(Vec3 start, Vec3 end) {
         List<ExtendedMOP> list = new ArrayList<>();
-        Iterator<TMultiPart> iterator = partList.iterator();
+        Iterator<TMultiPart> iterator = partList().iterator();
         int i = 0;
         while (iterator.hasNext()) {
             Object mop = iterator.next().collisionRayTrace(start, end);
@@ -531,7 +535,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
 
     /** Drop and remove part at index (internal mining callback). */
     public void harvestPart(int index, ExtendedMOP hit, EntityPlayer player) {
-        TMultiPart part = partList.apply(index);
+        TMultiPart part = partList().apply(index);
         if (part != null) {
             part.harvest(hit, player);
         }
@@ -549,7 +553,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
     public final void writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
         NBTTagList taglist = new NBTTagList();
-        Iterator<TMultiPart> iterator = partList.iterator();
+        Iterator<TMultiPart> iterator = partList().iterator();
         while (iterator.hasNext()) {
             TMultiPart part = iterator.next();
             NBTTagCompound parttag = new NBTTagCompound();
@@ -582,7 +586,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
 
     /** Mutable snapshot used only while publishing a replacement Seq. */
     private List<TMultiPart> mutablePartsSnapshot() {
-        return new ArrayList<>(JavaConversions.seqAsJavaList(partList));
+        return new ArrayList<>(JavaConversions.seqAsJavaList(partList()));
     }
 
     private static Seq<TMultiPart> toSeq(List<TMultiPart> parts) {

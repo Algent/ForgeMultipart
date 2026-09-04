@@ -116,6 +116,90 @@ class TileMultipartCharacterizationTest {
     }
 
     @Test
+    void overriddenPartListDrivesQueriesAndCallbacks() {
+        AccessorTile tile = new AccessorTile();
+        CountingPart first = new CountingPart("first");
+        RayTracingPart hit = new RayTracingPart("hit", 1d);
+        tile.parts = seq(first, new LightPart(13), new TorchSupportingPart(), hit);
+        tile.loadFrom(new TileMultipart());
+
+        assertEquals(4, tile.jPartList().size());
+        assertSame(tile, first.tile());
+        assertEquals(13, tile.getLightValue());
+        assertTrue(tile.canPlaceTorchOnTop());
+        assertFalse(tile.canReplacePart(first, hit));
+        tile.onChunkLoad();
+        assertEquals(1, first.chunkLoads);
+        tile.parts = seq(new RayTracingPart("missing", null), hit);
+        assertEquals(1, index(tile.collisionRayTrace(ORIGIN, ORIGIN)));
+        tile.harvestPart(1, null, null);
+        assertEquals(1, hit.harvests);
+    }
+
+    @Test
+    void overriddenPartListReceivesMutationsAndCopies() {
+        AccessorTile source = new AccessorTile();
+        CountingPart first = new CountingPart("first");
+        Seq<TMultiPart> before = source.parts;
+        source.addPart_do(first);
+        assertEquals(1, source.writes);
+        assertEquals(seq(first), source.parts);
+        assertTrue(before.isEmpty());
+
+        AccessorTile target = new AccessorTile();
+        target.copyFrom(source);
+        assertEquals(1, target.writes);
+        assertSame(source.parts, target.parts);
+        target.loadFrom(source);
+        assertSame(target, first.tile());
+        target.clearParts();
+        assertEquals(2, target.writes);
+        assertTrue(target.parts.isEmpty());
+        assertEquals(seq(first), source.parts);
+    }
+
+    @Test
+    void overriddenPartListKeepsTheCapturedTraversalAndDetachedPartGuard() {
+        AccessorTile tile = new AccessorTile();
+        CountingPart first = new CountingPart("first");
+        CountingPart removed = new CountingPart("removed");
+        CountingPart last = new CountingPart("last");
+        CountingPart added = new CountingPart("added");
+        tile.parts = seq(first, removed, last);
+        tile.loadFrom(new TileMultipart());
+        List<String> visited = new ArrayList<>();
+
+        tile.operate(action(part -> {
+            visited.add(part.getType());
+            if (part == first) {
+                tile.partList_$eq(seq(first, last, added));
+                removed.tile_$eq(null);
+                added.bind(tile);
+            }
+        }));
+
+        assertEquals(Arrays.asList("first", "last"), visited);
+        assertEquals(seq(first, last, added), tile.parts);
+    }
+
+    @Test
+    void overriddenPartListKeepsLightAndResistanceLookupOrder() {
+        int[] reads = { 0 };
+        TileMultipart tile = new TileMultipart() {
+
+            @Override
+            public Seq<TMultiPart> partList() {
+                return ++reads[0] == 1 ? seq(new ResistancePart(9f)) : seq(new LightPart(13));
+            }
+        };
+        assertEquals(13, tile.getLightValue());
+        assertEquals(2, reads[0]);
+        reads[0] = 0;
+        assertEquals(9f, tile.getExplosionResistance(null));
+        assertEquals(1, reads[0]);
+    }
+
+    @Test
     void operateSkipsPartsWhoseTileHasBeenCleared() {
         TileMultipart tile = new TileMultipart();
         CountingPart kept = new CountingPart("a");
@@ -372,6 +456,23 @@ class TileMultipartCharacterizationTest {
                 return BoxedUnit.UNIT;
             }
         };
+    }
+
+    private static final class AccessorTile extends TileMultipart {
+
+        private Seq<TMultiPart> parts = seq();
+        private int writes;
+
+        @Override
+        public Seq<TMultiPart> partList() {
+            return parts;
+        }
+
+        @Override
+        public void partList_$eq(Seq<TMultiPart> value) {
+            writes++;
+            parts = value;
+        }
     }
 
     private static class CountingPart extends TMultiPart {

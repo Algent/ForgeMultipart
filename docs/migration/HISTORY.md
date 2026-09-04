@@ -1684,3 +1684,16 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   frozen tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
   committed version. Sources remain 224 Java files and nine Scala files / 747 nonblank lines. Next:
   `ClassSymbolRef.info`, preserving outer/info-id/evaluation order, casts, trait bridges and failures.
+
+### 2026-09-04 — TileMultipart part-list accessor compatibility
+
+- Restored virtual `partList()` / `partList_$eq()` dispatch throughout the Java tile implementation, including
+  traversal, mutation, copying, serialization and queries. Retained the optimized list traversal, captured-sequence
+  behavior and detached-part guard; light and explosion queries retain the original accessor lookup counts.
+- Four new regression cases compiled against the original `ForgeMultipart-1.7.12-dev.jar` pass on Scala, fail on
+  the unfixed port and pass unchanged after the fix. Build/style checks, 523 JVM tests and 237 Java 8 Forge tests
+  pass. The tile's declared JVM signatures and private fields are unchanged.
+- Audited the supplied GTNH consumer checkouts: no `TileMultipart` subclass overriding these accessors was found.
+  This fixes an extension-contract regression, without claiming a demonstrated current-pack gameplay failure.
+  Evidence is under ignored `run/conversion-review/`; migration-plan changes remain deferred until the review fixes
+  are complete.
