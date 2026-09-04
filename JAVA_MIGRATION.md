@@ -13,8 +13,10 @@ The main difficulty is preserving behavior and compatibility, not translating Sc
 The current direction is:
 
 - Preserve observable behavior unless a divergence is an intentional, documented bug fix or performance fix.
-- Add clean Java APIs with equivalent features.
-- Keep deprecated compatibility bridges for the old Scala-facing API for at least the initial Java release.
+- Deliver a complete, documented Java API for GTNH consumer integrations, reusing the existing Java surface.
+- Keep compatibility bridges for the old Scala-facing API while consumers migrate; deprecate each entry only with
+  a usable replacement. Remove FMP's remaining Scala implementation and dependencies after the consumer and internal
+  removal gates pass.
 - Use the Hodgepodge/GTNH convention for any new Sponge Mixins: UniMixins plus explicit normal, early, and late registration where the target lifecycle requires it.
 - Allow GTNHLib as a dependency. Use fastutil selectively for measured primitive-collection or allocation problems, not as a blanket collection replacement.
 - Keep ForgeMultipart's runtime composite-tile generator separate from the Sponge Mixin decision until it is proven replaceable. They solve different problems.
@@ -32,8 +34,8 @@ retaining its case class. `MixinInfo.linearise` and `ScalaSignature.Bytes.sectio
 behavior to Java. `TypeRef.jName`, `TypeRef.jDesc` and `TMethodType.jDesc` delegate name/descriptor conversion and
 method assembly while preserving virtual lookup and evaluation order. `ClassSymbolRef.jInterfaces` delegates
 ordered interface-name mapping while retaining its Scala List contract. Class and method symbol formatting also
-delegate to Java. The next bounded candidate is `ScalaSignature.TypeRefType.jDesc`, with characterization before
-extraction.
+delegate to Java. The active priority is completing the consumer-facing Java API and migration documentation in
+Phases 2, 9 and 10. Further compiler/model extraction must unblock that milestone or address a demonstrated issue.
 Java-trait rewriting and compiler startup also delegate to Java helpers. Abstract Java mixins and Java-path
 side-only filtering are complete; multiple Scala-trait inheritance still needs its metadata. Retain trait
 state/accessor/super bridges and the compiler/signature/analyser model shells.
@@ -50,7 +52,8 @@ generated client-render dispatch crash are fixed; the user confirmed placement n
 [manual client checks](JAVA_MIGRATION_MANUAL_CHECKS.md) and full-pack profiling remain release gates.
 
 Focused traversal/redstone allocation improvements are recorded in [the profile](JAVA_MIGRATION_PROFILE.md).
-GTNHLib/UniMixins remain conditional on concrete need. Scala runtime removal is deliberately deferred.
+GTNHLib/UniMixins remain conditional on concrete need. Removing Scala from FMP remains the final target, gated by
+released consumer migrations and retirement of FMP's own Scala-dependent implementation.
 
 ## Scope and compatibility target
 
@@ -77,11 +80,41 @@ Each divergence should record the old behavior, new behavior, reason, compatibil
 
 The main GTNH release targets modern Java across the Java 17–26 range. A Java 8 artifact must remain available for legacy launchers, with the same functional behavior even if it cannot match the modern runtime's performance.
 
-- Modern Java syntax and APIs may be used when the GTNH build's JVM Downgrader/desugaring path provides a verified Java 8 artifact.
-- Do not enable desugaring speculatively. Introduce it with the first source change that needs it, then verify both the modern and downgraded artifacts.
+- Prefer modern Java syntax where it makes the code easier to read and the compilation path supports it. Java 8
+  artifact compatibility does not require Java 8 source syntax everywhere.
+- Reuse the scoped JVM Downgrader path established in `5f0e329b`; extend it per source unit when justified by a
+  concrete readability improvement, with normal and clean-build verification. Do not enable modern compilation
+  globally while it breaks retained Scala compilation.
 - Java 8 startup, serialization, networking, registration, and gameplay semantics are compatibility requirements. Equal throughput or allocation behavior between Java 8 and modern Java is not required.
 - Validate routinely in the Java 8 deobfuscated Forge runner. Validate the packaged release in a representative modern-Java server before release, because the current GTNH deobfuscated `runServer17`/`runServer21`/`runServer25` tasks do not provide a working dedicated-server path in this checkout.
 - Avoid modern runtime APIs whose downgrader stubs are unavailable or whose semantics materially differ on Java 8, especially in compatibility-critical and hot code.
+
+### Modern Java readability policy
+
+Commit `5f0e329b` (`build: support scoped modern Java compilation`) is an implemented precedent, not just a proposed
+experiment. It replaced the instruction-type dispatch in `StackAnalyserLogic.visitInsn` with a Java 21 pattern
+switch. A JDK 25 task compiles the helper with `--release 21`; JVM Downgrader supplies Java 8 bytecode to tests,
+Forge and both packaged jars. Scala 2.11.5 and joint Scala/Java compilation stay on Java 8. The checkpoint passed
+normal/clean builds, frozen consumers and Forge tests with unchanged retained Scala classes and generated tile
+dumps. See [JVM_DOWNGRADER_HANDOFF.md](JVM_DOWNGRADER_HANDOFF.md) for the arrangement, evidence and limits.
+
+- Prefer clearer pattern matching, switch expressions and local type inference where supported and appropriate;
+  retain explicit types or ordinary control flow when they communicate the intent better.
+- Apply readability improvements during relevant work or in focused follow-ups. They need not wait for consumer
+  migration or complete Scala removal, but a broad syntax rewrite is not a prerequisite for delivering the Java API.
+- Preserve behavior, virtual dispatch, evaluation order, public descriptors and generated-class contracts. Modern
+  declarations such as records/sealed types are not automatic replacements for compatibility-sensitive models.
+- Distinguish syntax from library APIs: syntax may downgrade without a runtime dependency, whereas a newer API can
+  require runtime stubs or change behavior. Verify that separately before adopting it.
+- When the old Scala parser, circular compilation, a later compilation stage, or downgrader/runtime support blocks
+  a change, keep the readable working form and defer that specific modernization. Record the concrete blocker and
+  what would unblock it in the handoff; do not introduce fragile compilation workarounds solely to change syntax.
+- Keep `enableModernJavaSyntax = false` while global mode moves Scala 2.11.5 onto an incompatible toolchain. Expand
+  the explicit modern source set only after declaration visibility, compile order and downgraded output are verified.
+
+For a new modern source unit or syntax feature, use the existing characterization/compatibility checks and verify
+the clean compilation path, packaged Java 8 output and relevant Forge behavior. This is a readability preference
+with a compatibility gate, not an obligation to modernize every file immediately.
 
 ## Audit findings
 
@@ -173,7 +206,37 @@ This means “all source is Java” and “the Scala runtime is gone” are sepa
 
 ## API migration design
 
-Create a Java-first API with the same capabilities, then make legacy entry points delegate into it. Delegation should have one direction: deprecated Scala bridge to canonical Java implementation. Avoid two independently maintained implementations.
+Complete the existing Java API with equivalent capabilities, then make legacy entry points adapt to the shared Java
+implementation. Avoid two independently maintained implementations. Where an old entry is an overridable hook,
+preserve its virtual dispatch while it remains supported: moving an algorithm behind a new Java method must not
+bypass old subclass overrides. Define and test the dispatch path for each such pair, without recursive forwarding.
+
+### Consumer API milestone and retained Scala stopping point
+
+The first release milestone is **a complete, documented Java API that every supported GTNH integration can migrate
+to, while the existing supported binaries continue to work**. Counting remaining Scala declarations is not an exit
+criterion. A Java API may initially run over Scala-backed storage and retained compatibility shells.
+
+- Reuse existing Java classes, interfaces and entry points; add only the missing capabilities. No wholesale new
+  facade or separate API artifact is required unless a concrete compilation or packaging constraint calls for it.
+- Cover extension contracts as well as calls: part/material subclasses, lifecycle and super dispatch, generated
+  tile capabilities, microblock trait registration, and supported replacements for reflection into internals.
+- Document collection ownership and mutation, ordering, nulls, callback/reentrancy behavior, override hooks,
+  registration timing, client/server restrictions, and persistence/network responsibilities where applicable.
+- Provide buildable Java examples using only the supported surface, with Forge fixtures for generated extensions.
+  Use ProjectRed's illuminated microblocks to prove the Java extension path end to end; a Java-shaped signature alone
+  does not establish a usable replacement. Check emitted consumer bytecode for legacy FMP references.
+- Scala-authored consumers can use this Java API without converting their whole mods to Java. The migration target
+  is their dependency on FMP's Scala-facing contracts, including compiler-emitted trait helper calls.
+
+Pause mechanical extraction of retained Scala models, accessors and trait declarations once their compatibility
+role is understood and tested, unless an extraction enables the Java API, fixes a demonstrated defect, or provides
+a measured benefit. Keep those shells supported during consumer migration. Resume their final replacement/removal
+when the relevant consumer gates pass; an internal dependency may still need implementation work at that point.
+
+Execution order is **complete and document the Java API → migrate and release consumers → adopt those releases in
+the target pack → retire FMP's Scala dependencies**. Work can overlap by capability, but the removal gate cannot be
+skipped. Phases 9 and 10 now drive the remaining work; Phase 8 is the final gated milestone.
 
 Candidate mappings, with final names and mutability contracts to be decided from existing behavior:
 
@@ -283,11 +346,10 @@ Exit condition: dependencies and loaders are present with no unintended gameplay
 - [x] Keep deprecated Scala signatures and singleton/static entry points as thin adapters.
 - [x] Compare the produced jar with the reference API and verify representative Java and Scala consumers can load.
 
-Status: the two open items are open only because conversion is still in progress, not because the approach is
-undecided. Every converted area already implements its behavior once in Java with the Scala entry points delegating
-inwards, and every public boundary is diffed against the reference dev jar. The collection and callback decisions are
-made per area against the inventory rather than up front: `readIDMap` moved to `java.util.List` because nothing links
-against it, while `getIdMap` keeps its `scala.Tuple2` array because extrautilities does.
+Status: implementation conversion alone does not close the two open items. Complete the missing consumer entry
+points, documented contracts and extension examples in Phase 9, then map every legacy use to a supported replacement
+in Phase 10. Every changed public boundary remains diffed against the reference dev jar. For example, `getIdMap`
+keeps its `scala.Tuple2` array while Extra Utilities still uses it; the new API must offer an alternative alongside it.
 
 Exit condition: new code can use a clean Java API while existing supported binaries still link through the deprecated surface.
 
@@ -417,25 +479,30 @@ Exit condition: the composition subsystem is maintainable Java with behavior and
 Exit condition: source layout, contributor guidance and durable migration documentation match the codebase being
 merged, and all release-required manual checks have recorded results.
 
-### Phase 8 — Decide on Scala runtime removal
+### Phase 8 — Remove FMP's Scala implementation and dependencies after consumer migration
 
-Status: **decided and deferred.** The inventory showed four shipping mods linking against trait `$class` helpers and
-companion singletons, and ProjRed registering its own Scala trait through `MicroblockGenerator.registerTrait`. Scala
-removal is therefore not achievable for the first Java release, and Java-maintainable source is the milestone instead.
-Revisit only in a release allowed to break that ABI.
+Status: **planned, gated by consumer adoption.** The inventory showed shipping mods linking against trait helpers,
+companion singletons and Scala descriptors, plus ProjectRed registering an external Scala trait. The first release
+therefore delivers the Java API with compatibility retained. Complete Scala removal from FMP follows migration of
+those integrations and adoption of their released versions in the target GTNH pack.
 
-Complete Scala removal is not the goal in its own right. `scala-library` stays in the pack regardless of what FMP
-does, because OpenComputers (843 Scala files) and ProjectRed (171) are Scala end to end and are not being ported.
-The value of removing Scala from FMP is FMP's own maintainability and hot-path allocation, not a pack-level
-dependency win. Phase 10 is what actually retires individual items on this list; each Scala shape removed here needs
-a corresponding released consumer version there.
+This removes FMP's own Scala requirement. Other mods may still use Scala internally; they need not be converted to
+Java. Consumer migration also does not remove FMP's internal dependencies automatically: retained built-in trait
+inputs, storage, models and compiler support must be replaced or retired before their dependency can be dropped.
 
 - [x] Measure actual downstream use of Scala descriptors, Scala traits, object singletons, and `$class` helpers.
+- [ ] Close every legacy-use row in the Phase 10 adoption ledger against the actual target-pack release jars,
+  including reflection, mixin targets and compiler-emitted helper calls. Retire or replace unmodifiable consumers.
 - [ ] Publish and complete a deprecation window if compatibility policy permits removal.
-- [ ] Remove Scala bridges, Scala signature decoding, and the Scala compiler/runtime dependency only in a release allowed to break that ABI.
-- [ ] Confirm no Scala types remain in published descriptors or runtime loading paths.
+- [ ] Replace or retire FMP's remaining Scala storage, trait inputs and model shells; remove bridges and signature
+  decoding only after their external and internal users are gone, in a release allowed to break the old ABI.
+- [ ] Remove FMP's Scala compilation and compiler/runtime dependencies; verify no FMP-owned Scala references remain
+  in shipped classes, descriptors, generated classes or runtime loading paths.
+- [ ] Validate the resulting artifact with the migrated consumer jars, old-world loading, packets, client rendering
+  and dedicated-server behavior before release.
 
-Exit condition: Scala removal is either completed deliberately or explicitly deferred as the cost of binary compatibility.
+Exit condition: FMP builds and runs without its own Scala requirement, and the supported target-pack integrations
+pass against that artifact. Any unfinished gate keeps the corresponding compatibility support in place.
 
 ### Phase 9 — Deprecate the Scala-shaped API and mark the internal boundary
 
@@ -446,8 +513,8 @@ lifecycle, render, NBT, and packet methods, and `IPartFactory2`, `IPartConverter
 signatures that still carry Scala types, and a boundary problem that is larger than it looks.
 
 The governing rule is: **deprecate only where a replacement already exists or is added in the same change.** A
-deprecation with nowhere to go is noise a consumer cannot act on, and these bridges are being retained deliberately for
-years. Adding the Java sibling and marking the Scala-shaped entry deprecated is one change, not two.
+deprecation with nowhere to go is noise a consumer cannot act on. Bridge lifetime follows consumer adoption and the
+removal policy. Adding the Java sibling and marking the Scala-shaped entry deprecated is one change, not two.
 
 Apply siblings, deprecations and internal-marker javadoc together when the relevant API is being changed.
 Most implementations are already Java; remaining work is at the specific boundaries below. Keep unrelated API
@@ -475,9 +542,12 @@ but no Scala type, so renaming is cosmetic churn across 27 consumers with no com
 `tile()` is additionally unsafe to rename toward `getTile()`, which already exists with a different return type; a
 same-name overload there invites a silent wrong-overload bind.
 
-- [ ] Add the missing Java-shaped siblings and route each Scala-shaped entry through it in one direction only.
+- [ ] Add the missing Java-shaped siblings over shared behavior, preserving legacy override dispatch and avoiding
+  recursive forwarding as required by the API migration design.
 - [ ] Mark all nine rows `@Deprecated` with javadoc naming the replacement.
 - [ ] Confirm every original descriptor still exists in the ABI fixture after the change.
+- [ ] Document the supported API with compiling usage examples and an old-to-new migration guide. Validate Java
+  subclasses and generated extensions on the actual Forge path, including both sides where relevant.
 
 #### 9.2 — Mark the internal boundary
 
@@ -505,13 +575,14 @@ Two similar-looking members **are** externally load-bearing and must not be mark
 - [ ] Do not add an annotations dependency for this; javadoc is sufficient and changes no descriptor.
 
 Exit condition: every Scala-typed public entry has a documented Java-shaped replacement and a deprecation pointing at
-it, the implementation-hook members are documented as internal, and the ABI fixture is unchanged.
+it, supported extension paths have buildable examples and Forge coverage, implementation-hook members are documented
+as internal, and the retained ABI fixture is unchanged.
 
 ### Phase 10 — Upstream consumer cleanup
 
-Status: **planned, unsequenced.** This phase does not block any other phase, and parts of it can start immediately,
-including before the Java port merges. Its purpose is to stop consumer-side hacks from dictating FMP's internal
-design.
+Status: **planned, required for final Scala removal.** Individual migrations can start as soon as their supported
+Java replacements exist. They need not wait for all internal source conversion; their release and pack adoption
+block removal of the corresponding legacy surface in Phase 8.
 
 Several consumers reach FMP through private fields, Scala-mangled names, name-only reflection, or third-party Scala
 traits. Today each one forces FMP to preserve an internal shape it would otherwise be free to change. Because all 27
@@ -519,11 +590,18 @@ consumers are GTNewHorizons forks, every one of these is patchable upstream. Ext
 is decompiled-only and is being replaced by UtilitiesInExcess, so it constrains FMP until it is retired from the pack
 rather than being fixed.
 
-The standard pattern is a three-step ratchet, and only the first step is on FMP's critical path:
+Apply the following sequence per capability:
 
 1. FMP adds a public, supported equivalent. Additive, no ABI break, safe to land at any time.
 2. The consumer is patched to use it and released.
-3. FMP drops the private shape in a release allowed to break that ABI. Feeds Phase 8.
+3. The target pack adopts the released consumer; scan its actual jar and validate the integration.
+4. FMP can retire the old shape once every supported user has migrated and the removal policy permits it. Feeds Phase 8.
+
+Maintain an adoption ledger in the consumer audit: legacy member/extension/reflection use, supported Java replacement,
+consumer source revision, first released version using it, version actually included in the target pack, and
+verification evidence. Cover all audited consumers, including OpenComputers, ProjectBlue and ForgeRelocationFMP;
+the cleanup table below is a list of hotspots, not the complete removal checklist. A source patch or merged PR alone
+does not close a row, and scans must distinguish a consumer's own Scala code from its legacy FMP dependencies.
 
 #### Cleanup targets
 
@@ -581,15 +659,17 @@ UtilitiesInExcess's `extrautils:*` aliases; there is no legacy-conversion risk i
 - [ ] Fix the UtilitiesInExcess `mat`/`material` key mismatch and its `getIdMap()` use before it enters the pack.
 - [ ] Add the supported public equivalents needed by Schematica, GuideNH, Et Futurum, and Iguana as additive API.
 - [ ] Patch those four consumers and record the released versions that no longer need the private shapes.
+- [ ] Track all legacy FMP dependencies in the adoption ledger, including trait helper/companion calls and reflection
+  outside the cleanup table; verify the released jars actually selected for the target pack.
 - [ ] Only after a consumer's released version is in the pack, move its retained private shape onto the Phase 8
   removal list.
 
-Consumer migration remains opportunistic. Nothing here justifies a coordinated lockstep release of the pack's most
-load-bearing block system; the value is in removing FMP's design constraints, not in reaching zero deprecated call
-sites.
+Consumers can migrate and release independently while bridges keep mixed versions working. The final Scala-removal
+release requires coordinated pack-version selection and a closed adoption ledger; it does not require every
+consumer to make its source changes at once.
 
-Exit condition: no consumer-side hack constrains an FMP internal that the port would otherwise be free to change, or
-each remaining constraint is recorded with the released consumer version required to lift it.
+Exit condition: every supported consumer in the target pack uses the supported Java surface for the contracts being
+retired, with source, released-jar and runtime evidence. Remaining dependencies are explicit blockers for Phase 8.
 
 ## Risk order
 
@@ -673,8 +753,9 @@ Resolved from the consumer audits:
 1. All 27 binaries in the target pack must keep working without recompilation; UtilitiesInExcess is an additional
    forward-compatibility target.
 2. Third-party Scala trait registration is public in practice: ProjectRed registers `LightMicroblock`.
-3. Java-maintainable source is the first-release milestone. Scala runtime removal is deferred because shipping mods
-   link Scala descriptors, trait helpers, companions, and external trait generation.
+3. The first-release milestone is a complete, documented Java API with supported legacy binaries still working.
+   Removing FMP's Scala implementation and dependencies is the final milestone, after consumer releases are adopted
+   in the target pack and FMP's internal Scala users are retired.
 
 Still open, and only to be decided when they become necessary:
 
@@ -688,13 +769,14 @@ Still open, and only to be decided when they become necessary:
 
 Track remaining work by completed compatibility gates, not the retired pre-audit calendar estimates:
 
-1. Extract the remaining compiler algorithms with unchanged characterization and generated output.
-2. Characterize and port the remaining generated microblock behavior, retaining necessary trait inheritance metadata.
-3. Resolve or explicitly retain the Scala model bridges; finish the applicable API and pre-merge cleanup gates.
-4. Complete packaged-pack, client and performance validation with recorded results.
+1. Complete the supported Java entry points, extension contracts, documentation and buildable examples.
+2. Prove the consumer migration paths and record released-version adoption in the target pack.
+3. Retain tested Scala shells until their removal gates pass; extract further behavior only for a concrete benefit.
+4. Retire remaining internal Scala users and dependencies after adoption; complete the applicable pre-merge, client,
+   packaged-pack and performance validation with recorded results.
 
 Reflection/member guards, core ordering/data fixtures, the first profiles and built-in tile-trait ports are complete.
-Scala-runtime removal remains a separate compatibility decision.
+Scala removal is gated by the compatibility evidence above, rather than by a remaining-source-line target.
 
 ## Findings log
 

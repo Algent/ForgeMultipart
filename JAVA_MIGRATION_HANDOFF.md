@@ -28,7 +28,8 @@ Accessor review fixes: `TileMultipart`, `Microblock` and `BlockMicroMaterial` no
 throughout the restored paths. Eleven new regression cases pass against the original Scala jar and the fixed port;
 all 519 archived consumers pass with their recorded version. The supplied consumer checkouts confirm extension/API
 use, but no override triggering these three regressions was found. All 443 class/member APIs, 17 ScalaSignature
-payloads and 116 generated dumps are retained. Plan adjustments remain deferred for discussion after these fixes.
+payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
+followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
 Latest bounded target: `ScalaSignature.MethodSymbol.info` delegates info-ID evaluation to
 `ScalaSignatureParser.methodSymbolInfo`. Seven characterization tests were committed first as `9859aa8`. They pin
@@ -37,18 +38,27 @@ and the frozen Scala caller descriptor. All 519 frozen JVM consumers pass; check
 APIs, all 17 ScalaSignature payloads, 3,744 unrelated method bodies and all 116 generated dumps. No class is added or
 removed; the total stays 443 classes. Evidence: `run/migration-method-symbol-info-reference/`.
 
-**Next bounded candidate: `ScalaSignature.ClassSymbolRef.info`.** Characterize outer/info-id/evaluation lookup order,
-repeated reads, nulls, casts and failures while retaining the trait helper, case classes and path-dependent declarations.
-Keep case-class/product/serialization shapes and simple model accessors. Broader shell replacement and opcode
-algorithm fixes remain separate work.
+**Next priority: close the Java API gaps in Phases 2 and 9 and map consumer migrations in Phase 10.** Reuse the existing
+Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
+subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
+are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
+
+Pause mechanical extraction of retained Scala shells unless it enables that API, fixes a demonstrated issue or has
+a measured benefit. `ScalaSignature.ClassSymbolRef.info` remains an optional bounded extraction, not the default next
+task. Keep case-class/product/serialization shapes and simple model accessors supported until their users are retired.
 The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client
 generation, GPU output and full-pack checks remain manual.
 
-The JVM Downgrader checkpoint now supports Java 21 method-body syntax in `StackAnalyserLogic` while retaining
-Scala 2.11.5 on Java 8. The model extractions stay in ordinary Java 8 joint compilation and add no build
-configuration or runtime dependencies. See `JVM_DOWNGRADER_HANDOFF.md` for the original 398-test integration checkpoint.
-Finish the remaining useful behavior extractions and define the retained compilation boundary before a broad
-modern-syntax pass. Removing every remaining Scala declaration still requires the documented consumer/ABI work.
+Commit `5f0e329b` established Java 21 method-body syntax in `StackAnalyserLogic` through scoped compilation and
+Java 8 downgrading, while retaining Scala 2.11.5 on Java 8. Prefer modern syntax where it improves readability and
+the compilation boundary supports it; it need not wait for Scala removal. Defer a specific change if Scala parsing,
+compile order, ABI or downgrader/runtime support blocks it, recording the blocker and revisit condition. Keep the
+global modern-syntax setting disabled while it breaks Scala compilation. See the plan's modern Java readability
+policy and `JVM_DOWNGRADER_HANDOFF.md` for the original 398-test integration checkpoint and expansion constraints.
+The initial Java API can operate over retained Scala storage and compatibility shells. Record legacy FMP uses,
+replacements, consumer releases, target-pack adoption and verification in the consumer audit. Source patches alone
+do not permit removal. Once the adoption gates pass, replace or retire FMP's remaining internal Scala users before
+dropping its compiler/runtime dependency. Other mods' own Scala requirements are outside this removal target.
 
 Remaining Scala units:
 
@@ -237,6 +247,8 @@ metadata as well as callable signatures.
 
 **Java 8 target.** Joint main sources and tests cannot use `List.of`, `var` or switch expressions. The scoped
 `StackAnalyserLogic` stage supports verified Java 21 method bodies; its packaged output must still target Java 8.
+These are current compilation constraints, not a preference for old syntax. Move additional source units onto the
+scoped path only when compatible; otherwise retain the working syntax and record why modernization is deferred.
 
 **Two test classes sharing global registry state** must guard their registrations, and the registries' error paths call
 a logger that is null until `preInit`, so they cannot run headless at all.

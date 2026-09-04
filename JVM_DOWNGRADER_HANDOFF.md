@@ -52,11 +52,16 @@ Evidence and runnable checks are under ignored `run/jvmdg-trial/`:
 
 ## Limits
 
-Sequence the remaining work as behavior extraction, compilation-boundary cleanup, then selective modern-syntax
-changes. The bulk is already Java: 224 Java files and nine Scala files / 782 nonblank Scala lines. Of the 221 Java
-sources in the Scala source tree, only this helper bypasses joint compilation. Retained models, trait metadata,
-synthetic super accessors, and downstream Scala consumers prevent treating the last nine files as a mechanical
-deletion queue. Modern GTNH runtime support does not remove the retained Scala compiler's Java 8 requirement.
+Prefer modern syntax where it improves readability and the compilation path supports it, as established by
+`5f0e329b`. This can accompany consumer-facing API work without waiting for complete Scala removal. Expand the
+scoped path selectively; if parsing, compilation order, ABI or downgrade support blocks a source unit, retain its
+working syntax and record the blocker and revisit condition. Do not add fragile workarounds solely for syntax.
+
+At this checkpoint the bulk was already Java: 224 Java files and nine Scala files / 782 nonblank Scala lines. Of the
+221 Java sources in the Scala source tree, only this helper bypassed joint compilation. Retained models, trait
+metadata, synthetic super accessors, and downstream Scala consumers prevent treating the last nine files as a
+mechanical deletion queue. Modern GTNH runtime support does not remove the retained Scala compiler's Java 8
+requirement. The main migration plan and working handoff carry the current API/adoption priorities and source counts.
 
 Keep `enableModernJavaSyntax = false`. The global GTNHGradle setting still moves Scala 2.11.5 onto Java 25; the new
 helper stage selects its modern compiler explicitly. This supports modern method bodies with declarations that the
@@ -64,9 +69,9 @@ old Scala parser understands. Records, sealed declarations, modern API types at 
 from joint-compiled Java into the later modern stage need separate compatibility work before expanding the scope.
 Modern APIs that downgrade to runtime stubs also require a deliberate runtime-provider decision.
 
-The installed GTNHGradle 2.0.24 build classloader uses JVM Downgrader engine/plugin **1.3.5**. The earlier **1.3.6**
-number identifies the API dependency configured by global mode, not the engine observed in this build. The integrated
-helper's exact match with the original prototype confirms that its transformation is preserved.
+At checkpoint `5f0e329b`, the installed GTNHGradle 2.0.24 build classloader used JVM Downgrader engine/plugin **1.3.5**.
+The earlier **1.3.6** number identifies the API dependency configured by global mode, not the engine observed in that
+build. The integrated helper's exact match with the original prototype confirmed that its transformation was preserved.
 
 ## Reproduce
 
