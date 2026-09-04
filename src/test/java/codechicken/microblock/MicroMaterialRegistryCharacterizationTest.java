@@ -5,13 +5,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
+import java.util.Arrays;
+import java.util.Collections;
 
 import net.minecraft.block.Block.SoundType;
 import net.minecraft.entity.Entity;
@@ -26,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import codechicken.lib.data.MCDataInput;
 import codechicken.lib.data.MCDataOutput;
 import codechicken.lib.data.MCDataOutputWrapper;
+import codechicken.lib.packet.PacketCustom;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Vector3;
 import codechicken.microblock.MicroMaterialRegistry.IMicroHighlightRenderer;
@@ -70,6 +75,58 @@ class MicroMaterialRegistryCharacterizationTest {
             assertEquals(names[i], MicroMaterialRegistry.materialName(i));
             assertSame(MicroMaterialRegistry.getIdMap()[i]._2(), MicroMaterialRegistry.getMaterial(i));
         }
+    }
+
+    @Test
+    void legacyIdMapIsTheSharedArrayAndNullBeforeInitialization() throws Exception {
+        Object original = MicroMaterialRegistry.getIdMap();
+        assertSame(original, MicroMaterialRegistry.getIdMap());
+        assertSame(original, MicroMaterialRegistry$.MODULE$.getIdMap());
+        Field idMap = MicroMaterialRegistry.class.getDeclaredField("idMap");
+        idMap.setAccessible(true);
+        try {
+            idMap.set(null, null);
+            assertNull(MicroMaterialRegistry.getIdMap());
+            assertNull(MicroMaterialRegistry$.MODULE$.getIdMap());
+            assertThrows(NullPointerException.class, () -> MicroMaterialRegistry.materialName(0));
+            assertThrows(NullPointerException.class, () -> MicroMaterialRegistry.getMaterial(0));
+        } finally {
+            idMap.set(null, original);
+        }
+    }
+
+    @Test
+    void serverMapControlsOrderAndRetainsMissingSlotsAndEmptyMaps() {
+        Object original = MicroMaterialRegistry.getIdMap();
+        try {
+            assertEquals(
+                    Collections.emptyList(),
+                    MicroMaterialRegistry.readIDMap(incomingMap("test:stone", "test:glass")));
+            assertEquals(2, MicroMaterialRegistry.getIdMap().length);
+            assertEquals("test:stone", MicroMaterialRegistry.materialName(0));
+            assertSame(STONE, MicroMaterialRegistry.getMaterial(0));
+            assertEquals("test:glass", MicroMaterialRegistry.materialName(1));
+            assertSame(GLASS, MicroMaterialRegistry.getMaterial(1));
+            assertEquals(0, MicroMaterialRegistry.materialID("test:stone"));
+            assertEquals(1, MicroMaterialRegistry.materialID("test:oldglass"));
+
+            assertEquals(
+                    Arrays.asList("server:unavailable"),
+                    MicroMaterialRegistry.readIDMap(incomingMap("test:stone", "server:unavailable", "test:glass")));
+            assertEquals(3, MicroMaterialRegistry.getIdMap().length);
+            assertNull(MicroMaterialRegistry.getIdMap()[1]);
+            assertEquals("test:glass", MicroMaterialRegistry.materialName(2));
+            assertThrows(NullPointerException.class, () -> MicroMaterialRegistry.materialName(1));
+            assertThrows(NullPointerException.class, () -> MicroMaterialRegistry.getMaterial(1));
+
+            assertEquals(Collections.emptyList(), MicroMaterialRegistry.readIDMap(incomingMap()));
+            assertEquals(0, MicroMaterialRegistry.getIdMap().length);
+            assertThrows(ArrayIndexOutOfBoundsException.class, () -> MicroMaterialRegistry.materialName(0));
+            assertThrows(ArrayIndexOutOfBoundsException.class, () -> MicroMaterialRegistry.getMaterial(-1));
+        } finally {
+            MicroMaterialRegistry$.MODULE$.setupIDMap();
+        }
+        assertEquals(java.lang.reflect.Array.getLength(original), MicroMaterialRegistry.getIdMap().length);
     }
 
     @Test
@@ -150,6 +207,14 @@ class MicroMaterialRegistryCharacterizationTest {
                             throw new AssertionError("Unexpected read method: " + method.getName());
                     }
                 });
+    }
+
+    private static PacketCustom incomingMap(String... names) {
+        PacketCustom packet = new PacketCustom("test", 1).writeInt(names.length);
+        for (String name : names) {
+            packet.writeString(name);
+        }
+        return new PacketCustom(packet.getByteBuf().copy());
     }
 
     private static final class RecordingRenderer implements IMicroHighlightRenderer {
