@@ -83,7 +83,10 @@ class ScalaSignature(val bytes: Bytes) {
     override def toString = ScalaSignatureParser.methodSymbolString(this)
     def full = ScalaSignatureParser.methodSymbolFull(this)
 
-    def info: TMethodType = evalT(infoId)
+    def info: TMethodType =
+      ScalaSignatureParser
+        .methodSymbolInfo(ScalaSignature.this, this)
+        .asInstanceOf[TMethodType]
     def jDesc = ScalaSignatureParser.methodSymbolDescriptor(this)
   }
 

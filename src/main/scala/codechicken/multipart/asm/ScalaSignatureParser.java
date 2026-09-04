@@ -122,6 +122,11 @@ final class ScalaSignatureParser {
         return symbol.info().jDesc();
     }
 
+    static Object methodSymbolInfo(ScalaSignature sig, Object value) {
+        ScalaSignature.MethodSymbol symbol = (ScalaSignature.MethodSymbol) value;
+        return sig.evalT(symbol.infoId());
+    }
+
     static byte[] section(Bytes bytes) {
         byte[] array = bytes.arr();
         int start = bytes.pos();
