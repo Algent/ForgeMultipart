@@ -16,23 +16,25 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**449 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
-files and 9 Scala files / 751 nonblank Scala lines**. The packaged inventory has 443 classes.
+**456 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+files and 9 Scala files / 749 nonblank Scala lines**. The packaged inventory has 443 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
 virtual tile accessor dispatch throughout `TMultiPart`, and null-safe equality for scheduled-tick deduplication.
 Six JVM and two Forge regression cases cover the fixes. Callable signatures remain unchanged; the packet traversal
 callback adds one anonymous class. See the latest history entries for the individual fixes and validation.
 
-Latest bounded target: `ScalaSignature.TypeRef.jDesc` delegates to `ScalaSignatureParser.typeDescriptor`.
-Seven characterization tests were committed first as `b3b3f10`. They pin primitive/array matches, unmatched names
-(including the legacy Char descriptor), virtual name/jName lookup, repeated symbol reads, nulls, failures and the
-static trait helper. TypeRefType's array override and SingleType's super shell remain Scala. All 449 frozen JVM
-consumers pass; checks preserve 442 retained class/member APIs, all 17 ScalaSignature payloads, 3,734 unrelated
-method bodies and all 116 generated dumps. Evidence: `run/migration-type-descriptor-reference/`.
+Latest bounded target: `ScalaSignature.TMethodType.jDesc` delegates to `ScalaSignatureParser.methodDescriptor`.
+Seven characterization tests were committed first as `d61aed2`. They pin literal descriptor assembly, ordered
+parameter info/return-type reads, repeated queries, nulls, getter failures and the static trait helper. The Java
+callback retains Scala collection mapping and finishes parameters before reading the method return type.
+All 456 frozen JVM consumers pass; checks preserve 441 retained class/member APIs, all 17 ScalaSignature payloads,
+3,732 unrelated method bodies and all 116 generated dumps. One unreferenced Scala callback is replaced by a Java
+callback; the total stays 443 classes. Evidence: `run/migration-method-descriptor-reference/`.
+The preceding `TypeRef.jDesc` extraction is recorded in history and `run/migration-type-descriptor-reference/`.
 
-**Next bounded candidate: `ScalaSignature.TMethodType.jDesc`.** Characterize ordered parameter info/return-type
-reads, descriptor concatenation, nulls, failures and the static trait helper before extracting method assembly.
+**Next bounded candidate: `ScalaSignature.ClassSymbolRef.jInterfaces`.** Characterize virtual info/interface
+lookup, ordered jName mapping, empty/null cases and failure order. Retain the trait/model declarations and List API.
 Keep case-class/product/serialization shapes and simple model accessors. Broader shell replacement and opcode
 algorithm fixes remain separate work.
 The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client

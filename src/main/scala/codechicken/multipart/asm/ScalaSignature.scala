@@ -101,9 +101,7 @@ class ScalaSignature(val bytes: Bytes) {
   }
 
   trait TMethodType {
-    def jDesc = "(" + params
-      .map(m => m.info.returnType.jDesc)
-      .mkString + ")" + returnType.jDesc
+    def jDesc = ScalaSignatureParser.methodDescriptor(this)
     def returnType: TypeRef
     def params: List[MethodSymbol]
   }

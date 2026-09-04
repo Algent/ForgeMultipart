@@ -1475,3 +1475,25 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the committed version.
   Source totals are 224 Java files and nine Scala files / 751 nonblank lines. Next: `TMethodType.jDesc` assembly,
   preserving parameter/return lookup order, nulls, failures and the retained trait/models.
+
+### 2026-09-04 — ScalaSignature method descriptors
+
+- Committed seven JVM characterization cases first as `d61aed2` against the untouched `TMethodType.jDesc`. They
+  cover MethodType/ParameterlessType assembly, ordered virtual parameter info/return-type/descriptor reads,
+  repeated parameters and queries, literal null/invalid descriptors, each getter failure and null-chain boundary,
+  plus the legacy static trait helper using an independent proxy. Parameter `jDesc` and nested `params` must not
+  be used; the method return type is read only after every parameter descriptor completes.
+- Extracted assembly into `ScalaSignatureParser.methodDescriptor(Object)`. Its Java callback retains the original
+  Scala List builder, map and mkString semantics, using the existing TraversableLike bridge pattern to resolve
+  javac's ambiguous Scala List map overloads. Path-dependent models stay inside method bodies; Scala trait/model
+  declarations, forwarders, generic signatures and serialization shapes remain unchanged.
+- Normal and clean validation pass 456 JVM tests, 456 frozen consumers and 237 Java 8 Forge tests with zero
+  failures/errors/skips. All 116 generated dumps match the reference; both jars contain 443 Java 8 classes and
+  matching packaged sources. Comparison preserves 441 retained class/member APIs, all 17 ScalaSignature payloads
+  and 3,732 unrelated method bodies. The sole inventory replacement is `TMethodType$$anonfun$jDesc$1` with
+  `ScalaSignatureParser$1`, covered by the existing unreferenced compiler-artifact ledger entry. The helper gains
+  one package-private method; no new effective divergence is introduced.
+- Evidence is under ignored `run/migration-method-descriptor-reference/`, including the reference jar, frozen
+  tests/resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the committed
+  version. Sources remain 224 Java files and nine Scala files / 749 nonblank lines. Next: `ClassSymbolRef.jInterfaces`,
+  retaining its List contract, virtual lookup, ordered mapping and failure behavior.

@@ -9,11 +9,14 @@ import scala.None$;
 import scala.Option;
 import scala.Some;
 import scala.collection.Iterator;
+import scala.collection.TraversableLike;
+import scala.collection.TraversableOnce;
 import scala.collection.immutable.IndexedSeq;
 import scala.collection.immutable.IndexedSeq$;
 import scala.collection.immutable.List;
 import scala.collection.immutable.List$;
 import scala.collection.mutable.Builder;
+import scala.runtime.AbstractFunction1;
 
 /** Parser implementation behind the retained Scala case-class and path-dependent API. */
 final class ScalaSignatureParser {
@@ -39,6 +42,20 @@ final class ScalaSignatureParser {
         if ("scala.Boolean".equals(name)) return "Z";
         if ("scala.Unit".equals(name)) return "V";
         return "L" + ref.jName() + ";";
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    static String methodDescriptor(Object value) {
+        ScalaSignature.TMethodType method = (ScalaSignature.TMethodType) value;
+        TraversableOnce<?> parameters = (TraversableOnce<?>) ((TraversableLike) method.params())
+                .map(new AbstractFunction1<ScalaSignature.MethodSymbol, String>() {
+
+                    @Override
+                    public String apply(ScalaSignature.MethodSymbol parameter) {
+                        return parameter.info().returnType().jDesc();
+                    }
+                }, List$.MODULE$.canBuildFrom());
+        return "(" + parameters.mkString() + ")" + method.returnType().jDesc();
     }
 
     static byte[] section(Bytes bytes) {
