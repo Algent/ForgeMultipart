@@ -5,11 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,6 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.IIcon;
+import net.minecraft.world.IBlockAccess;
 
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Type;
@@ -219,6 +223,151 @@ class BlockMicroMaterialCharacterizationTest {
                 (List<CCRenderState.IVertexOperation>) operationsField.get(state.pipeline));
         assertTrue(operations.contains(icons));
         assertTrue(operations.stream().anyMatch(ColourMultiplier.class::isInstance));
+    }
+
+    @Test
+    void overriddenBlockAndMetadataDriveMaterialProperties() {
+        Block block = new Block(Material.rock) {
+
+            @Override
+            public int getHarvestLevel(int metadata) {
+                return metadata;
+            }
+
+            @Override
+            public int colorMultiplier(IBlockAccess world, int x, int y, int z) {
+                return 0x123456;
+            }
+        };
+        block.setLightLevel(0.8f);
+        block.setResistance(12);
+        List<String> reads = new ArrayList<>();
+        BlockMicroMaterial material = new BlockMicroMaterial(null, 0) {
+
+            @Override
+            public Block block() {
+                reads.add("block");
+                return block;
+            }
+
+            @Override
+            public int meta() {
+                reads.add("meta");
+                return 23;
+            }
+        };
+        assertTrue(reads.isEmpty(), "Construction uses the argument before subclass state is initialized");
+        assertEquals(block.getLightValue(), material.getLightValue());
+        assertEquals(!block.isOpaqueCube(), material.isTransparent());
+        assertEquals(7, material.getCutterStrength());
+        assertSame(block.stepSound, material.getSound());
+        assertEquals(block.getExplosionResistance(null), material.explosionResistance(null));
+        assertEquals(block.canRenderInPass(1), material.canRenderInPass(1));
+        assertEquals((block.getBlockColor() << 8) | 0xFF, material.getColour(-1));
+        assertEquals(0x123456FF, material.getColour(0));
+        reads.clear();
+        assertNotNull(material.getItem());
+        assertEquals(Arrays.asList("block", "meta"), reads);
+        reads.clear();
+        assertThrows(NullPointerException.class, () -> material.getStrength(null));
+        assertEquals(Arrays.asList("block", "block", "meta"), reads);
+    }
+
+    @Test
+    void overriddenMetadataReachesBreakingAndSafeIcons() {
+        IIcon icon = (IIcon) Proxy.newProxyInstance(
+                IIcon.class.getClassLoader(),
+                new Class<?>[] { IIcon.class },
+                (proxy, method, arguments) -> { throw new AssertionError(method); });
+        List<Integer> reads = new ArrayList<>();
+        Block block = new Block(Material.rock) {
+
+            @Override
+            public IIcon getIcon(int side, int metadata) {
+                reads.add(side);
+                reads.add(metadata);
+                return icon;
+            }
+        };
+        BlockMicroMaterial material = new BlockMicroMaterial(null, 0) {
+
+            @Override
+            public Block block() {
+                return block;
+            }
+
+            @Override
+            public int meta() {
+                return 23;
+            }
+        };
+        assertSame(icon, material.getBreakingIcon(2));
+        assertSame(icon, material.codechicken$microblock$BlockMicroMaterial$$safeIcon$1(block, 4));
+        assertEquals(Arrays.asList(2, 23, 4, 23), reads);
+    }
+
+    @Test
+    void overriddenBlockKeyIsReadBeforeLoadingIcons() {
+        IllegalStateException failure = new IllegalStateException("block key unavailable");
+        BlockMicroMaterial material = new BlockMicroMaterial(null, 0) {
+
+            @Override
+            public String blockKey() {
+                throw failure;
+            }
+        };
+        assertSame(failure, assertThrows(IllegalStateException.class, material::loadIcons));
+    }
+
+    @Test
+    void overriddenIconsAndBlockPropertiesReachTheRenderPipeline() throws Exception {
+        MultiIconTransformation icons = new MultiIconTransformation((IIcon) null);
+        List<String> reads = new ArrayList<>();
+        BlockMicroMaterial material = new BlockMicroMaterial(null, 0) {
+
+            @Override
+            public MultiIconTransformation icont() {
+                reads.add("icons");
+                return icons;
+            }
+
+            @Override
+            public int getColour(int pass) {
+                reads.add("colour");
+                return 0x89ABCDEF;
+            }
+
+            @Override
+            public Block block() {
+                reads.add("block");
+                return null;
+            }
+
+            @Override
+            public int meta() {
+                reads.add("meta");
+                return 23;
+            }
+        };
+        assertTrue(reads.isEmpty());
+        CCRenderState state = CCRenderState.instance();
+        state.resetInstance();
+        BlockFace face = new BlockFace();
+        face.side = 1;
+        state.model = face;
+        state.firstVertexIndex = 0;
+        state.lastVertexIndex = 0;
+        try {
+            material.renderMicroFace(new Vector3(), -1, Cuboid6.full);
+            assertEquals(Arrays.asList("icons", "colour", "block", "meta"), reads);
+            Field operationsField = CCRenderPipeline.class.getDeclaredField("ops");
+            operationsField.setAccessible(true);
+            assertTrue(((List<?>) operationsField.get(state.pipeline)).contains(icons));
+        } finally {
+            state.resetInstance();
+            MaterialRenderHelper.pass_$eq(0);
+            MaterialRenderHelper.builder_$eq(null);
+        }
     }
 
     private static void assertClass(Class<?> type, Class<?> superclass, boolean isFinal, Set<String> methods) {

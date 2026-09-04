@@ -16,13 +16,19 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**526 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+**530 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 443 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
 virtual tile accessor dispatch throughout `TMultiPart`, and null-safe equality for scheduled-tick deduplication.
 Six JVM and two Forge regression cases cover the fixes. Callable signatures remain unchanged; the packet traversal
 callback adds one anonymous class. See the latest history entries for the individual fixes and validation.
+
+Accessor review fixes: `TileMultipart`, `Microblock` and `BlockMicroMaterial` now use their virtual state accessors
+throughout the restored paths. Eleven new regression cases pass against the original Scala jar and the fixed port;
+all 519 archived consumers pass with their recorded version. The supplied consumer checkouts confirm extension/API
+use, but no override triggering these three regressions was found. All 443 class/member APIs, 17 ScalaSignature
+payloads and 116 generated dumps are retained. Plan adjustments remain deferred for discussion after these fixes.
 
 Latest bounded target: `ScalaSignature.MethodSymbol.info` delegates info-ID evaluation to
 `ScalaSignatureParser.methodSymbolInfo`. Seven characterization tests were committed first as `9859aa8`. They pin

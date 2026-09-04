@@ -1708,3 +1708,19 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Build/style checks, 526 JVM tests and 237 Java 8 Forge tests pass. ProjectRed extends `Microblock`, and consumers
   use its shape/material accessors, but no supplied consumer overriding those accessors was found. Evidence is
   under ignored `run/conversion-review/`; no migration-plan changes were made.
+
+### 2026-09-04 — BlockMicroMaterial property accessor compatibility
+
+- Restored virtual block, metadata, icon-transform and registry-key reads across material properties, items,
+  strength, icon loading and rendering. Preserved the constructor's direct argument use, private reflective fields,
+  client-only annotations, safe-icon exception boundary and original render/accessor evaluation order.
+- Four new cases compiled against the original Scala jar pass there, fail on the unfixed port and pass unchanged
+  after the fix. Together the three fixes add eleven JVM cases. Build/style checks, 530 JVM tests, 237 Java 8 Forge
+  tests and all 14 assertions in the original-jar accessor probe pass. All 519 archived JVM consumers also pass
+  when built with their recorded version; their two embedded-version assertions require that override.
+- Compared against the pre-fix dev jar: all 443 class/member APIs, all 17 ScalaSignature payloads and 3,702 unrelated
+  method bodies are unchanged, allowing only the build-version literal to differ. The fixes change 44 method bodies;
+  all 116 generated tile dumps are identical. Both jars contain 443 Java 8 classes and five matching mod versions.
+- ProjectRed, Chisel and ExtraUtilities extend `BlockMicroMaterial`; no supplied consumer overrides the affected
+  accessors. These are verified extension-contract regressions, without a demonstrated current-pack gameplay
+  failure. Evidence is under ignored `run/conversion-review/`; migration-plan changes remain deferred.

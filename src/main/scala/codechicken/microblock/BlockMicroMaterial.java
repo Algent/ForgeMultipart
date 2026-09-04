@@ -10,6 +10,7 @@ import net.minecraft.util.IIcon;
 
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.uv.MultiIconTransformation;
+import codechicken.lib.vec.BlockCoord;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Vector3;
 import codechicken.microblock.MicroMaterialRegistry.IMicroMaterial;
@@ -106,7 +107,7 @@ public class BlockMicroMaterial implements IMicroMaterial {
     @Override
     @SideOnly(Side.CLIENT)
     public void loadIcons() {
-        Block currentBlock = Block.getBlockFromName(blockKey);
+        Block currentBlock = Block.getBlockFromName(blockKey());
         IIcon[] icons = new IIcon[6];
         for (int side = 0; side < icons.length; side++) {
             icons[side] = codechicken$microblock$BlockMicroMaterial$$safeIcon$1(currentBlock, side);
@@ -116,7 +117,7 @@ public class BlockMicroMaterial implements IMicroMaterial {
 
     public final IIcon codechicken$microblock$BlockMicroMaterial$$safeIcon$1(Block block, int side) {
         try {
-            return MicroblockProxy.renderBlocks().getIconSafe(block.getIcon(side, meta));
+            return MicroblockProxy.renderBlocks().getIconSafe(block.getIcon(side, meta()));
         } catch (Exception ignored) {
             return MicroblockProxy.renderBlocks().getIconSafe(null);
         }
@@ -124,36 +125,33 @@ public class BlockMicroMaterial implements IMicroMaterial {
 
     @Override
     public void renderMicroFace(Vector3 pos, int pass, Cuboid6 bounds) {
-        MaterialRenderHelper$.MODULE$.start(pos, pass, icont).blockColour(getColour(pass)).lighting()
-                .blockAndMeta(block, meta).render();
+        MaterialRenderHelper$.MODULE$.start(pos, pass, icont()).blockColour(getColour(pass)).lighting()
+                .blockAndMeta(block(), meta()).render();
     }
 
     public int getColour(int pass) {
         if (pass == -1) {
-            return (block.getBlockColor() << 8) | 0xFF;
+            return (block().getBlockColor() << 8) | 0xFF;
         }
         CCRenderState state = CCRenderState.instance();
-        return (block.colorMultiplier(
-                state.lightMatrix.access,
-                state.lightMatrix.pos.x,
-                state.lightMatrix.pos.y,
-                state.lightMatrix.pos.z) << 8) | 0xFF;
+        BlockCoord pos = state.lightMatrix.pos;
+        return (block().colorMultiplier(state.lightMatrix.access, pos.x, pos.y, pos.z) << 8) | 0xFF;
     }
 
     @Override
     public boolean canRenderInPass(int pass) {
-        return block.canRenderInPass(pass);
+        return block().canRenderInPass(pass);
     }
 
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getBreakingIcon(int side) {
-        return block.getIcon(side, meta);
+        return block().getIcon(side, meta());
     }
 
     @Override
     public ItemStack getItem() {
-        return new ItemStack(block, 1, meta);
+        return new ItemStack(block(), 1, meta());
     }
 
     @Override
@@ -165,19 +163,19 @@ public class BlockMicroMaterial implements IMicroMaterial {
     public float getStrength(EntityPlayer player) {
         float hardness = 30F;
         try {
-            hardness = block.getBlockHardness(null, 0, 0, 0);
+            hardness = block().getBlockHardness(null, 0, 0, 0);
         } catch (Exception ignored) {}
-        return player.getBreakSpeed(block, false, meta % 16, 0, -1, 0) / hardness;
+        return player.getBreakSpeed(block(), false, meta() % 16, 0, -1, 0) / hardness;
     }
 
     @Override
     public boolean isTransparent() {
-        return !block.isOpaqueCube();
+        return !block().isOpaqueCube();
     }
 
     @Override
     public int getLightValue() {
-        return block.getLightValue();
+        return block().getLightValue();
     }
 
     public Seq<String> toolClasses() {
@@ -186,16 +184,16 @@ public class BlockMicroMaterial implements IMicroMaterial {
 
     @Override
     public int getCutterStrength() {
-        return block.getHarvestLevel(meta % 16);
+        return block().getHarvestLevel(meta() % 16);
     }
 
     @Override
     public Block.SoundType getSound() {
-        return block.stepSound;
+        return block().stepSound;
     }
 
     @Override
     public float explosionResistance(Entity entity) {
-        return block.getExplosionResistance(entity);
+        return block().getExplosionResistance(entity);
     }
 }
