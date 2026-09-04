@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import net.minecraft.nbt.CompressedStreamTools;
@@ -209,7 +210,7 @@ public final class TickScheduler {
 
         void scheduleTick(TMultiPart part, long time, boolean random) {
             for (PartTickEntry e : tickList) {
-                if (e.part() == part) {
+                if (Objects.equals(e.part(), part)) {
                     // only override an existing tick if we're going from random to scheduled
                     if (e.random() && !random) {
                         e.time_$eq(time);

@@ -1286,3 +1286,14 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Added three JVM regression cases covering overridden binding/unbinding, convenience methods and description
   reads that publish a replacement tile before the render update. All three failed before the fix.
 - Formatting, test checkstyle, the three new cases and all seven existing tile equality cases pass.
+
+### 2026-09-04 — Tick scheduler equality regression
+
+- Restored Scala's null-safe part equality in `ChunkTickScheduler.scheduleTick` with `Objects.equals`. Distinct but
+  equal parts share the original entry and callback target, and random-to-scheduled promotion updates that entry.
+  Existing explicit ticks keep their original timing.
+- Added three JVM regression cases for deduplication, promotion and retaining an existing explicit tick. All three
+  failed before the fix. Together with the accessor and packet fixes, this adds six JVM and two Forge cases.
+- Formatting, test checkstyle, build and Forge pass with 398 JVM / 237 Forge tests and zero failures/errors/skips.
+  The four touched class surfaces retain their callable member names and descriptors. The packaged inventory grows
+  from 444 to 445 classes solely for the packet traversal callback; no existing class is removed.
