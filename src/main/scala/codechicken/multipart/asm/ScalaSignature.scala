@@ -9,7 +9,7 @@ object ScalaSignature {
 
   case class Bytes(arr: Array[Byte], pos: Int, len: Int) {
     def reader = new ByteCodeReader(this)
-    def section = arr.drop(pos).take(len)
+    def section = ScalaSignatureParser.section(this)
   }
 
   trait Flags {

@@ -28,8 +28,8 @@ placement/render helpers, both generators and all built-in tile traits are Java.
 hollow and occlusion microblock traits retain Scala inheritance/state/super declarations over Java behavior,
 including client bounds/mask updates. `StackAnalyser` initialization and constant-type classification delegate to
 Java; retain its coordinated Scala class/companion/models. `FieldMixin.accessName` also delegates to Java while
-retaining its case class. `MixinInfo.linearise` delegates its recursive collection traversal to Java. The next bounded
-candidate is `ScalaSignature.Bytes.section`, with characterization before extraction.
+retaining its case class. `MixinInfo.linearise` and `ScalaSignature.Bytes.section` delegate traversal and array-copy
+behavior to Java. The next bounded candidate is `ScalaSignature.TypeRef.jName`, with characterization before extraction.
 Java-trait rewriting and compiler startup also delegate to Java helpers. Abstract Java mixins and Java-path
 side-only filtering are complete; multiple Scala-trait inheritance still needs its metadata. Retain trait
 state/accessor/super bridges and the compiler/signature/analyser model shells.

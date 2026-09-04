@@ -1,5 +1,6 @@
 package codechicken.multipart.asm;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 import codechicken.multipart.asm.ScalaSignature.Bytes;
@@ -18,6 +19,15 @@ import scala.collection.mutable.Builder;
 final class ScalaSignatureParser {
 
     private ScalaSignatureParser() {}
+
+    static byte[] section(Bytes bytes) {
+        byte[] array = bytes.arr();
+        int start = bytes.pos();
+        start = Math.min(array.length, Math.max(0, start));
+        // Snapshot before len(): an override can mutate the original array.
+        byte[] remaining = Arrays.copyOfRange(array, start, array.length);
+        return Arrays.copyOf(remaining, Math.min(remaining.length, Math.max(0, bytes.len())));
+    }
 
     // Keep path-dependent model types out of signatures read by Scala 2.11's Java parser.
     static Object readTable(ScalaSignature sig, Bytes bytes) {

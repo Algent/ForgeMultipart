@@ -1413,3 +1413,25 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   are under ignored `run/migration-linearise-reference/`; use its `version.txt` for frozen version assertions.
 - Source totals remain 224 Java files and nine Scala files / 765 nonblank lines. The next candidate is
   `ScalaSignature.Bytes.section`, preserving clamping, copy boundaries and virtual getter/failure ordering.
+
+### 2026-09-04 — ScalaSignature byte sections
+
+- Committed six JVM characterization cases first as `13de853`, against the untouched Scala `Bytes.section`.
+  They cover independent drop/take clamping including integer extremes, fresh empty/full/partial result arrays,
+  source/result isolation, virtual getter reads, mutations during `pos` and `len`, and every getter failure.
+  A null source still evaluates `pos` before failing; an empty dropped array still evaluates `len`.
+- Extracted slicing into `ScalaSignatureParser.section` using `Arrays.copyOfRange` and `Arrays.copyOf`. The first
+  copy remains between the `pos` and `len` reads: mutations from `pos` are visible, while mutations from `len` are
+  excluded. This holds even for zero/negative positions. Scala retains the case class, companion, product/copy
+  methods and serialization shape. Ordinary Java 8 joint compilation remains sufficient.
+- Normal and clean formatting/checkstyle/build/Forge checks pass: 435 JVM tests, all 435 frozen JVM consumers and
+  237 Java 8 Forge tests, with zero failures/errors/skips. All 116 generated dump names and hashes match. Both jars
+  contain 443 Java 8 classes; packaged sources match. The comparison preserves 442 retained class/member APIs,
+  all 17 ScalaSignature payloads and 3,732 unrelated method bodies. Only `Bytes.section` and the parser helper have
+  changed class bytes; the helper adds one package-private method. No new effective divergence is introduced.
+- Evidence and rerun tools are saved under ignored `run/migration-bytes-section-reference/`, including baseline
+  jar/sources, frozen tests/resources, reports, dumps and logs. Use its `version.txt` with `frozen-consumers.gradle`
+  for the existing inlined-version tests. The prior linearisation reference remains independently reproducible.
+- Source totals remain 224 Java files and nine Scala files / 765 nonblank lines. Next bounded candidate:
+  `ScalaSignature.TypeRef.jName`, preserving name normalization, aliases and virtual dispatch while retaining
+  path-dependent model declarations and trait bridges. Descriptor conversion remains a separate target.

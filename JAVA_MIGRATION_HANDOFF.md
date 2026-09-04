@@ -16,7 +16,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**429 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+**435 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
 files and 9 Scala files / 765 nonblank Scala lines**. The packaged inventory has 443 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
@@ -24,16 +24,16 @@ virtual tile accessor dispatch throughout `TMultiPart`, and null-safe equality f
 Six JVM and two Forge regression cases cover the fixes. Callable signatures remain unchanged; the packet traversal
 callback adds one anonymous class. See the latest history entries for the individual fixes and validation.
 
-Latest bounded target: `ASMMixinCompiler.MixinInfo.linearise` delegates to `MixinClassGenerator.linearise`.
-Seven characterization tests were committed first as `d93b09d`. They pin recursive parent order and duplicates,
-collection builders, mutable parents, virtual parent/collection dispatch, erased casts and failure order. Flattening
-retains its `SeqLike` intermediate before append returns a `Seq`. Scala keeps the model/companion and all bridges.
-All 429 frozen JVM consumers pass; checks preserve 442 retained class/member APIs, all 17 ScalaSignature payloads,
-3,731 unrelated method bodies and all 116 generated dumps. The obsolete Scala traversal closure disappears;
-the Java helper reuses the existing callback adapter. Evidence: `run/migration-linearise-reference/`.
+Latest bounded target: `ScalaSignature.Bytes.section` delegates to `ScalaSignatureParser.section`.
+Six characterization tests were committed first as `13de853`. They pin independent drop/take clamping, fresh arrays,
+virtual getter order, source mutations and failure ordering. The first array copy completes before `len()` is read,
+so mutations from that getter do not affect the result. Scala retains the model/companion and serialization shape.
+All 435 frozen JVM consumers pass; checks preserve 442 retained class/member APIs, all 17 ScalaSignature payloads,
+3,732 unrelated method bodies and all 116 generated dumps. Evidence: `run/migration-bytes-section-reference/`.
+The preceding `MixinInfo.linearise` extraction is recorded in history and `run/migration-linearise-reference/`.
 
-**Next bounded candidate: `ScalaSignature.Bytes.section`.** Characterize clamped array slicing, fresh result arrays,
-virtual getter order, mutations during getter calls and null/failure behavior before extracting its body.
+**Next bounded candidate: `ScalaSignature.TypeRef.jName`.** Characterize slash normalization, Any/AnyRef aliases,
+virtual name dispatch and null/failure behavior while retaining the trait and path-dependent model declarations.
 Keep case-class/product/serialization shapes and simple model accessors. Broader shell replacement and opcode
 algorithm fixes remain separate work.
 The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client
