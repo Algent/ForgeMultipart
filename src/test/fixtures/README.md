@@ -390,3 +390,18 @@ Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouche
 | `ReferenceScalaClassParent` | `38001778088d012f62256291ede409203138b396cbc28f208e980a29f2b9418f` |
 | `ReferenceScalaClassParent$$anon$1` | `91fee2779c962b2b970383ef965b0ec5f2e8d1d44cfc026b7394804f1e56993d` |
 | `ReferenceScalaClassParent$$anon$2` | `941a3dce5726e8f355159ae001007f54ad4a307e7d91887909eb84f11952802c` |
+
+### `ReferenceScalaMethodSymbolDescriptor`
+
+`scala/codechicken/multipart/compat/ReferenceScalaMethodSymbolDescriptor.scala` freezes a Scala caller and
+MethodSymbol subclass with a virtual method-type supplier. Tests preserve info/descriptor order and failure behavior.
+
+Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouched dev jar at `27863b4`
+(SHA-256 `1d2dcad447e30fb8df3f73e60b9a02987c42d9f8a632ce5c4523f365c7043ff5`). Source SHA-256 is
+`c584b3c91ce80c3b3e5e413bb24af160d1eb89fb0a9bb51b4570193e99b27c9b`. Frozen class files are under
+`src/test/resources/compat/`; do not regenerate them against the port.
+
+| Class | SHA-256 |
+| --- | --- |
+| `ReferenceScalaMethodSymbolDescriptor` | `47731de0986ab2701a3d5acae0b0a93b24c979495c288383fcab4a925370c192` |
+| `ReferenceScalaMethodSymbolDescriptor$$anon$1` | `9fbfb463190e14a9be53a27add9d460d2e8e45bedb0054059806798aa098d2e1` |
