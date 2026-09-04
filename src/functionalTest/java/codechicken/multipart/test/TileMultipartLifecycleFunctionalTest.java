@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import net.minecraft.block.Block;
 import net.minecraft.server.MinecraftServer;
@@ -20,6 +21,7 @@ import codechicken.multipart.TMultiPart;
 import codechicken.multipart.TSlottedPart;
 import codechicken.multipart.TileMultipart;
 import codechicken.multipart.scalatraits.TSlottedTile;
+import scala.collection.JavaConversions;
 
 /** Consumer-visible multipart ordering and lifecycle behavior that requires a real world and generated tile. */
 class TileMultipartLifecycleFunctionalTest {
@@ -28,6 +30,7 @@ class TileMultipartLifecycleFunctionalTest {
     private static final BlockCoord MOVE_FROM = new BlockCoord(34, 200, 32);
     private static final BlockCoord MOVE_TO = new BlockCoord(36, 200, 32);
     private static final BlockCoord TRAVERSAL_POS = new BlockCoord(38, 200, 32);
+    private static final BlockCoord LOADING_POS = new BlockCoord(40, 200, 32);
 
     @Test
     void addAndRemovePreserveOrderSlotsAndPartCallbackOrder() {
@@ -157,6 +160,35 @@ class TileMultipartLifecycleFunctionalTest {
         }
     }
 
+    @Test
+    void legacyLoadingRebuildsGeneratedSlotsAndNotifiesAfterBinding() {
+        checkLoading((tile, parts) -> tile.loadParts(JavaConversions.asScalaBuffer(parts).toList()));
+    }
+
+    private static void checkLoading(BiConsumer<TileMultipart, List<TMultiPart>> load) {
+        World world = world();
+        clear(world, LOADING_POS);
+        List<String> events = new ArrayList<>();
+        RecordingPart old = new RecordingPart("old", 2, events);
+        RecordingPart first = new RecordingPart("first", 7, events);
+        RecordingPart second = new RecordingPart("second", 8, events);
+        try {
+            TileMultipart tile = TileMultipart.addPart(world, LOADING_POS, old);
+            events.clear();
+            load.accept(tile, Arrays.asList(first, second));
+            assertEquals(Arrays.asList("first.bind", "second.bind", "first.changed:all", "second.changed:all"), events);
+            assertEquals(Arrays.asList(first, second), tile.jPartList());
+            assertNull(tile.partMap(2));
+            assertSame(first, tile.partMap(7));
+            assertSame(second, tile.partMap(8));
+            assertSame(tile, first.tile());
+            assertSame(tile, second.tile());
+            assertSame(tile, old.tile(), "Loading is not removal of previously bound parts");
+        } finally {
+            clear(world, LOADING_POS);
+        }
+    }
+
     private static World world() {
         World world = MinecraftServer.getServer().worldServers[0];
         world.getChunkFromBlockCoords(ADD_REMOVE_POS.x, ADD_REMOVE_POS.z);
@@ -214,7 +246,7 @@ class TileMultipartLifecycleFunctionalTest {
 
         @Override
         public void onPartChanged(TMultiPart part) {
-            events.add(name + ".changed:" + ((RecordingPart) part).name);
+            events.add(name + ".changed:" + (part == null ? "all" : ((RecordingPart) part).name));
         }
 
         @Override
