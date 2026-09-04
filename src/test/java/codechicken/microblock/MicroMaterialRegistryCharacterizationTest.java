@@ -35,11 +35,12 @@ import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Vector3;
 import codechicken.microblock.MicroMaterialRegistry.IMicroHighlightRenderer;
 import codechicken.microblock.MicroMaterialRegistry.IMicroMaterial;
+import codechicken.microblock.examples.MaterialEnumerationExample;
 
 /**
  * The registry is global mutable state, so everything is registered once in {@link #registerAndFreezeIdMap()} and the
- * cases below only read it. Error paths are not covered: they call the microblock logger, which is null until
- * MicroblockProxy.preInit runs, so they cannot execute headless.
+ * cases below restore any temporary state changes. Logger-backed error paths require MicroblockProxy.preInit and cannot
+ * execute headless.
  */
 class MicroMaterialRegistryCharacterizationTest {
 
@@ -127,6 +128,48 @@ class MicroMaterialRegistryCharacterizationTest {
             MicroMaterialRegistry$.MODULE$.setupIDMap();
         }
         assertEquals(java.lang.reflect.Array.getLength(original), MicroMaterialRegistry.getIdMap().length);
+    }
+
+    @Test
+    void javaExampleEnumeratesTheSameMaterialsWithoutExposingTheLegacyArray() throws Exception {
+        String[] names = Arrays.stream(MicroMaterialRegistry.getIdMap()).map(entry -> entry._1())
+                .toArray(String[]::new);
+        assertEquals(names.length, MicroMaterialRegistry.materialCount());
+        assertEquals(Arrays.asList(names), MaterialEnumerationExample.materialNames());
+        assertTrue(MicroMaterialRegistry.class.getMethod("getIdMap").isAnnotationPresent(Deprecated.class));
+        assertTrue(MicroMaterialRegistry$.class.getMethod("getIdMap").isAnnotationPresent(Deprecated.class));
+    }
+
+    @Test
+    void javaEnumerationTracksServerOrderMissingSlotsAndEmptyMaps() {
+        try {
+            MicroMaterialRegistry.readIDMap(incomingMap("test:stone", "test:glass"));
+            assertEquals(2, MicroMaterialRegistry.materialCount());
+            assertEquals(Arrays.asList("test:stone", "test:glass"), MaterialEnumerationExample.materialNames());
+
+            MicroMaterialRegistry.readIDMap(incomingMap("test:stone", "server:unavailable", "test:glass"));
+            assertEquals(3, MicroMaterialRegistry.materialCount());
+            assertThrows(NullPointerException.class, MaterialEnumerationExample::materialNames);
+
+            MicroMaterialRegistry.readIDMap(incomingMap());
+            assertEquals(0, MicroMaterialRegistry.materialCount());
+            assertEquals(Collections.emptyList(), MaterialEnumerationExample.materialNames());
+        } finally {
+            MicroMaterialRegistry$.MODULE$.setupIDMap();
+        }
+    }
+
+    @Test
+    void materialCountRejectsAnUninitializedMapInsteadOfReportingAnEmptyRegistry() throws Exception {
+        Field idMap = MicroMaterialRegistry.class.getDeclaredField("idMap");
+        idMap.setAccessible(true);
+        Object original = idMap.get(null);
+        try {
+            idMap.set(null, null);
+            assertThrows(IllegalStateException.class, MicroMaterialRegistry::materialCount);
+        } finally {
+            idMap.set(null, original);
+        }
     }
 
     @Test

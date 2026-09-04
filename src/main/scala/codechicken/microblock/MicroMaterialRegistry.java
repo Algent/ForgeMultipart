@@ -241,6 +241,15 @@ public final class MicroMaterialRegistry {
         return idWriter.read(data);
     }
 
+    /**
+     * Returns the persistent name at a numeric ID in the active material map. IDs may change when the map is rebuilt or
+     * synchronized with a server; store material names rather than numeric IDs in persistent data.
+     *
+     * @param id an ID from zero (inclusive) to {@link #materialCount()} (exclusive)
+     * @throws ArrayIndexOutOfBoundsException if the ID is outside the active map
+     * @throws NullPointerException           if the map is uninitialized or the ID is unresolved after a failed
+     *                                        handshake
+     */
     public static String materialName(int id) {
         return idMap[id]._1();
     }
@@ -258,10 +267,47 @@ public final class MicroMaterialRegistry {
         return typeMap.get(remapped(name));
     }
 
+    /**
+     * Returns the registered material instance at an ID in the active material map; no copy is made.
+     *
+     * @param id an ID from zero (inclusive) to {@link #materialCount()} (exclusive)
+     * @throws ArrayIndexOutOfBoundsException if the ID is outside the active map
+     * @throws NullPointerException           if the map is uninitialized or the ID is unresolved after a failed
+     *                                        handshake
+     */
     public static IMicroMaterial getMaterial(int id) {
         return idMap[id]._2();
     }
 
+    /**
+     * Returns the number of numeric ID slots in the active material map, including the missing-material placeholder
+     * when present. Enumerate IDs from zero (inclusive) to this count (exclusive) with {@link #materialName(int)} and
+     * {@link #getMaterial(int)}.
+     *
+     * FMP builds the map during post-initialization and before server startup. A multiplayer handshake replaces the
+     * client map with server ID order. Enumerate on the game/lifecycle thread after initialization; multiplayer clients
+     * must also finish the handshake successfully. The map must not be rebuilt during enumeration. Do not cache numeric
+     * IDs across map replacements. A failed handshake can leave unresolved slots, which this count includes; it is not
+     * a readiness check.
+     *
+     * @return the active map length, or zero for an initialized empty map
+     * @throws IllegalStateException if FMP has not initialized the material ID map
+     */
+    public static int materialCount() {
+        if (idMap == null) {
+            throw new IllegalStateException("The material ID map has not been initialized.");
+        }
+        return idMap.length;
+    }
+
+    /**
+     * Returns the legacy live backing array, or null before ID-map initialization. A map replacement leaves earlier
+     * array references pointing at the old map; unresolved IDs after a failed handshake contain null.
+     *
+     * @deprecated For enumeration, use {@link #materialCount()}, {@link #materialName(int)} and
+     *             {@link #getMaterial(int)}. The Scala array descriptor is retained for existing consumers.
+     */
+    @Deprecated
     public static Tuple2<String, IMicroMaterial>[] getIdMap() {
         return idMap;
     }

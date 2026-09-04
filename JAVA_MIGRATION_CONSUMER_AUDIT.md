@@ -488,6 +488,26 @@ behavior:
    API, trait, generator, registry, or tile change. Add UtilitiesInExcess as a compile/runtime fixture now even though
    it is not yet in the pack.
 
+## Java API adoption ledger
+
+This ledger tracks migration of a specific legacy contract, not completion of an entire consumer's migration.
+The FMP material-enumeration addition is implemented on `algent/java`, with the
+[documented Java replacement](docs/api/MATERIAL_ENUMERATION.md) and a compiling example. It is not yet a released
+minimum dependency version. Unlisted contracts remain governed by the inventories above.
+
+| Legacy contract | Consumer and inspected source | Supported replacement | Consumer migration/release | Target-pack adoption and removal gate |
+| --- | --- | --- | --- | --- |
+| `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | UtilitiesInExcess `3e107a1fe9bc15fcb6a808242ffda1354dac7c3a`: `FMPRecipeLoader.run`, `UEMultipartItem.getSubItems` | `materialCount()` with `materialName(int)` and, when needed, `getMaterial(int)` | Source patch and first released version pending; checkout used as reference only | No migrated pack version verified; retain the bridge |
+| `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | Extra Utilities 1.2.12 decompiled reference: both NEI microblock handlers and `multipart.microblock.ItemMicroBlock` | Same ID-based Java enumeration | No editable upstream consumer in scope; retirement/replacement remains pending | Verify Extra Utilities is absent and its replacement uses the new API before retiring this dependency |
+
+Evidence for the FMP addition is under ignored `run/migration-material-enumeration-reference/`. The original
+reference-compiled Scala consumer still exercises the companion and tuple-array descriptor. The new compiling Java
+example has no Scala imports or bytecode references. Runtime checks cover initialized ID lookup and handshake order;
+they do not establish that an updated UtilitiesInExcess release has shipped or entered the pack.
+
+FMP's own `ItemMicroPart` and `MicroRecipe$` still use the legacy array internally. Their migration, any additional
+retained companion users, and the other Scala-facing contracts remain separate removal gates.
+
 ## Practical priority for the current branch
 
 1. Keep the existing `+678` ABI fixture as the exact binary floor and correct failures before source cleanup.

@@ -16,7 +16,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**530 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+**535 plain-JVM tests and 238 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 443 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
@@ -31,17 +31,25 @@ use, but no override triggering these three regressions was found. All 443 class
 payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
 followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
-Latest bounded target: `ScalaSignature.MethodSymbol.info` delegates info-ID evaluation to
-`ScalaSignatureParser.methodSymbolInfo`. Seven characterization tests were committed first as `9859aa8`. They pin
-infoId/eval order, repeated uncached reads, exact and null results, the result cast, failures, unused symbol/type members
-and the frozen Scala caller descriptor. All 519 frozen JVM consumers pass; checks preserve 442 retained class/member
-APIs, all 17 ScalaSignature payloads, 3,744 unrelated method bodies and all 116 generated dumps. No class is added or
-removed; the total stays 443 classes. Evidence: `run/migration-method-symbol-info-reference/`.
+Latest API addition: `MicroMaterialRegistry.materialCount()` completes ID-based enumeration with the existing
+`materialName(int)` and `getMaterial(int)` methods. Both `getIdMap()` entries are deprecated with unchanged descriptors
+and live-array behavior. Two baseline cases were committed first as `9b78099`; three further JVM cases and one Forge
+case cover the new API and a compiling Java example. All 532 pre-change compiled tests pass with their recorded
+version. The 443 class APIs retain all existing members, with one public static method added; 17 ScalaSignature
+payloads, 3,746 existing method bodies and 116 generated dumps are unchanged apart from expected deprecation metadata
+and build-version literals. Evidence: `run/migration-material-enumeration-reference/`.
+
+The [material enumeration guide](docs/api/MATERIAL_ENUMERATION.md) documents lifecycle, server ID ordering and failure
+boundaries. The consumer audit's adoption ledger records the inspected UtilitiesInExcess revision and Extra Utilities
+1.2.12; their source migrations, releases and pack adoption remain pending. The supplied checkouts remain reference-only.
 
 **Next priority: close the Java API gaps in Phases 2 and 9 and map consumer migrations in Phase 10.** Reuse the existing
 Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
 subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
 are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
+The next bounded API candidate is `TileMultipart` collection/traversal access, preserving legacy getter and callback
+overrides, captured-sequence mutation behavior and detached-part filtering. Do not repeat material enumeration as an
+unimplemented gap or treat its FMP-side completion as consumer adoption.
 
 Pause mechanical extraction of retained Scala shells unless it enables that API, fixes a demonstrated issue or has
 a measured benefit. `ScalaSignature.ClassSymbolRef.info` remains an optional bounded extraction, not the default next

@@ -14,3 +14,7 @@ If you only want to use the API and not modify it:
  * Place both mods in your /libs/ folder and link them as libraries in your IDE.
 
 Implementation of all parts of the API should be clean and easy in Java. The minecraft multipart mod is implemented in java as a test case.
+
+Java API migration guides:
+
+* [Enumerating microblock materials](docs/api/MATERIAL_ENUMERATION.md), including a compiling example and legacy API replacements.

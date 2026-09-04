@@ -89,6 +89,13 @@ public final class MicroMaterialRegistry$ {
         return MicroMaterialRegistry.getMaterial(id);
     }
 
+    /**
+     * Returns the same legacy backing array as {@link MicroMaterialRegistry#getIdMap()}.
+     *
+     * @deprecated For enumeration, use {@link MicroMaterialRegistry#materialCount()},
+     *             {@link MicroMaterialRegistry#materialName(int)} and {@link MicroMaterialRegistry#getMaterial(int)}.
+     */
+    @Deprecated
     public Tuple2<String, IMicroMaterial>[] getIdMap() {
         return MicroMaterialRegistry.getIdMap();
     }

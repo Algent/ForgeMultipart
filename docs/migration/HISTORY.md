@@ -1724,3 +1724,20 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - ProjectRed, Chisel and ExtraUtilities extend `BlockMicroMaterial`; no supplied consumer overrides the affected
   accessors. These are verified extension-contract regressions, without a demonstrated current-pack gameplay
   failure. Evidence is under ignored `run/conversion-review/`; migration-plan changes remain deferred.
+
+### 2026-09-04 — Java material enumeration API
+
+- Committed two baseline cases first as `9b78099`, pinning the shared legacy array, uninitialized access, server ID
+  ordering, missing slots and empty maps. Saved the pre-API jar and all 532 compiled tests before implementation.
+- Added `MicroMaterialRegistry.materialCount()` beside the existing indexed name/material lookups. It reports the
+  active ID-map length and explicitly rejects an uninitialized map. The static and companion `getIdMap()` methods
+  keep their original descriptors and live-array behavior, with deprecation documentation pointing at the Java API.
+- Added three JVM cases, a compiling Java enumeration example and one Forge handshake/registry case. Normal/clean build/style
+  checks, 535 JVM tests, 238 Java 8 Forge tests and all 532 frozen pre-change tests pass. The example compiles against
+  only the dev jar and Java 8 APIs and has no Scala bytecode references; FMP's runtime dependencies remain in place.
+- Binary comparison retains all 443 class APIs with exactly one new public static method and two deprecations.
+  All 17 ScalaSignature payloads, 3,746 existing method bodies and 116 generated dumps are unchanged, allowing only
+  the expected deprecation metadata and build-version literals. No production class or dependency is added.
+- Added the material-enumeration guide and the first consumer adoption ledger rows. UtilitiesInExcess's two source
+  call sites and Extra Utilities' tuple-array readers have supported replacements; consumer changes, releases and
+  pack adoption remain pending. Evidence is under ignored `run/migration-material-enumeration-reference/`.

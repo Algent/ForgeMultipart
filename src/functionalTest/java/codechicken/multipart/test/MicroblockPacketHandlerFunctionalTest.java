@@ -3,6 +3,8 @@ package codechicken.multipart.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
@@ -21,6 +23,24 @@ import cpw.mods.fml.common.network.internal.FMLProxyPacket;
 import scala.Tuple2;
 
 class MicroblockPacketHandlerFunctionalTest {
+
+    @Test
+    void javaEnumerationUsesTheSameIdsAsTheInitializedRegistryAndHandshake() {
+        PacketCustom outgoing = new PacketCustom("test", 1);
+        MicroMaterialRegistry.writeIDMap(outgoing);
+        PacketCustom incoming = new PacketCustom(outgoing.getByteBuf().copy());
+        int count = MicroMaterialRegistry.materialCount();
+        assertTrue(count > 0);
+        assertEquals(count, incoming.readInt());
+        for (int id = 0; id < count; id++) {
+            String name = MicroMaterialRegistry.materialName(id);
+            assertEquals(name, incoming.readString());
+            assertEquals(id, MicroMaterialRegistry.materialID(name));
+            assertNotNull(MicroMaterialRegistry.getMaterial(id));
+            assertSame(MicroMaterialRegistry.getMaterial(name), MicroMaterialRegistry.getMaterial(id));
+        }
+        assertEquals(0, incoming.getByteBuf().readableBytes());
+    }
 
     @Test
     void sendsTheCompleteMaterialIdMapDuringTheServerHandshake() {

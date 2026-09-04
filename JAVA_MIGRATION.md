@@ -529,7 +529,7 @@ their sibling and only need the annotation and javadoc.
 | --- | --- | --- |
 | `TileMultipart.partList(): scala.collection.Seq` | `jPartList(): java.util.List` | Sibling already exists |
 | `MultiPartRegistry.registerParts(IPartFactory2, scala.collection.Seq)` | `registerParts(IPartFactory2, String...)` | Sibling already exists |
-| `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | `materialCount(): int` plus existing `materialName(int)` and `getMaterial(int)` | The array index **is** the material ID, so no pair or map type is needed |
+| `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | `materialCount(): int` plus existing `materialName(int)` and `getMaterial(int)` | Implemented with static/companion deprecation; [guide and compiling example](docs/api/MATERIAL_ENUMERATION.md). Consumer release/adoption remains pending |
 | `TileMultipart.operate(scala.Function1<TMultiPart, BoxedUnit>)` | `forEachPart(java.util.function.Consumer<TMultiPart>)` | Preserve the existing skip-unbound-part behavior |
 | `TileMultipart.occlusionTest(scala.collection.Seq, TMultiPart)` | `occlusionTest(Collection<TMultiPart>, TMultiPart)` | |
 | `TileMultipart.loadParts(scala.collection.Iterable)` | `loadParts(Collection<TMultiPart>)` | Schematica and GuideNH reflect the Scala descriptor; see Phase 10 |
@@ -544,6 +544,7 @@ same-name overload there invites a silent wrong-overload bind.
 
 - [ ] Add the missing Java-shaped siblings over shared behavior, preserving legacy override dispatch and avoiding
   recursive forwarding as required by the API migration design.
+- [x] Add and document `materialCount()` with existing indexed lookups; retain and deprecate both `getIdMap()` entries.
 - [ ] Mark all nine rows `@Deprecated` with javadoc naming the replacement.
 - [ ] Confirm every original descriptor still exists in the ABI fixture after the change.
 - [ ] Document the supported API with compiling usage examples and an old-to-new migration guide. Validate Java
