@@ -41,10 +41,8 @@ object ASMMixinCompiler {
   def getMixinInfo(name: String) = mixinMap.get(name)
 
   case class FieldMixin(name: String, desc: String, access: Int) {
-    def accessName(owner: String) = if ((access & ACC_PRIVATE) != 0)
-      owner.replace('/', '$') + "$$" + name
-    else
-      name
+    def accessName(owner: String) =
+      MixinClassGenerator.fieldAccessName(this, owner)
   }
 
   case class MixinInfo(

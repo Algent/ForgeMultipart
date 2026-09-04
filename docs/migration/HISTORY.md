@@ -1366,3 +1366,31 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Sources now total 224 Java files and nine Scala files / 767 nonblank lines. The next bounded candidate is
   `ASMMixinCompiler.FieldMixin.accessName`: characterize private-flag selection, owner mangling, null behavior and
   virtual accessor/failure ordering while retaining the case-class model.
+
+### 2026-09-04 — FieldMixin accessor names
+
+- Committed seven JVM characterization cases first as `ddeed27`, against the untouched Scala `accessName` body.
+  They cover every access-flag bit and combinations, literal slash-to-dollar owner mangling, unchanged field names,
+  null owner/name behavior, virtual `access` then `name` reads, unused descriptors and unwrapped accessor failures.
+  Private fields process the owner before reading the name; a null private owner therefore fails between the two
+  reads. Non-private fields ignore the owner and return the exact name reference, including null.
+- Moved the body to `MixinClassGenerator.fieldAccessName`, retaining virtual accessor calls and evaluation order.
+  The existing Java 8 joint-compilation path handles this helper; no modern-Java build change or dependency is
+  needed. Scala retains the complete case class, companion, product/copy methods and serialization shape. Its
+  return type remains inferred: an explicit Scala `String` annotation changes the ScalaSignature payload even
+  though the JVM descriptor stays the same.
+- Normal and clean builds pass formatting/checkstyle, 422 JVM tests, all 422 frozen compiled JVM consumers, and
+  237 Java 8 Forge tests, with zero failures/errors/skips. The clean run follows a Gradle daemon stop. All 116
+  generated ASM dump names and hashes match, including Java/Scala trait registration and generated field access.
+  Dev/release jars contain 444 Java 8 classes and packaged edited sources match the source jar.
+- Preserved all 443 retained class/member APIs, all 17 ScalaSignature payloads and 3,733 unrelated method bodies.
+  The Java helper retains every previous member and adds only the package-private `fieldAccessName` method.
+  No class is added or removed and no new effective divergence is introduced. The consumer source scan found no
+  direct `FieldMixin` or `accessName` references; generated trait behavior remains the integration contract.
+- Evidence is saved under ignored `run/migration-field-access-reference/`: baseline jar/sources, frozen compiled
+  tests/resources, reports, generated dumps, logs, `Compare.java`, `VerifyVersions.java` and `verify.py`.
+  Use `frozen-consumers.gradle` and `VERSION` from `version.txt` for the frozen lane because two existing tests
+  inline the original version. Ordinary final builds use the actual Git version.
+- Sources remain 224 Java files and nine Scala files / 765 nonblank lines. Next candidate:
+  `ASMMixinCompiler.MixinInfo.linearise`, with characterization of recursive parent order, repeated/diamond parents,
+  virtual collection/parent dispatch and null/failure behavior before extraction.

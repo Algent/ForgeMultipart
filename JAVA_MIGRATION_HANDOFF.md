@@ -16,33 +16,33 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**415 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
-files and 9 Scala files / 767 nonblank Scala lines**. The packaged inventory has 444 classes.
+**422 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+files and 9 Scala files / 765 nonblank Scala lines**. The packaged inventory has 444 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
 virtual tile accessor dispatch throughout `TMultiPart`, and null-safe equality for scheduled-tick deduplication.
 Six JVM and two Forge regression cases cover the fixes. Callable signatures remain unchanged; the packet traversal
 callback adds one anonymous class. See the latest history entries for the individual fixes and validation.
 
-Latest bounded target: `StackAnalyser.Const.getType` delegates to `StackAnalyserLogic.constType`.
-Eight characterization tests were committed first as `89f31e3`. They pin every boxed primitive, fresh null/String
-types, unsupported values, repeated virtual `c` access and accessor/formatting failures. Success reads `c` once;
-failure rereads it for the message without reclassifying the second value. Scala retains the complete case class,
-companion, product/copy methods and serialization shape. All 415 frozen JVM consumers pass; checks preserve 443
-retained class/member APIs, all 17 ScalaSignature payloads, 3,731 unrelated method bodies and all 116 generated
-dumps. Only the package-private helper method and its private string-concatenation helper are added.
-Evidence: `run/migration-stack-const-reference/`.
+Latest bounded target: `ASMMixinCompiler.FieldMixin.accessName` delegates to `MixinClassGenerator.fieldAccessName`.
+Seven characterization tests were committed first as `ddeed27`. They pin private-bit selection, literal owner/name
+mangling, null handling, virtual accessor order and failures. The private branch transforms the owner before reading
+the name; the other branch ignores the owner and returns the name directly. Scala retains the complete case class,
+companion, inferred return type, product/copy methods and serialization shape. All 422 frozen JVM consumers pass;
+checks preserve 443 retained class/member APIs, all 17 ScalaSignature payloads, 3,733 unrelated method bodies and all
+116 generated dumps. Only one package-private Java helper method is added.
+Evidence: `run/migration-field-access-reference/`.
 
-**Next bounded candidate: `ASMMixinCompiler.FieldMixin.accessName`.** Characterize private-flag selection, owner
-mangling, null handling and virtual accessor/failure ordering before extracting its body to an existing Java helper.
+**Next bounded candidate: `ASMMixinCompiler.MixinInfo.linearise`.** Characterize recursive parent order, repeated
+and diamond parents, virtual collection/parent dispatch and null/failure behavior before extracting its body.
 Keep case-class/product/serialization shapes and simple model accessors. Broader shell replacement and opcode
 algorithm fixes remain separate work.
 The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client
 generation, GPU output and full-pack checks remain manual.
 
 The JVM Downgrader checkpoint now supports Java 21 method-body syntax in `StackAnalyserLogic` while retaining
-Scala 2.11.5 on Java 8. The constant-type extraction uses that existing build stage; it adds no build configuration
-or runtime dependencies. See `JVM_DOWNGRADER_HANDOFF.md` for the original 398-test integration checkpoint.
+Scala 2.11.5 on Java 8. The field-name extraction stays in ordinary Java 8 joint compilation and adds no build
+configuration or runtime dependencies. See `JVM_DOWNGRADER_HANDOFF.md` for the original 398-test integration checkpoint.
 Finish the remaining useful behavior extractions and define the retained compilation boundary before a broad
 modern-syntax pass. Removing every remaining Scala declaration still requires the documented consumer/ABI work.
 
@@ -226,6 +226,10 @@ three options: leave it in Scala, invent a Java type to hold its members, or inl
 **Scala's uniform access hides field versus no-arg method.** `renderer.hasOverrideBlockTexture` reads the same in
 Scala either way; it is a method on `RenderBlocks` and Java needs the parentheses. It fails at compile time rather than
 silently, but expect it in every remaining renderer conversion.
+
+**Preserve inferred Scala return types.** Adding `: String` to `FieldMixin.accessName` changes its ScalaSignature
+payload despite preserving the JVM descriptor. Let the Java delegate's return type remain inferred and compare the
+metadata as well as callable signatures.
 
 **Java 8 target.** Joint main sources and tests cannot use `List.of`, `var` or switch expressions. The scoped
 `StackAnalyserLogic` stage supports verified Java 21 method bodies; its packaged output must still target Java 8.

@@ -39,6 +39,11 @@ final class MixinClassGenerator {
 
     private MixinClassGenerator() {}
 
+    static String fieldAccessName(FieldMixin field, String owner) {
+        if ((field.access() & ACC_PRIVATE) != 0) return owner.replace('/', '$') + "$$" + field.name();
+        return field.name();
+    }
+
     static Class<?> mixinClasses(String name, String superClass, Seq<String> traits, Map<String, MixinInfo> mixins,
             Function1<ClassInfo, Iterable<ClassInfo>> parents) throws ClassNotFoundException {
         ASMMixinCompiler$ compiler = ASMMixinCompiler$.MODULE$;
