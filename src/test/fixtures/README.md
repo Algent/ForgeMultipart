@@ -330,3 +330,18 @@ Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouche
 | `ReferenceScalaInterfaceNames` | `996493c5c2dbab7d71e4ecf6c5598d8bf371bd9af182f1f3ee57a8eea2c1c9e1` |
 | `ReferenceScalaInterfaceNames$$anon$1` | `448774963acc6afc1641d039ec79fc82b9e825de3cee65fc44e7fc4b6a238315` |
 | `ReferenceScalaInterfaceNames$$anon$2` | `ecf0adc32ca5cab232a8fcbed45acad8bda8091dd5ecdf10213e9ddfc13f8217` |
+
+### `ReferenceScalaAppliedTypeDescriptor`
+
+`scala/codechicken/multipart/compat/ReferenceScalaAppliedTypeDescriptor.scala` freezes a Scala caller and
+TypeRefType subclass with a virtual name supplier. Tests use it to preserve array/fallback routing and repeated reads.
+
+Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouched dev jar at `d5bf16f`
+(SHA-256 `822052863670e511283fa7941ea141cb2069233530524f232e07c4379e52f373`). Source SHA-256 is
+`e09a7b21b88c3cb184819b93822f5128374b881dce45efced79922b0b6c8e9af`. Frozen class files are under
+`src/test/resources/compat/`; do not regenerate them against the port.
+
+| Class | SHA-256 |
+| --- | --- |
+| `ReferenceScalaAppliedTypeDescriptor` | `40eebab873311f3fec01dd5678e1c12c3af959b7f357aa49ed9cca59e1889b99` |
+| `ReferenceScalaAppliedTypeDescriptor$$anon$1` | `0ac784d966048b6daa6715ead62360624a22d6a0927aba280c6d3908de11447e` |
