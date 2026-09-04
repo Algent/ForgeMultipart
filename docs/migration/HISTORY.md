@@ -1697,3 +1697,14 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   This fixes an extension-contract regression, without claiming a demonstrated current-pack gameplay failure.
   Evidence is under ignored `run/conversion-review/`; migration-plan changes remain deferred until the review fixes
   are complete.
+
+### 2026-09-04 — Microblock state accessor compatibility
+
+- Restored virtual shape/material getters and setters for geometry, material lookup, drops, pick-block, NBT and
+  description/incremental packets. The backing fields, JVM signatures and serialized formats remain unchanged.
+- Three new regression cases compiled against the original Scala jar pass there, fail on the unfixed Java port
+  and pass unchanged after the fix. The test material explicitly implements the original Scala interface defaults
+  and uses the retained registry companion so the same test source compiles against both versions.
+- Build/style checks, 526 JVM tests and 237 Java 8 Forge tests pass. ProjectRed extends `Microblock`, and consumers
+  use its shape/material accessors, but no supplied consumer overriding those accessors was found. Evidence is
+  under ignored `run/conversion-review/`; no migration-plan changes were made.

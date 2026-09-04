@@ -16,7 +16,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**523 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+**526 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 443 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,

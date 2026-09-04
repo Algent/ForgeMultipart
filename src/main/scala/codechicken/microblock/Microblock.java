@@ -81,23 +81,23 @@ public abstract class Microblock extends TMultiPart implements TCuboidPart {
     }
 
     public int getSize() {
-        return shape >> 4;
+        return shape() >> 4;
     }
 
     public int getShape() {
-        return shape & 0xF;
+        return shape() & 0xF;
     }
 
     public void setShape(int size, int slot) {
-        shape = (byte) (size << 4 | slot);
+        shape_$eq((byte) (size << 4 | slot));
     }
 
     public int getMaterial() {
-        return material;
+        return material();
     }
 
     public MicroMaterialRegistry.IMicroMaterial getIMaterial() {
-        return MicroMaterialRegistry.getMaterial(material);
+        return MicroMaterialRegistry.getMaterial(material());
     }
 
     public abstract int itemClassID();
@@ -114,7 +114,7 @@ public abstract class Microblock extends TMultiPart implements TCuboidPart {
                         ItemMicroPart.create(
                                 amount,
                                 size | itemClassID() << 8,
-                                MicroMaterialRegistry.materialName(material)));
+                                MicroMaterialRegistry.materialName(material())));
             }
         }
         return items;
@@ -126,7 +126,7 @@ public abstract class Microblock extends TMultiPart implements TCuboidPart {
         for (int itemSize = 4; itemSize > 0; itemSize /= 2) {
             if (size % itemSize == 0 && size / itemSize >= 1) {
                 return ItemMicroPart
-                        .create(itemSize | itemClassID() << 8, MicroMaterialRegistry.materialName(material));
+                        .create(itemSize | itemClassID() << 8, MicroMaterialRegistry.materialName(material()));
             }
         }
         return null;
@@ -134,17 +134,17 @@ public abstract class Microblock extends TMultiPart implements TCuboidPart {
 
     @Override
     public void writeDesc(MCDataOutput packet) {
-        MicroMaterialRegistry.writeMaterialID(packet, material);
-        packet.writeByte(shape);
+        MicroMaterialRegistry.writeMaterialID(packet, material());
+        packet.writeByte(shape());
     }
 
     @Override
     public void readDesc(MCDataInput packet) {
-        shape = packet.readByte();
+        shape_$eq(packet.readByte());
     }
 
     public void sendShapeUpdate() {
-        getWriteStream().writeByte(shape);
+        getWriteStream().writeByte(shape());
     }
 
     @Override
@@ -155,14 +155,14 @@ public abstract class Microblock extends TMultiPart implements TCuboidPart {
 
     @Override
     public void save(NBTTagCompound tag) {
-        tag.setByte("shape", shape);
-        tag.setString("material", MicroMaterialRegistry.materialName(material));
+        tag.setByte("shape", shape());
+        tag.setString("material", MicroMaterialRegistry.materialName(material()));
     }
 
     @Override
     public void load(NBTTagCompound tag) {
-        shape = tag.getByte("shape");
-        material = MicroMaterialRegistry.materialID(tag.getString("material"));
+        shape_$eq(tag.getByte("shape"));
+        material_$eq(MicroMaterialRegistry.materialID(tag.getString("material")));
     }
 
     public boolean isTransparent() {

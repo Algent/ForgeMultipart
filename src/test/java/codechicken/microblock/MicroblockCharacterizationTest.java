@@ -106,7 +106,7 @@ class MicroblockCharacterizationTest {
         if (MicroMaterialRegistry.getMaterial(MATERIAL_NAME) == null) {
             MicroMaterialRegistry.registerMaterial(MATERIAL, MATERIAL_NAME);
         }
-        MicroMaterialRegistry.setupIDMap();
+        MicroMaterialRegistry$.MODULE$.setupIDMap();
         materialId = MicroMaterialRegistry.materialID(MATERIAL_NAME);
         microClass = allocateInstance(TestMicroClass.class);
     }
@@ -247,6 +247,85 @@ class MicroblockCharacterizationTest {
         assertSame(loaded, tile.changedPart);
     }
 
+    @Test
+    void overriddenStateDrivesGeometryMaterialAndItems() {
+        AccessorMicroblock part = new AccessorMicroblock();
+        assertEquals(5, part.getSize());
+        assertEquals(2, part.getShape());
+        assertEquals(materialId, part.getMaterial());
+        assertSame(MATERIAL, part.getIMaterial());
+        assertEquals(2.5f, part.getStrength(null, null));
+        assertTrue(part.isTransparent());
+        assertEquals(11, part.getLightValue());
+        assertEquals(2f, part.explosionResistance(null));
+
+        part.setShape(7, 3);
+        assertEquals((byte) 0x73, part.shape());
+        assertEquals(1, part.shapeWrites);
+        ItemMicroPart previous = MicroblockProxy.itemMicro();
+        ItemMicroPart item = new ItemMicroPart();
+        MicroblockProxy.itemMicro_$eq(item);
+        try {
+            List<ItemStack> drops = part.getDrops();
+            assertEquals(3, drops.size());
+            assertItem(drops.get(0), item, 1, 7 << 8 | 4);
+            assertItem(drops.get(1), item, 1, 7 << 8 | 2);
+            assertItem(drops.get(2), item, 1, 7 << 8 | 1);
+            part.setShape(6, 1);
+            assertItem(part.pickItem(null), item, 1, 7 << 8 | 2);
+        } finally {
+            MicroblockProxy.itemMicro_$eq(previous);
+        }
+        part.setShape(8, 15);
+        assertEquals(-8, part.getSize());
+        assertEquals(15, part.getShape());
+    }
+
+    @Test
+    void overriddenStateIsWrittenToDescriptionsNbtAndUpdates() {
+        AccessorMicroblock part = new AccessorMicroblock();
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        part.writeDesc(output(bytes));
+        assertArrayEquals(new byte[] { (byte) materialId, (byte) 0x52 }, bytes.toByteArray());
+        NBTTagCompound tag = new NBTTagCompound();
+        part.save(tag);
+        assertEquals((byte) 0x52, tag.getByte("shape"));
+        assertEquals(MATERIAL_NAME, tag.getString("material"));
+
+        bytes.reset();
+        RecordingTile tile = new RecordingTile();
+        tile.output = output(bytes);
+        part.bind(tile);
+        part.sendShapeUpdate();
+        assertArrayEquals(new byte[] { (byte) 0x52 }, bytes.toByteArray());
+    }
+
+    @Test
+    void overriddenSettersReceiveLoadedStateAndNetworkUpdates() {
+        AccessorMicroblock part = new AccessorMicroblock();
+        NBTTagCompound tag = new NBTTagCompound();
+        tag.setByte("shape", (byte) 0x31);
+        tag.setString("material", MissingMicroMaterial.key());
+        part.load(tag);
+        assertEquals((byte) 0x31, part.shape());
+        assertEquals(MicroMaterialRegistry.getMissingId(), part.material());
+        assertEquals(1, part.shapeWrites);
+        assertEquals(1, part.materialWrites);
+
+        part.readDesc(input((byte) 0x42));
+        assertEquals((byte) 0x42, part.shape());
+        assertEquals(2, part.shapeWrites);
+        RecordingTile tile = new RecordingTile();
+        part.bind(tile);
+        part.read(input((byte) 0x63));
+        assertEquals((byte) 0x63, part.shape());
+        assertEquals(3, part.shapeWrites);
+        assertEquals(1, part.materialWrites);
+        assertEquals(1, tile.renderMarks);
+        assertEquals(1, tile.partChanges);
+        assertSame(part, tile.changedPart);
+    }
+
     private static void assertTrait(Class<?> type, Class<?>[] interfaces, Set<String> methods) {
         assertTrue(type.isInterface());
         assertArrayEquals(interfaces, type.getInterfaces());
@@ -315,7 +394,7 @@ class MicroblockCharacterizationTest {
         return (T) unsafe.getMethod("allocateInstance", Class.class).invoke(field.get(null), type);
     }
 
-    private static final class TestMicroblock extends Microblock {
+    private static class TestMicroblock extends Microblock {
 
         private static final Cuboid6 BOUNDS = new Cuboid6(0, 0, 0, 0.5, 0.75, 1);
 
@@ -336,6 +415,40 @@ class MicroblockCharacterizationTest {
         @Override
         public Cuboid6 getBounds() {
             return BOUNDS;
+        }
+    }
+
+    private static final class AccessorMicroblock extends TestMicroblock {
+
+        private int overriddenMaterial = materialId;
+        private byte overriddenShape = 0x52;
+        private int materialWrites;
+        private int shapeWrites;
+
+        private AccessorMicroblock() {
+            super(MicroMaterialRegistry.getMissingId());
+        }
+
+        @Override
+        public int material() {
+            return overriddenMaterial;
+        }
+
+        @Override
+        public void material_$eq(int value) {
+            materialWrites++;
+            overriddenMaterial = value;
+        }
+
+        @Override
+        public byte shape() {
+            return overriddenShape;
+        }
+
+        @Override
+        public void shape_$eq(byte value) {
+            shapeWrites++;
+            overriddenShape = value;
         }
     }
 
@@ -387,6 +500,19 @@ class MicroblockCharacterizationTest {
     }
 
     private static final class TestMaterial implements IMicroMaterial {
+
+        @Override
+        public boolean isSolid() {
+            return !isTransparent();
+        }
+
+        @Override
+        public void loadIcons() {}
+
+        @Override
+        public boolean canRenderInPass(int pass) {
+            return pass == 0;
+        }
 
         @Override
         public IIcon getBreakingIcon(int side) {
