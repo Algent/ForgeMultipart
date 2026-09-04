@@ -16,24 +16,24 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**435 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
-files and 9 Scala files / 765 nonblank Scala lines**. The packaged inventory has 443 classes.
+**442 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+files and 9 Scala files / 762 nonblank Scala lines**. The packaged inventory has 443 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
 virtual tile accessor dispatch throughout `TMultiPart`, and null-safe equality for scheduled-tick deduplication.
 Six JVM and two Forge regression cases cover the fixes. Callable signatures remain unchanged; the packet traversal
 callback adds one anonymous class. See the latest history entries for the individual fixes and validation.
 
-Latest bounded target: `ScalaSignature.Bytes.section` delegates to `ScalaSignatureParser.section`.
-Six characterization tests were committed first as `13de853`. They pin independent drop/take clamping, fresh arrays,
-virtual getter order, source mutations and failure ordering. The first array copy completes before `len()` is read,
-so mutations from that getter do not affect the result. Scala retains the model/companion and serialization shape.
-All 435 frozen JVM consumers pass; checks preserve 442 retained class/member APIs, all 17 ScalaSignature payloads,
-3,732 unrelated method bodies and all 116 generated dumps. Evidence: `run/migration-bytes-section-reference/`.
-The preceding `MixinInfo.linearise` extraction is recorded in history and `run/migration-linearise-reference/`.
+Latest bounded target: `ScalaSignature.TypeRef.jName` delegates normalization to `ScalaSignatureParser.typeName`.
+Seven characterization tests were committed first as `ac1182e`. They pin dot-to-slash conversion, exact Any/AnyRef
+aliases, string identity, virtual name/symbol reads, nulls and failures, the static trait helper and SingleType's
+super dispatch. Scala reads `name` once and passes only a String to Java; the path-dependent trait/models and
+serialization shapes remain intact. All 442 frozen JVM consumers pass; checks preserve 442 retained class/member
+APIs, all 17 ScalaSignature payloads, 3,733 unrelated method bodies and all 116 generated dumps.
+Evidence: `run/migration-type-name-reference/`.
 
-**Next bounded candidate: `ScalaSignature.TypeRef.jName`.** Characterize slash normalization, Any/AnyRef aliases,
-virtual name dispatch and null/failure behavior while retaining the trait and path-dependent model declarations.
+**Next bounded candidate: `ScalaSignature.TypeRef.jDesc`.** Characterize primitive/array cases, unmatched names,
+virtual `jName` fallback and null/failure order. Keep TypeRefType's array override and SingleType's super shell.
 Keep case-class/product/serialization shapes and simple model accessors. Broader shell replacement and opcode
 algorithm fixes remain separate work.
 The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client

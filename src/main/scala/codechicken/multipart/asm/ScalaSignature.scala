@@ -124,10 +124,7 @@ class ScalaSignature(val bytes: Bytes) {
     def sym: SymbolRef
     def name = sym.full
 
-    def jName = name.replace('.', '/') match {
-      case "scala/AnyRef" | "scala/Any" => "java/lang/Object"
-      case s                            => s
-    }
+    def jName = ScalaSignatureParser.typeName(name)
 
     def jDesc = name match {
       case "scala.Array"   => null

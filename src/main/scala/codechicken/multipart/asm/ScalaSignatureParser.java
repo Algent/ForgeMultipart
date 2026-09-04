@@ -20,6 +20,12 @@ final class ScalaSignatureParser {
 
     private ScalaSignatureParser() {}
 
+    static String typeName(String name) {
+        String internalName = name.replace('.', '/');
+        if ("scala/AnyRef".equals(internalName) || "scala/Any".equals(internalName)) return "java/lang/Object";
+        return internalName;
+    }
+
     static byte[] section(Bytes bytes) {
         byte[] array = bytes.arr();
         int start = bytes.pos();

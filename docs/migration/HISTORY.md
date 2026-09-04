@@ -1435,3 +1435,25 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Source totals remain 224 Java files and nine Scala files / 765 nonblank lines. Next bounded candidate:
   `ScalaSignature.TypeRef.jName`, preserving name normalization, aliases and virtual dispatch while retaining
   path-dependent model declarations and trait bridges. Descriptor conversion remains a separate target.
+
+### 2026-09-04 — ScalaSignature type names
+
+- Committed seven JVM characterization cases first as `ac1182e`, against the untouched Scala `TypeRef.jName`.
+  They cover literal dot-to-slash conversion, exact normalized Any/AnyRef aliases, unchanged string identities,
+  primitive/descriptor-looking inputs, virtual name reads, default symbol/full lookup, nulls and getter failures.
+  They also exercise SingleType's retained super call and descriptor routing, NoType's name override, and the
+  legacy static `TypeRef$class.jName(TypeRef)` descriptor with a proxy that supplies only `name()`.
+- Extracted normalization into `ScalaSignatureParser.typeName(String)`. Scala retains the single virtual `name`
+  read before entering Java, so the helper needs no path-dependent model parameter or callback. Trait declarations,
+  static helper/forwarder descriptors, SingleType's super shell and serialization shapes remain unchanged. The
+  existing Java 8 joint-compilation path suffices; no dependency or build configuration changes are needed.
+- Normal and clean builds pass formatting/checkstyle, 442 JVM tests, all 442 frozen JVM consumers, and 237 Java 8
+  Forge tests, with zero failures/errors/skips. All 116 generated dump names and hashes match. Both jars contain
+  443 Java 8 classes, with matching packaged sources. Comparison preserves 442 retained class/member APIs, all 17
+  ScalaSignature payloads and 3,733 unrelated method bodies. The Java helper adds only one package-private method;
+  no class is added or removed and no new effective divergence is introduced.
+- Evidence, frozen tests/resources and rerun tools are under ignored `run/migration-type-name-reference/`.
+  Use its `version.txt` with `frozen-consumers.gradle` to retain the existing inlined-version assertions. Ordinary
+  final builds use the committed Git version. Source totals are 224 Java files and nine Scala files / 762 nonblank
+  lines. Next candidate: `ScalaSignature.TypeRef.jDesc`, preserving primitive/array cases, virtual fallback and
+  failure order while retaining the model overrides and trait bridges.
