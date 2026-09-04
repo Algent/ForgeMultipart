@@ -53,6 +53,61 @@ class PacketSchedulerFunctionalTest {
     }
 
     @Test
+    void callbacksCanScheduleAnotherPartDuringTheFlush() {
+        RecordingPart first = boundPart(1, 0);
+        RecordingPart second = boundPart(1, 1);
+        // These hashes place the new entry in a bucket still ahead of Scala's original traversal.
+        RecordingPart added = boundPart(1, 3);
+        first.onWrite = () -> PacketScheduler.schedulePacket(added, 0x4L);
+        second.onWrite = first.onWrite;
+        try {
+            PacketScheduler.schedulePacket(first, 0x1L);
+            PacketScheduler.schedulePacket(second, 0x2L);
+            sendScheduled();
+
+            assertEquals(Collections.singletonList(0x1L), first.written);
+            assertEquals(Collections.singletonList(0x2L), second.written);
+            assertEquals(Collections.singletonList(0x4L), added.written);
+            sendScheduled();
+            assertEquals(1, first.written.size());
+            assertEquals(1, second.written.size());
+            assertEquals(1, added.written.size());
+        } finally {
+            first.tile_$eq(null);
+            second.tile_$eq(null);
+            added.tile_$eq(null);
+            sendScheduled();
+        }
+    }
+
+    @Test
+    void callbacksMergeMasksIntoEntriesThatHaveNotBeenWrittenYet() {
+        RecordingPart first = boundPart(1, 0);
+        RecordingPart second = boundPart(1, 1);
+        first.onWrite = () -> PacketScheduler.schedulePacket(second, 0x4L);
+        second.onWrite = () -> PacketScheduler.schedulePacket(first, 0x8L);
+        try {
+            PacketScheduler.schedulePacket(first, 0x1L);
+            PacketScheduler.schedulePacket(second, 0x2L);
+            sendScheduled();
+
+            assertEquals(1, first.written.size());
+            assertEquals(1, second.written.size());
+            assertTrue(
+                    first.written.get(0) == 0x9L && second.written.get(0) == 0x2L
+                            || first.written.get(0) == 0x1L && second.written.get(0) == 0x6L,
+                    "Whichever part is visited second must receive the mask added by the first callback");
+            sendScheduled();
+            assertEquals(1, first.written.size());
+            assertEquals(1, second.written.size());
+        } finally {
+            first.tile_$eq(null);
+            second.tile_$eq(null);
+            sendScheduled();
+        }
+    }
+
+    @Test
     void aPartThatLostItsTileIsSkippedButStillCleared() {
         RecordingPart part = boundPart(1);
         PacketScheduler.schedulePacket(part, 0x7L);
@@ -98,7 +153,11 @@ class PacketSchedulerFunctionalTest {
     }
 
     private static RecordingPart boundPart(int maskWidth) {
-        RecordingPart part = new RecordingPart(maskWidth);
+        return boundPart(maskWidth, 0);
+    }
+
+    private static RecordingPart boundPart(int maskWidth, int hash) {
+        RecordingPart part = new RecordingPart(maskWidth, hash);
         TileMultipart tile = MultipartHelper.createTileFromParts(Collections.<TMultiPart>singletonList(part));
         assertNotNull(tile);
         World world = MinecraftServer.getServer().worldServers[0];
@@ -113,10 +172,18 @@ class PacketSchedulerFunctionalTest {
     private static final class RecordingPart extends TMultiPart implements IScheduledPacketPart {
 
         private final int maskWidth;
+        private final int hash;
         final List<Long> written = new ArrayList<>();
+        Runnable onWrite;
 
-        RecordingPart(int maskWidth) {
+        RecordingPart(int maskWidth, int hash) {
             this.maskWidth = maskWidth;
+            this.hash = hash;
+        }
+
+        @Override
+        public int hashCode() {
+            return hash;
         }
 
         @Override
@@ -132,6 +199,9 @@ class PacketSchedulerFunctionalTest {
         @Override
         public void writeScheduled(long mask, MCDataOutput packet) {
             written.add(mask);
+            if (onWrite != null) {
+                onWrite.run();
+            }
         }
 
         @Override

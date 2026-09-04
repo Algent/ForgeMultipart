@@ -1266,3 +1266,14 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   Scala shell/models; keep opcode fixes separate. The client manual row now names Stone/Glass covers and
   ProjectRed Inverted White Lamp microblocks, including a server rejoin. Headless probes do not establish actual
   client generation, GPU output or full-pack correctness; those checks remain unrecorded release gates.
+
+### 2026-09-04 — Packet scheduler callback regression
+
+- Restored the original Scala mutable hash-map `foreach` traversal behind `PacketScheduler`'s Java API. Java's
+  fail-fast iterator threw `ConcurrentModificationException` when a write callback scheduled another part. Keeping
+  the reference collection also preserves live mask updates, hash-bucket visitation and clearing after a successful
+  flush; no new batching or callback timing policy is introduced.
+- Added two Forge regression cases for scheduling a new part during a flush and merging masks into an existing
+  pending entry. The first failed with the reported exception before the fix. The new-entry hash placement was
+  checked against the original Scala implementation under Java 8.
+- Formatting, test checkstyle, all four packet-interface JVM tests and all 237 Forge server tests pass.
