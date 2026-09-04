@@ -345,3 +345,18 @@ Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouche
 | --- | --- |
 | `ReferenceScalaAppliedTypeDescriptor` | `40eebab873311f3fec01dd5678e1c12c3af959b7f357aa49ed9cca59e1889b99` |
 | `ReferenceScalaAppliedTypeDescriptor$$anon$1` | `0ac784d966048b6daa6715ead62360624a22d6a0927aba280c6d3908de11447e` |
+
+### `ReferenceScalaClassSymbolFull`
+
+`scala/codechicken/multipart/compat/ReferenceScalaClassSymbolFull.scala` freezes a Scala caller and direct
+ClassSymbolRef implementation. Tests use it to preserve the old trait helper, virtual owner/name reads and failures.
+
+Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouched dev jar at `24c7723`
+(SHA-256 `40c5851ad982190b2f44cd7473d8fb3ab73e0dc3d3bfa2911de06b924532248d`). Source SHA-256 is
+`3744035617fbe0a1619d20ae2a44259e9aea9ea3dfa16d19a1c9b57daef0ffee`. Frozen class files are under
+`src/test/resources/compat/`; do not regenerate them against the port.
+
+| Class | SHA-256 |
+| --- | --- |
+| `ReferenceScalaClassSymbolFull` | `77498a049a18080a67b557b1751c7f8ab905b9f832ebd680db822e5447ea0799` |
+| `ReferenceScalaClassSymbolFull$$anon$1` | `df9d4c907de922b6e917ea848e40f746ef446bf601dbda4b8d9f9761403b5f46` |
