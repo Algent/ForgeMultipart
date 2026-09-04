@@ -7,6 +7,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 | Document | Purpose |
 | --- | --- |
 | [Plan](JAVA_MIGRATION.md) | Phase gates, API policy and upstream cleanup |
+| [Java API index](docs/API.md) | Consumer entry points, guides, compiling examples and remaining API gaps |
 | [ABI inventory](JAVA_MIGRATION_ABI_INVENTORY.md) | Shipping binary names/descriptors and reflective constraints |
 | [Consumer audit](JAVA_MIGRATION_CONSUMER_AUDIT.md) | Runtime behavior, data/lifecycle contracts and consumer source |
 | [Divergences](JAVA_MIGRATION_DIVERGENCES.md) | Intentional effective compatibility differences |
@@ -16,7 +17,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**542 plain-JVM tests and 239 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+**549 plain-JVM tests and 242 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 443 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
@@ -31,32 +32,34 @@ use, but no override triggering these three regressions was found. All 443 class
 payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
 followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
-Latest API addition: `TileMultipart.forEachPart(Consumer)` reuses the existing adapter and virtual `operate` hook.
-`jPartList()` now documents its captured-sequence view. Both legacy getter/callback entries are deprecated while
-retaining their descriptors and bodies. Three baseline tests were committed first as `5c1e760`; four further JVM cases,
-a compiling Java example and one Forge generated-tile case cover the new API. All 538 pre-change compiled tests pass
-with their recorded version. The 443 class APIs retain all existing members, with one method added; 17 ScalaSignature
-payloads, 3,747 existing method bodies and 116 generated dumps are unchanged apart from expected deprecation metadata
-and build-version literals. Evidence: `run/migration-part-traversal-reference/`.
+Latest API addition: `TileMultipart.setPartList(List)` copies Java list storage through the legacy setter, and
+`loadPartList(Collection)` delegates through the legacy Scala loader. Storage assignment and binding/cache rebuilding
+have separate documented contracts. Both old entries are deprecated while retaining their descriptors and bodies.
+Four JVM and one Forge baseline cases were committed first as `92273bd`; three further JVM cases, a Java example
+and two Forge cases cover the new methods on generated server/client tiles. All 546 pre-change compiled JVM tests
+pass with their recorded version. The 443 class APIs retain all existing members, with two methods added; 17
+ScalaSignature payloads, 3,748 existing method bodies and 116 generated dumps are unchanged apart from expected
+deprecation metadata and build-version literals. Evidence: `run/migration-part-loading-reference/`.
 
-The [part traversal guide](docs/api/PART_TRAVERSAL.md) covers ownership, callback mutation/reentrancy, failure timing,
-detached/rebound parts and override dispatch. Lifecycle still uses `operate`; overriding `forEachPart` alone does not
-intercept lifecycle callbacks. The adoption ledger names five legacy-getter consumers and the remaining GuideNH
-setter/loading gap. The installed `+719` pack rescan matches every member/type/reflection row in the `+678` floor:
-27 consumers, 35 inherited types, 255 members, 76 other types and 20 strings. Consumer releases/adoption remain pending.
+Naming correction: the planned `loadParts(Collection)` overload made javac require `scala.collection.Iterable` even
+for Java arguments. The distinct `loadPartList` name allows compilation without Scala on the example's classpath.
+Keep this compilation gate for remaining occlusion/registration APIs; checking only imports or bytecode is insufficient.
+Internal storage writes and reconstruction still dispatch through the old setter/loader hooks, not the Java siblings.
 
-`MicroMaterialRegistry.materialCount()` and its indexed lookups are also complete, with both `getIdMap()` entries
-deprecated; see the [material enumeration guide](docs/api/MATERIAL_ENUMERATION.md) and previous history entry.
-The supplied consumer checkouts remain reference-only.
+The [API index](docs/API.md) now orients consumers to entry points, compiling examples and migration status. Material
+enumeration and tile read/traversal access are also complete; use their guides rather than treating them as missing
+APIs. GuideNH and Schematica have Java loading replacements, but their source changes, other reflection/extension
+contracts, releases and pack adoption remain pending. The supplied checkouts remain reference-only. The installed
+`+719` pack scan retains the `+678` floor: 27 consumers, 35 inherited types, 255 members, 76 other types and 20 strings.
 
 **Next priority: close the Java API gaps in Phases 2 and 9 and map consumer migrations in Phase 10.** Reuse the existing
 Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
 subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
 are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
-The next bounded API candidate is Java tile loading/state access: `loadParts(Collection<TMultiPart>)` and
-`setPartList(List<TMultiPart>)`, with distinct binding/lifecycle contracts and preserved legacy setter/loading dispatch.
-GuideNH's client-tile reconstruction makes the old descriptors load-bearing. Do not repeat material enumeration or
-tile read/traversal access as unimplemented gaps, or treat FMP-side completion as consumer adoption.
+The next bounded API candidate is Java collection-based occlusion testing. Verify legacy override dispatch, both
+directions of occlusion checks, ordering/failures, and compilation without Scala before choosing the Java entry name.
+The tentative same-name overload may have the same compiler constraint as loading. Registry registration guidance
+and bridges remain another pending API slice. FMP-side completion does not establish consumer adoption.
 
 Pause mechanical extraction of retained Scala shells unless it enables that API, fixes a demonstrated issue or has
 a measured benefit. `ScalaSignature.ClassSymbolRef.info` remains an optional bounded extraction, not the default next

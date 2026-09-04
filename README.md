@@ -15,7 +15,5 @@ If you only want to use the API and not modify it:
 
 Implementation of all parts of the API should be clean and easy in Java. The minecraft multipart mod is implemented in java as a test case.
 
-Java API migration guides:
-
-* [Enumerating microblock materials](docs/api/MATERIAL_ENUMERATION.md), including a compiling example and legacy API replacements.
-* [Reading and visiting multipart parts](docs/api/PART_TRAVERSAL.md), including collection ownership, callback behavior and legacy overrides.
+See the [Java API index](docs/API.md) for supported entry points, compiling examples, ownership/lifecycle contracts
+and migration status. It links to the material enumeration, part traversal and tile loading guides.

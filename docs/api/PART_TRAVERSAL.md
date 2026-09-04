@@ -1,5 +1,7 @@
 # Reading and visiting multipart parts from Java
 
+[API index](../API.md)
+
 Use `TileMultipart.jPartList()` for ordered collection access. The `algent/java` branch also adds
 `forEachPart(Consumer<TMultiPart>)` for callbacks that skip detached parts. Consumers using the new method must require
 an FMP release containing it; no minimum released version is established yet. Both methods work on generated tiles.
@@ -92,8 +94,8 @@ must retain their original order, filters and aggregation. Those mods can remain
 collection methods. Existing Java consumers already using `jPartList()` need no rename.
 
 GuideNH also reflects `partList`, `partList_$eq` and `loadParts` while reconstructing client tiles. Moving read-only
-uses to the Java getter does not migrate its setter/loading contracts. Their Java replacements and the consumer patch,
-release and pack adoption remain separate work. No reference checkout was edited.
+uses to the Java getter does not migrate its setter/loading contracts. Their [Java replacements](PART_LOADING.md)
+are implemented; the consumer patch, release and pack adoption remain separate work. No reference checkout was edited.
 
 The [adoption ledger](../../JAVA_MIGRATION_CONSUMER_AUDIT.md#java-api-adoption-ledger) records inspected revisions and
 the remaining release gates. JVM checks cover both getter forms, mutable storage, callback mutation/reentrancy,

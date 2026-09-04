@@ -77,6 +77,23 @@ class TileMultipartClientFunctionalTest {
     }
 
     @Test
+    void javaStorageAndLoadingWorkOnTheGeneratedClientTile() throws Exception {
+        TileMultipart tile = newClientTile();
+        TileMultipartClient client = (TileMultipartClient) tile;
+        tile.setPartList(null);
+        invokeUpdateRenderCache(client);
+        assertEquals(0, staticCache(client).length);
+        RenderPart part = new RenderPart("loaded", false, false, Cuboid6.full);
+        tile.setPartList(Arrays.asList(part));
+        assertNull(part.tile(), "Storage assignment does not bind client parts");
+        tile.loadPartList(tile.jPartList());
+        assertSame(tile, part.tile());
+        invokeUpdateRenderCache(client);
+        assertArrayEquals(new TMultiPart[] { part }, staticCache(client));
+        assertEquals(0, dynamicCache(client).length);
+    }
+
+    @Test
     void emptyPartsUseFullLocalBoundsAndLazyQueriesPopulateBothCaches() throws Exception {
         TileMultipart tile = newClientTile();
         tile.xCoord = 4;

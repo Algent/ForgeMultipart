@@ -199,9 +199,10 @@ Types used only for `isInstanceOf`: `BlockMultipart`, `TileMultipart`, `TileMult
    companion and pins `MicroblockClass`'s fully qualified name. Widening a parameter or renaming the class breaks the
    lookup even though every call site still links.
 
-3. **`TileMultipart.partList_$eq(scala.collection.Seq)` is reflectively load-bearing.** It is a Scala `var` setter with
-   no Java-facing equivalent, so a Java-first port that drops it in favour of a list mutator would break guidenh
-   invisibly. The current port keeps it, verified by `javap`. `resolvePartList` also falls back to a public *field*
+3. **`TileMultipart.partList_$eq(scala.collection.Seq)` is reflectively load-bearing.** The branch now supplies
+   `setPartList(java.util.List)` and `loadPartList(java.util.Collection)`, while retaining the exact legacy setter and
+   loader descriptors and override dispatch. Dropping the old setter in favor of the Java method would still break
+   guidenh invisibly. Exact and assignability-based reflective tests cover both legacy contracts. `resolvePartList` also falls back to a public *field*
    named `partList`, which never existed — Scala emits the field private — so that path is dead in the reference too.
 
 `MultipartHelper$` is retained on the strength of the fallback path alone: the static is found first today, so the

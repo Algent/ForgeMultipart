@@ -1763,3 +1763,24 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Rescanned the installed GTNH daily `2026-09-04+719`: 241 jars scanned, one FMP jar excluded, 27 consumers. All
   386 member/type/reflection rows match the frozen `+678` inventory; consumer version changes do not permit bridge
   removal. Reference checkouts were not modified. Evidence: `run/migration-part-traversal-reference/`.
+
+### 2026-09-05 — Java tile loading/state API and documentation index
+
+- Committed four JVM and one Forge baseline cases first as `92273bd`. They pin storage aliasing/null state, binding
+  and cache-hook order, stale ticking/old bindings, partial failures, exact/assignable reflection and generated slots.
+  Saved the pre-API jar, source, reports, 116 generated dumps and all 546 compiled JVM tests before implementation.
+- Added `setPartList(List<TMultiPart>)` through the old setter and `loadPartList(Collection<TMultiPart>)` through
+  the old loader. The Java setter copies non-null list storage and retains the null sentinel; loading retains the
+  input's iteration behavior, callback order and partial failures. Old hooks/descriptors remain supported and deprecated.
+- Changed the planned loader name after the `loadParts(Collection)` trial made javac require Scala's `Iterable`
+  during overload resolution with a Java list. The distinct `loadPartList` entry lets the example compile without
+  Scala on its classpath. Added this compile check to the remaining API gates; no existing method was renamed.
+- Added three JVM cases, a compiling Java example and two Forge cases for server slots/notifications and generated
+  client storage/loading/render-cache queries. Normal/clean build/style checks pass with 549 JVM and 242 Java 8 Forge
+  tests; all 546 frozen pre-change JVM tests also pass. Real client-world/GPU preview checks remain manual.
+- All 443 class APIs retain their existing members, with exactly two new public instance methods and two deprecations.
+  All 17 ScalaSignature payloads, 3,748 existing method bodies and 116 generated dumps remain unchanged, allowing only
+  the expected deprecation metadata and build-version literals. No production class or dependency is added.
+- Added `docs/API.md` as the consumer entry point, a loading/storage guide, compiling examples, and reciprocal guide
+  links. Updated the plan, ABI notes and GuideNH/Schematica adoption ledger; reference checkouts remain unchanged and
+  consumer releases/pack adoption are pending. Evidence: `run/migration-part-loading-reference/`.

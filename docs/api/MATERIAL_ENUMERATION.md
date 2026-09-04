@@ -1,5 +1,7 @@
 # Enumerating microblock materials from Java
 
+[API index](../API.md)
+
 The `algent/java` branch adds `MicroMaterialRegistry.materialCount()`. Use it with the existing
 `materialName(int)` and `getMaterial(int)` methods to enumerate materials without importing Scala types.
 This API is not yet tied to a published release; consumers must require an FMP version containing the addition.

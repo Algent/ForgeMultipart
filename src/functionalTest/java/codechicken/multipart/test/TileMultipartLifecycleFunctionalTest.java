@@ -165,6 +165,19 @@ class TileMultipartLifecycleFunctionalTest {
         checkLoading((tile, parts) -> tile.loadParts(JavaConversions.asScalaBuffer(parts).toList()));
     }
 
+    @Test
+    void javaLoadingRebuildsGeneratedSlotsAfterStorageOnlyAssignment() {
+        checkLoading((tile, parts) -> {
+            TMultiPart old = tile.partMap(2);
+            tile.setPartList(parts);
+            assertSame(old, tile.partMap(2), "The setter must not rebuild trait caches");
+            assertNull(tile.partMap(7));
+            assertNull(parts.get(0).tile());
+            assertEquals(parts, tile.jPartList());
+            tile.loadPartList(tile.jPartList());
+        });
+    }
+
     private static void checkLoading(BiConsumer<TileMultipart, List<TMultiPart>> load) {
         World world = world();
         clear(world, LOADING_POS);

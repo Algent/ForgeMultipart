@@ -491,10 +491,9 @@ behavior:
 ## Java API adoption ledger
 
 This ledger tracks migration of a specific legacy contract, not completion of an entire consumer's migration.
-Material enumeration and tile collection/traversal access are implemented on `algent/java`, with
-[material](docs/api/MATERIAL_ENUMERATION.md) and [part traversal](docs/api/PART_TRAVERSAL.md) guides and compiling Java
-examples. Neither addition is yet tied to a released minimum dependency version. Unlisted contracts remain governed
-by the inventories above.
+Material enumeration, tile collection/traversal access and tile loading/storage assignment are implemented on
+`algent/java`. The [API index](docs/API.md) links the guides and compiling Java examples. These additions are not yet
+tied to a released minimum dependency version. Unlisted contracts remain governed by the inventories above.
 
 | Legacy contract | Consumer and inspected source | Supported replacement | Consumer migration/release | Target-pack adoption and removal gate |
 | --- | --- | --- | --- | --- |
@@ -504,7 +503,8 @@ by the inventories above.
 | `TileMultipart.partList(): scala.collection.Seq` | OpenComputers `2c00f79be24b`: cable/print/network searches and aggregation | `jPartList()` with the same search/aggregation semantics | Source patch and release pending | No migrated pack version verified; retain the getter |
 | `TileMultipart.partList(): scala.collection.Seq` | AE2 `87f2b3817c2a`: `FMPPlacementHelper.getPart` and `removePart` | Iterate `jPartList()`; retain last-match lookup and removal/break behavior | Source patch and release pending | No migrated pack version verified; retain the getter |
 | `TileMultipart.partList(): scala.collection.Seq` | Extra Utilities 1.2.12: multipart renderer iterators | Iterate `jPartList()` without adding detached-part filtering | Retirement/replacement pending | Confirm absence or migration in the target pack before retiring the getter |
-| `TileMultipart.partList(): scala.collection.Seq` plus reflective getter/setter/loading | GuideNH `7d8fb44e77b9`: `Ae2ForgeMultipartBridge`, `ForgeMultipartHelpers` | `jPartList()` for reads; Java setter/loading replacements still pending | Read migration alone does not migrate client-tile reconstruction | Retain `partList`, `partList_$eq` and `loadParts` until their separate gates pass |
+| `TileMultipart.partList(): scala.collection.Seq` plus reflective getter/setter/loading | GuideNH `7d8fb44e77b9`: `Ae2ForgeMultipartBridge`, `ForgeMultipartHelpers` | `jPartList()` for reads, `setPartList(List)` for staging, `loadPartList(Collection)` for binding/cache reconstruction | Source patch and release pending; preserve world/position setup and following tile/render notifications | Retain the legacy getter/setter/loader until adoption; companion-only generator migration is separate |
+| `TileMultipart.loadParts(scala.collection.Iterable)` exact reflection | Schematica `3b03ee937953`: `nbt.ForgeMultipart` | Reflect `loadPartList(Collection.class)` and pass its existing Java part list directly | Source patch and release pending; registry map and generator reflection remain separate contracts | No migrated pack version verified; retain the Scala loader descriptor |
 
 Evidence for the FMP addition is under ignored `run/migration-material-enumeration-reference/`. The original
 reference-compiled Scala consumer still exercises the companion and tuple-array descriptor. The new compiling Java
@@ -530,6 +530,14 @@ The installed GTNH daily `2026-09-04+719` rescan scanned 241 jars and excluded o
 reference the exact same 35 inherited types, 255 members, 76 other types and 20 reflection strings as the frozen
 `+678` inventory, compared by full row rather than counts alone. The report is archived with the traversal evidence;
 source revisions above remain the inspected checkout revisions, not a claim of source parity with every newer jar.
+
+Loading/storage evidence is under ignored `run/migration-part-loading-reference/`. The supplied source search found
+no FMP loader/setter overrides or `setPartList`/`loadPartList` name collisions; GuideNH's assignability-based selection and Schematica's
+exact Scala-parameter lookup remain pinned. The Java setter copies non-null list storage while the old setter retains
+its exact sequence; neither binds parts. The loader retains callback order, client/server branching and partial
+failure behavior. All 546 pre-change compiled JVM tests pass with their recorded version; generated tile checks cover
+server slot rebuilding/notifications and client storage/loading/render-cache queries. Actual client preview rendering,
+consumer release and pack adoption are still separate gates.
 
 ## Practical priority for the current branch
 

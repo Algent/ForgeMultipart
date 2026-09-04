@@ -53,8 +53,29 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         return partList;
     }
 
+    /**
+     * @deprecated Use {@link #setPartList(List)} for Java storage assignment. This legacy hook retains the exact
+     *             supplied sequence, including mutable storage or null; existing overrides remain supported.
+     */
+    @Deprecated
     public void partList_$eq(Seq<TMultiPart> parts) {
         partList = parts;
+    }
+
+    /**
+     * Assigns a shallow, immutable copy of the supplied list through the legacy {@link #partList_$eq(Seq)} hook.
+     * Preserves order, duplicate entries and part identities. Later list edits do not affect the stored sequence.
+     *
+     * <p>
+     * This is low-level storage assignment for reconstruction. It does not bind parts, rebuild trait caches, change
+     * ticking or send notifications. Use {@link #loadPartList(Collection)} to load a correctly prepared composite tile;
+     * use {@link #addPart(World, BlockCoord, TMultiPart)} / {@link #remPart(TMultiPart)} for normal world changes.
+     * Existing setter overrides can customize storage. Internal writes still call the legacy hook directly.
+     *
+     * @param parts list to copy; null preserves the legacy unset-state sentinel, and null entries are not validated
+     */
+    public void setPartList(List<TMultiPart> parts) {
+        partList_$eq(parts == null ? null : toSeq(parts));
     }
 
     public void from(TileMultipart that) {
@@ -520,6 +541,35 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
     /** Remove this part from internal cache. Provided for trait overrides, do not call externally. */
     public void partRemoved(TMultiPart part, int p) {}
 
+    /**
+     * Loads parts into an already prepared composite tile through the legacy
+     * {@link #loadParts(scala.collection.Iterable)} hook. Clears trait caches, then stores and binds each input part in
+     * collection iteration order. The collection is viewed during the call, not copied in advance; do not structurally
+     * modify it from callbacks.
+     *
+     * <p>
+     * With a world, the default hook calls {@code onWorldJoin} on the client and then
+     * {@link #notifyPartChange(TMultiPart)} with null on either side. Without a world it only loads/binds. It does not
+     * generate capabilities, remove/unbind old parts, call {@code onAdded}, reset the existing ticking flag or send a
+     * complete description packet. Use {@link MultipartHelper#createTileFromParts(Iterable)} when constructing a new
+     * server tile from parts.
+     *
+     * <p>
+     * Call on the game thread. Loading is not atomic: failures propagate with cleared or partially loaded state. The
+     * default hook clears before reading the collection, so a null collection also fails after clearing. Existing
+     * legacy overrides still control loading; internal reconstruction continues to call that hook directly.
+     *
+     * @param parts parts to load; iteration order, duplicates and callback failure behavior are retained
+     */
+    public void loadPartList(Collection<TMultiPart> parts) {
+        loadParts(JavaConversions.iterableAsScalaIterable(parts));
+    }
+
+    /**
+     * @deprecated Call {@link #loadPartList(Collection)} from Java. Retained for legacy overrides, compiled callers and
+     *             exact Scala-parameter reflection; behavior is unchanged.
+     */
+    @Deprecated
     public void loadParts(scala.collection.Iterable<TMultiPart> parts) {
         clearParts();
         for (TMultiPart p : JavaConversions.asJavaIterable(parts)) {

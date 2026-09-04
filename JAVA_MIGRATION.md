@@ -527,13 +527,13 @@ Each row keeps its existing descriptor for binary compatibility and gains a Java
 
 | Deprecate | Java-shaped replacement | Notes |
 | --- | --- | --- |
-| `TileMultipart.partList(): scala.collection.Seq` | `jPartList(): java.util.List` | Getter deprecated; captured-sequence view documented in the [guide and compiling example](docs/api/PART_TRAVERSAL.md). Setter/loading migrations remain separate |
+| `TileMultipart.partList(): scala.collection.Seq` | `jPartList(): java.util.List` | Getter deprecated; captured-sequence view documented in the [guide and compiling example](docs/api/PART_TRAVERSAL.md) |
 | `MultiPartRegistry.registerParts(IPartFactory2, scala.collection.Seq)` | `registerParts(IPartFactory2, String...)` | Sibling already exists |
 | `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | `materialCount(): int` plus existing `materialName(int)` and `getMaterial(int)` | Implemented with static/companion deprecation; [guide and compiling example](docs/api/MATERIAL_ENUMERATION.md). Consumer release/adoption remains pending |
 | `TileMultipart.operate(scala.Function1<TMultiPart, BoxedUnit>)` | `forEachPart(java.util.function.Consumer<TMultiPart>)` | Implemented through the legacy virtual hook; preserves captured traversal, detached-part filtering and callback failures. Lifecycle still calls `operate` |
 | `TileMultipart.occlusionTest(scala.collection.Seq, TMultiPart)` | `occlusionTest(Collection<TMultiPart>, TMultiPart)` | |
-| `TileMultipart.loadParts(scala.collection.Iterable)` | `loadParts(Collection<TMultiPart>)` | Schematica and GuideNH reflect the Scala descriptor; see Phase 10 |
-| `TileMultipart.partList_$eq(scala.collection.Seq)` | `setPartList(List<TMultiPart>)` | GuideNH reflects the `_$eq` name; see Phase 10 |
+| `TileMultipart.loadParts(scala.collection.Iterable)` | `loadPartList(Collection<TMultiPart>)` | Implemented through the legacy virtual hook; binding, world notifications, input iteration and partial failure retained. [Loading guide](docs/api/PART_LOADING.md) |
+| `TileMultipart.partList_$eq(scala.collection.Seq)` | `setPartList(List<TMultiPart>)` | Implemented through the legacy setter; Java list copied without binding, null sentinel supported. GuideNH's old reflective name remains supported |
 | `TileMultipart.renderID()` / `renderID_$eq(int)` | `getRenderID()` / `setRenderID(int)` | |
 | `TileMultipart.getOrConvertTile2(): scala.Tuple2<TileMultipart, Object>` | Small immutable result type with named accessors | No consumer in the audited set calls this |
 
@@ -547,6 +547,12 @@ same-name overload there invites a silent wrong-overload bind.
 - [x] Add and document `materialCount()` with existing indexed lookups; retain and deprecate both `getIdMap()` entries.
 - [x] Document `jPartList()` and add `forEachPart(Consumer)`; deprecate the legacy getter/callback entries while retaining
   their override dispatch. JVM and generated-tile Forge cases cover the [documented contract](docs/api/PART_TRAVERSAL.md).
+- [x] Add Java loading and storage assignment, with legacy override/reflection coverage, explicit ownership and
+  lifecycle contracts, and generated server/client tile checks; [guide](docs/api/PART_LOADING.md), [API index](docs/API.md).
+- [ ] For remaining siblings, compile external Java examples with Scala excluded from the compile classpath before
+  finalizing names. The proposed `loadParts(Collection)` overload required `scala.collection.Iterable` during javac
+  overload resolution; the implemented `loadPartList(Collection)` avoids that dependency. Apply this gate to the
+  remaining occlusion and registration overloads as well as checking the emitted consumer bytecode.
 - [ ] Mark all nine rows `@Deprecated` with javadoc naming the replacement.
 - [ ] Confirm every original descriptor still exists in the ABI fixture after the change.
 - [ ] Document the supported API with compiling usage examples and an old-to-new migration guide. Validate Java
