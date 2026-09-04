@@ -1297,3 +1297,17 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Formatting, test checkstyle, build and Forge pass with 398 JVM / 237 Forge tests and zero failures/errors/skips.
   The four touched class surfaces retain their callable member names and descriptors. The packaged inventory grows
   from 444 to 445 classes solely for the packet traversal callback; no existing class is removed.
+
+### 2026-09-04 — Scoped modern Java compilation
+
+- Kept Scala 2.11.5 and joint Java compilation on Java 8. Scalac resolves `StackAnalyserLogic` through its source
+  path; a separate JDK 25 task compiles that helper with `--release 21`, and JVM Downgrader supplies only Java 8
+  output to normal compilation consumers, tests, Forge, and packaging. The explicit downgrade output declaration
+  also covers clean builds. The existing forced Scala-compilation guard remains.
+- Applied the characterized Java 21 instruction-type switch. Normal and clean builds pass 398 JVM tests, the same
+  398 frozen JVM consumer tests, and 237 Java 8 Forge tests. All 445 dev/release classes remain Java 8 compatible;
+  with matching version metadata, only the helper changes and it exactly matches the isolated prototype. All
+  retained Scala classes and 116 generated ASM dumps are identical. Source-jar contents, formatting, and checkstyle
+  pass. Evidence and reproduction commands are in `JVM_DOWNGRADER_HANDOFF.md` and ignored `run/jvmdg-trial/`.
+- Prefer completing useful remaining Scala behavior extractions before broad Java syntax changes. Most remaining
+  Scala declarations preserve model/trait binary contracts; zero Scala is a separate compatibility decision.

@@ -39,6 +39,12 @@ bridges; this is an initialization extraction, not a full shell replacement or o
 The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client
 generation, GPU output and full-pack checks remain manual.
 
+The JVM Downgrader checkpoint now supports Java 21 method-body syntax in `StackAnalyserLogic` while retaining
+Scala 2.11.5 on Java 8. Its integrated normal/clean builds preserve all retained Scala binaries and all 116 dumps;
+398 JVM tests, the same 398 frozen JVM consumer tests, and 237 Forge tests pass. See `JVM_DOWNGRADER_HANDOFF.md`.
+Finish the remaining useful behavior extractions and define the retained compilation boundary before a broad
+modern-syntax pass. Removing every remaining Scala declaration still requires the documented consumer/ABI work.
+
 Remaining Scala units:
 
 | Files under `src/main/scala/codechicken` | Why they remain |
