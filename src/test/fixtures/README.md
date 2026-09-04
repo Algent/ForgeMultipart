@@ -360,3 +360,17 @@ Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouche
 | --- | --- |
 | `ReferenceScalaClassSymbolFull` | `77498a049a18080a67b557b1751c7f8ab905b9f832ebd680db822e5447ea0799` |
 | `ReferenceScalaClassSymbolFull$$anon$1` | `df9d4c907de922b6e917ea848e40f746ef446bf601dbda4b8d9f9761403b5f46` |
+
+### `ReferenceScalaMethodSymbolFull`
+
+`scala/codechicken/multipart/compat/ReferenceScalaMethodSymbolFull.scala` freezes a Scala caller of
+`MethodSymbol.full`. Tests combine it with virtual JVM accessor overrides to preserve read order and failures.
+
+Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouched dev jar at `64f5abc`
+(SHA-256 `39dcdec0f93d8d475b326b70abb0c8afd8c76f45d175e0d4fd032d6d61e6dc07`). Source SHA-256 is
+`7a82e44389fe45d9aaf0b3a830ba554074b2f947e634a9ae5417163e9e969b33`. The frozen class file is under
+`src/test/resources/compat/`; do not regenerate it against the port.
+
+| Class | SHA-256 |
+| --- | --- |
+| `ReferenceScalaMethodSymbolFull` | `82aad2c3f67b61337d7f9daf853ccdd5e68bd30ccf82abd084195e7b66e0846d` |
