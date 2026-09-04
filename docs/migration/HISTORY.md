@@ -1277,3 +1277,12 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   pending entry. The first failed with the reported exception before the fix. The new-entry hash placement was
   checked against the original Scala implementation under Java 8.
 - Formatting, test checkstyle, all four packet-interface JVM tests and all 237 Forge server tests pass.
+
+### 2026-09-04 — Multipart virtual tile accessor regression
+
+- Restored virtual `tile()` and `tile_$eq` dispatch throughout `TMultiPart`, matching the original Scala methods.
+  Binding, coordinates/world lookup, ray tracing, harvesting and packet operations now honor part subclasses that
+  override the tile accessors instead of reading or writing the base class's private storage directly.
+- Added three JVM regression cases covering overridden binding/unbinding, convenience methods and description
+  reads that publish a replacement tile before the render update. All three failed before the fix.
+- Formatting, test checkstyle, the three new cases and all seven existing tile equality cases pass.

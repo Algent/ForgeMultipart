@@ -46,27 +46,27 @@ public abstract class TMultiPart {
      */
     @Deprecated
     public TileEntity getTile() {
-        return tile;
+        return tile();
     }
 
     /** Getter for tile.worldObj. */
     public World world() {
-        return tile == null ? null : tile.getWorldObj();
+        return tile() == null ? null : tile().getWorldObj();
     }
 
     /** Short getter for xCoord. */
     public int x() {
-        return tile.xCoord;
+        return tile().xCoord;
     }
 
     /** Short getter for yCoord. */
     public int y() {
-        return tile.yCoord;
+        return tile().yCoord;
     }
 
     /** Short getter for zCoord. */
     public int z() {
-        return tile.zCoord;
+        return tile().zCoord;
     }
 
     /** The unique string identifier for this class of multipart. */
@@ -74,7 +74,7 @@ public abstract class TMultiPart {
 
     /** Called when the container tile instance is changed to update reference. */
     public void bind(TileMultipart t) {
-        tile = t;
+        tile_$eq(t);
     }
 
     /** Perform an occlusion test to determine whether this and npart can 'fit' in this block space. */
@@ -107,7 +107,7 @@ public abstract class TMultiPart {
                 new Vector3(end),
                 boxes,
                 new BlockCoord(x(), y(), z()),
-                tile.getBlockType());
+                tile().getBlockType());
     }
 
     /**
@@ -140,9 +140,9 @@ public abstract class TMultiPart {
      */
     public void harvest(MovingObjectPosition hit, EntityPlayer player) {
         if (!player.capabilities.isCreativeMode) {
-            tile.dropItems(getDrops());
+            tile().dropItems(getDrops());
         }
-        tile.remPart(this);
+        tile().remPart(this);
     }
 
     /** The light level emitted by this part. */
@@ -256,7 +256,7 @@ public abstract class TMultiPart {
      * as a buffer which is flushed in a compressed databurst packet at the end of the tick.
      */
     public MCDataOutput getWriteStream() {
-        return tile.getWriteStream(this);
+        return tile().getWriteStream(this);
     }
 
     /**
@@ -265,7 +265,7 @@ public abstract class TMultiPart {
      */
     public void read(MCDataInput packet) {
         readDesc(packet);
-        tile.markRender();
+        tile().markRender();
     }
 
     /**
@@ -274,7 +274,7 @@ public abstract class TMultiPart {
      * possible.
      */
     public void sendDescUpdate() {
-        if (tile != null) {
+        if (tile() != null) {
             writeDesc(getWriteStream());
         }
     }
