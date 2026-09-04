@@ -17,7 +17,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**549 plain-JVM tests and 242 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+**556 plain-JVM tests and 243 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 443 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
@@ -32,34 +32,36 @@ use, but no override triggering these three regressions was found. All 443 class
 payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
 followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
-Latest API addition: `TileMultipart.setPartList(List)` copies Java list storage through the legacy setter, and
-`loadPartList(Collection)` delegates through the legacy Scala loader. Storage assignment and binding/cache rebuilding
-have separate documented contracts. Both old entries are deprecated while retaining their descriptors and bodies.
-Four JVM and one Forge baseline cases were committed first as `92273bd`; three further JVM cases, a Java example
-and two Forge cases cover the new methods on generated server/client tiles. All 546 pre-change compiled JVM tests
-pass with their recorded version. The 443 class APIs retain all existing members, with two methods added; 17
-ScalaSignature payloads, 3,748 existing method bodies and 116 generated dumps are unchanged apart from expected
-deprecation metadata and build-version literals. Evidence: `run/migration-part-loading-reference/`.
+Latest API addition: `TileMultipart.testOcclusion(Collection<? extends TMultiPart>, TMultiPart)` copies the input
+before dispatching through the legacy `occlusionTest(Seq, TMultiPart)` hook. Generated partial-occlusion checks remain
+in that path; the query is not full placement approval. Three JVM baseline cases and stronger existing Forge
+assertions were committed first as `6744f5b`. Four further JVM cases, a compiling shape example and one Forge
+generated-partial case cover the new entry. All 552 pre-change compiled JVM tests pass with their recorded version.
+All 443 class APIs retain their existing members, with one method added; 17 ScalaSignature payloads, 3,750 existing
+method bodies and 116 generated dumps are unchanged apart from expected deprecation metadata and build-version
+literals. Evidence: `run/migration-part-occlusion-reference/`; [guide](docs/api/OCCLUSION.md).
 
 Naming correction: the planned `loadParts(Collection)` overload made javac require `scala.collection.Iterable` even
 for Java arguments. The distinct `loadPartList` name allows compilation without Scala on the example's classpath.
 Keep this compilation gate for remaining occlusion/registration APIs; checking only imports or bytecode is insufficient.
 Internal storage writes and reconstruction still dispatch through the old setter/loader hooks, not the Java siblings.
 
-The [API index](docs/API.md) now orients consumers to entry points, compiling examples and migration status. Material
-enumeration and tile read/traversal access are also complete; use their guides rather than treating them as missing
-APIs. GuideNH and Schematica have Java loading replacements, but their source changes, other reflection/extension
-contracts, releases and pack adoption remain pending. The supplied checkouts remain reference-only. The installed
-`+719` pack scan retains the `+678` floor: 27 consumers, 35 inherited types, 255 members, 76 other types and 20 strings.
+The [API index](docs/API.md) orients consumers to entry points, compiling examples and migration status. Material
+enumeration and tile read/traversal/loading/storage APIs are also complete. No supplied consumer directly calls the
+two-argument tile occlusion hook; existing `canAddPart`/`canReplacePart` calls need no rename. GuideNH and Schematica
+have Java loading replacements, but consumer source changes, other reflection/extension contracts, releases and pack
+adoption remain pending. Checkouts remain reference-only. The installed `+719` pack scan retains the `+678` floor:
+27 consumers, 35 inherited types, 255 members, 76 other types and 20 strings.
 
 **Next priority: close the Java API gaps in Phases 2 and 9 and map consumer migrations in Phase 10.** Reuse the existing
 Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
 subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
 are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
-The next bounded API candidate is Java collection-based occlusion testing. Verify legacy override dispatch, both
-directions of occlusion checks, ordering/failures, and compilation without Scala before choosing the Java entry name.
-The tentative same-name overload may have the same compiler constraint as loading. Registry registration guidance
-and bridges remain another pending API slice. FMP-side completion does not establish consumer adoption.
+The next bounded API candidate is the direct box-versus-box `NormalOcclusionTest` contract. Its public box-list entry
+still takes Scala `Traversable` on both the static class and companion, while the Java `test(Iterable, Iterable)` loop
+is private. ForgeRelocationFMP and OpenComputers use the Scala descriptor. Characterize eager input collection,
+ordering/failures and geometric boundaries before adding a distinctly named Java entry and deprecating the bridges.
+Verify compilation without Scala. Registry registration guidance and bridges remain another pending slice.
 
 Pause mechanical extraction of retained Scala shells unless it enables that API, fixes a demonstrated issue or has
 a measured benefit. `ScalaSignature.ClassSymbolRef.info` remains an optional bounded extraction, not the default next

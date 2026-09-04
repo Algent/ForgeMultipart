@@ -415,7 +415,40 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         return occlusionTest(others, npart);
     }
 
-    /** Returns true if parts do not occlude npart. */
+    /**
+     * Tests a candidate against a shallow snapshot of the supplied parts through the legacy
+     * {@link #occlusionTest(Seq, TMultiPart)} hook, including generated partial-occlusion overrides. Preserves
+     * collection iteration order, duplicates and part identities; changes to the caller's collection during callbacks
+     * do not change this query's sequence.
+     *
+     * <p>
+     * The default hook calls each existing part's occlusion test first, then the candidate's reverse test, stopping
+     * immediately on rejection or an exception. It includes detached parts and does not exclude the candidate itself.
+     * Part objects remain shared, so callback changes to their state are visible. Existing overrides may add checks.
+     *
+     * <p>
+     * This tests the supplied geometry, not full placement validity: it does not select tile capabilities, check
+     * placement permissions or slot occupancy, bind parts or change stored parts. Use the appropriate composite tile
+     * for the candidate's capabilities; use {@link #canAddPart(TMultiPart)} /
+     * {@link #canReplacePart(TMultiPart, TMultiPart)} for normal tile checks. Those methods still dispatch directly
+     * through the legacy hook.
+     *
+     * @param parts     parts to copy before dispatch; null fails before calling the legacy hook
+     * @param candidate part to test; no eager null check, so the default hook accepts null against an empty collection
+     * @return true when all applicable occlusion checks allow the candidate
+     */
+    public boolean testOcclusion(Collection<? extends TMultiPart> parts, TMultiPart candidate) {
+        return occlusionTest(toSeq(new ArrayList<>(parts)), candidate);
+    }
+
+    /**
+     * Returns true if parts do not occlude npart.
+     *
+     * @deprecated Call {@link #testOcclusion(Collection, TMultiPart)} from Java. Retained as the virtual hook for
+     *             existing subclasses, generated traits and tile placement/replacement checks; its sequence behavior is
+     *             unchanged.
+     */
+    @Deprecated
     public boolean occlusionTest(Seq<TMultiPart> parts, TMultiPart npart) {
         for (TMultiPart part : JavaConversions.seqAsJavaList(parts)) {
             if (!part.occlusionTest(npart) || !npart.occlusionTest(part)) {

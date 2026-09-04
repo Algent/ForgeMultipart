@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -585,6 +586,24 @@ class ForgeEnvironmentSmokeTest {
         assertFalse(tile.canAddPart(new PartialPart(voxel(0))));
         assertTrue(tile.occlusionTest(tile.partList(), new PartialPart(voxel(1))));
         assertFalse(tile.occlusionTest(tile.partList(), new PartialPart(voxel(0))));
+    }
+
+    @Test
+    void javaOcclusionQueryDispatchesThroughTheGeneratedPartialTrait() {
+        PartialPart existing = new PartialPart(voxel(0));
+        PartialPart overlapping = new PartialPart(voxel(0));
+        PartialPart disjoint = new PartialPart(voxel(1));
+        TileMultipart tile = MultipartHelper.createTileFromParts(Collections.singletonList(existing));
+
+        assertTrue(
+                new TileMultipart().testOcclusion(Collections.singletonList(existing), overlapping),
+                "Pair tests alone allow these parts; the generated aggregate check must reject them");
+        assertFalse(tile.testOcclusion(Collections.singletonList(existing), overlapping));
+        assertTrue(tile.testOcclusion(Collections.singletonList(existing), disjoint));
+        assertEquals(Collections.singletonList(existing), tile.jPartList());
+        assertSame(tile, existing.tile());
+        assertNull(overlapping.tile());
+        assertNull(disjoint.tile());
     }
 
     @Test

@@ -491,7 +491,7 @@ behavior:
 ## Java API adoption ledger
 
 This ledger tracks migration of a specific legacy contract, not completion of an entire consumer's migration.
-Material enumeration, tile collection/traversal access and tile loading/storage assignment are implemented on
+Material enumeration, tile collection/traversal access, tile loading/storage assignment and collection occlusion queries are implemented on
 `algent/java`. The [API index](docs/API.md) links the guides and compiling Java examples. These additions are not yet
 tied to a released minimum dependency version. Unlisted contracts remain governed by the inventories above.
 
@@ -538,6 +538,18 @@ its exact sequence; neither binds parts. The loader retains callback order, clie
 failure behavior. All 546 pre-change compiled JVM tests pass with their recorded version; generated tile checks cover
 server slot rebuilding/notifications and client storage/loading/render-cache queries. Actual client preview rendering,
 consumer release and pack adoption are still separate gates.
+
+Tile collection occlusion is implemented as `testOcclusion(Collection<? extends TMultiPart>, TMultiPart)`, documented
+in the [occlusion guide](docs/api/OCCLUSION.md). The supplied Java/Scala source search found no direct consumer calls or
+overrides of the old two-argument tile `occlusionTest` and no `testOcclusion` name collisions. The frozen ABI floor
+likewise contains no direct reference to that tile descriptor. The legacy hook is nevertheless required by generated
+`TPartialOcclusionTile` behavior and by existing tile placement/replacement dispatch; it remains supported.
+
+ProjectRed and ForgeRelocationFMP's `canReplacePart` callers need no rename and must retain outgoing-part exclusion.
+The new collection query is not a blanket replacement for placement checks or the part-level `occlusionTest` hook.
+`NormalOcclusionTest$.apply(Traversable, Traversable)` remains a separate box-list bridge used by ForgeRelocationFMP
+and OpenComputers. Its Java replacement is now explicit in the plan; completion of the tile query does not retire it.
+Evidence for this slice is under ignored `run/migration-part-occlusion-reference/`; reference checkouts remain unchanged.
 
 ## Practical priority for the current branch
 

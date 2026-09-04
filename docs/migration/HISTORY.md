@@ -1784,3 +1784,25 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Added `docs/API.md` as the consumer entry point, a loading/storage guide, compiling examples, and reciprocal guide
   links. Updated the plan, ABI notes and GuideNH/Schematica adoption ledger; reference checkouts remain unchanged and
   consumer releases/pack adoption are pending. Evidence: `run/migration-part-loading-reference/`.
+
+### 2026-09-05 — Java collection occlusion query
+
+- Committed three JVM baseline cases and stronger generated-trait assertions first as `6744f5b`. They pin pair order,
+  both rejection directions, lazy null behavior, original exceptions and replacement-hook dispatch. Saved the pre-API
+  jar, source, reports, 116 generated dumps and all 552 compiled JVM tests before implementation.
+- Added `TileMultipart.testOcclusion(Collection<? extends TMultiPart>, TMultiPart)` as an adapter through the old
+  virtual `occlusionTest(Seq, TMultiPart)`. It takes a shallow immutable snapshot, retains order/duplicates/identities,
+  and accepts subtype collections. The distinct name avoids a Scala/Java overload pair. The legacy hook is deprecated
+  for callers, with its descriptor and body unchanged; placement/replacement still dispatch directly through it.
+- Four new JVM cases and a compiling Java shape example cover snapshot/callback behavior, non-list/subtype inputs,
+  failures, override routing and touching/overlapping bounds. One new Forge case proves aggregate partial-occlusion
+  rejection through the generated trait when plain pair tests would accept the same parts.
+- Normal/clean build/style checks pass: 556 JVM tests, 243 Java 8 Forge tests and all 552 frozen pre-change JVM tests.
+  The Java example compiles with Scala excluded from the classpath and contains no Scala bytecode references.
+  All 443 existing class APIs, 17 ScalaSignature payloads, 3,750 existing method bodies and 116 generated dumps are
+  retained, with exactly one added public method and one deprecation. Only expected deprecation metadata and build
+  versions differ; no production class or dependency is added.
+- Added the occlusion guide and API index entry. No direct consumer use of the two-argument tile hook or collision
+  with the new name was found. The separately load-bearing Scala box-list `NormalOcclusionTest.apply` contract now
+  has an explicit plan row and is the next candidate. Reference checkouts remain unchanged; client previews and
+  consumer release/adoption remain separate gates. Evidence: `run/migration-part-occlusion-reference/`.
