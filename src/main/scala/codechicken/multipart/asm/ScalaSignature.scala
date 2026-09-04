@@ -80,8 +80,7 @@ class ScalaSignature(val bytes: Bytes) {
       flags: Int,
       infoId: Int
   ) extends SymbolRef {
-    override def toString =
-      "MethodSymbol(" + name + "," + owner + "," + flags.toHexString + "," + infoId + ")"
+    override def toString = ScalaSignatureParser.methodSymbolString(this)
     def full = owner.full + "." + name
 
     def info: TMethodType = evalT(infoId)

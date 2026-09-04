@@ -84,6 +84,18 @@ final class ScalaSignatureParser {
                 + ")";
     }
 
+    static String methodSymbolString(Object value) {
+        ScalaSignature.MethodSymbol symbol = (ScalaSignature.MethodSymbol) value;
+        return "MethodSymbol(" + symbol.name()
+                + ","
+                + symbol.owner()
+                + ","
+                + Integer.toHexString(symbol.flags())
+                + ","
+                + symbol.infoId()
+                + ")";
+    }
+
     static byte[] section(Bytes bytes) {
         byte[] array = bytes.arr();
         int start = bytes.pos();

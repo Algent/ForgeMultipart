@@ -1540,3 +1540,21 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   tests/resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the committed
   version. Source totals are 224 Java files and nine Scala files / 748 nonblank lines. Next:
   `MethodSymbol.toString`, preserving formatting, virtual reads and failure order.
+
+### 2026-09-04 — ScalaSignature method-symbol strings
+
+- Committed seven JVM characterization cases first as `d81195a` against the untouched `MethodSymbol.toString`.
+  They cover its fixed prefix for concrete and anonymous subclasses, punctuation/nulls, lowercase two's-complement
+  hexadecimal flags, negative/limit info IDs, repeated virtual reads, owner formatting and every failure boundary.
+  Derived full-name, info, descriptor and flag-query methods must not be read during formatting.
+- Extracted formatting into `ScalaSignatureParser.methodSymbolString(Object)`. Java retains left-to-right virtual
+  getter order, object-to-string conversion and hexadecimal representation. Scala keeps the inferred return type,
+  case-class declaration, symbol/flag bridges, product members and serialization shape.
+- Normal and clean validation pass 477 JVM tests, 477 frozen consumers and 237 Java 8 Forge tests with zero
+  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
+  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,738 unrelated method
+  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Evidence is under ignored `run/migration-method-symbol-string-reference/`, including the reference jar, frozen
+  tests/resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the committed
+  version. Source totals are 224 Java files and nine Scala files / 747 nonblank lines. Next:
+  `TypeRefType.jDesc`, preserving array/super routing, virtual reads and malformed-input behavior.
