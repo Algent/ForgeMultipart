@@ -56,7 +56,7 @@ class ScalaSignature(val bytes: Bytes) {
     def isObject = false
     def info: ClassType = evalT(infoId)
     def jParent = info.parent.jName
-    def jInterfaces = info.interfaces.map(_.jName)
+    def jInterfaces = ScalaSignatureParser.interfaceNames(this)
   }
 
   case class ClassSymbol(

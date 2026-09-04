@@ -1497,3 +1497,26 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   tests/resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the committed
   version. Sources remain 224 Java files and nine Scala files / 749 nonblank lines. Next: `ClassSymbolRef.jInterfaces`,
   retaining its List contract, virtual lookup, ordered mapping and failure behavior.
+
+### 2026-09-04 — ScalaSignature interface names
+
+- Committed seven JVM characterization cases first as `6ccb83f` against the untouched `ClassSymbolRef.jInterfaces`.
+  They pin ClassSymbol/ObjectSymbol parent exclusion, ordered names and duplicates, the empty List singleton,
+  string identity and null names, repeated queries, virtual info/interfaces/jName dispatch and failure boundaries.
+  A proxy also exercises the exact static trait-helper descriptor without an outer instance.
+- Added `ReferenceScalaInterfaceNames`, compiled once with Scala 2.11.5 under Java 8 against the unchanged dev jar
+  at `240a788`. Its Scala caller and ClassSymbol/ClassType subclasses prove compatibility with old bytecode and
+  overridden path-dependent methods. Source, encoded classes and SHA-256 provenance are committed under
+  `src/test/fixtures/` and `src/test/resources/compat/`; do not regenerate them against the port.
+- Extracted the mapping into `ScalaSignatureParser.interfaceNames(Object)`. The Java callback retains virtual
+  lookup and Scala List map/builder behavior, using the existing TraversableLike bridge pattern. The helper returns
+  `List<String>`; Scala retains inferred types, trait/model declarations, forwarders and serialization shapes.
+- Normal and clean validation pass 463 JVM tests, 463 frozen consumers and 237 Java 8 Forge tests with zero
+  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
+  comparison preserves 441 retained class/member APIs, all 17 ScalaSignature payloads and 3,733 unrelated method
+  bodies. The sole inventory replacement is `ClassSymbolRef$$anonfun$jInterfaces$1` with `ScalaSignatureParser$2`,
+  covered by the existing unreferenced compiler-artifact ledger entry. No new effective divergence is introduced.
+- Evidence is under ignored `run/migration-interface-names-reference/`, including the fixture/reference jars,
+  frozen tests/resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the
+  committed version. Sources remain 224 Java files and nine Scala files / 749 nonblank lines. Next:
+  `ClassSymbolRef.toString`, preserving formatting, virtual reads and failure order.

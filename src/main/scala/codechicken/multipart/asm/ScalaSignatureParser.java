@@ -58,6 +58,19 @@ final class ScalaSignatureParser {
         return "(" + parameters.mkString() + ")" + method.returnType().jDesc();
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    static List<String> interfaceNames(Object value) {
+        ScalaSignature.ClassSymbolRef symbol = (ScalaSignature.ClassSymbolRef) value;
+        return (List<String>) ((TraversableLike) symbol.info().interfaces())
+                .map(new AbstractFunction1<ScalaSignature.TypeRef, String>() {
+
+                    @Override
+                    public String apply(ScalaSignature.TypeRef ref) {
+                        return ref.jName();
+                    }
+                }, List$.MODULE$.canBuildFrom());
+    }
+
     static byte[] section(Bytes bytes) {
         byte[] array = bytes.arr();
         int start = bytes.pos();

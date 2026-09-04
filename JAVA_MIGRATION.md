@@ -30,8 +30,9 @@ including client bounds/mask updates. `StackAnalyser` initialization and constan
 Java; retain its coordinated Scala class/companion/models. `FieldMixin.accessName` also delegates to Java while
 retaining its case class. `MixinInfo.linearise` and `ScalaSignature.Bytes.section` delegate traversal and array-copy
 behavior to Java. `TypeRef.jName`, `TypeRef.jDesc` and `TMethodType.jDesc` delegate name/descriptor conversion and
-method assembly while preserving virtual lookup and evaluation order. The next bounded candidate is
-`ScalaSignature.ClassSymbolRef.jInterfaces`, with characterization before extraction.
+method assembly while preserving virtual lookup and evaluation order. `ClassSymbolRef.jInterfaces` delegates
+ordered interface-name mapping while retaining its Scala List contract. The next bounded candidate is
+`ScalaSignature.ClassSymbolRef.toString`, with characterization before extraction.
 Java-trait rewriting and compiler startup also delegate to Java helpers. Abstract Java mixins and Java-path
 side-only filtering are complete; multiple Scala-trait inheritance still needs its metadata. Retain trait
 state/accessor/super bridges and the compiler/signature/analyser model shells.
