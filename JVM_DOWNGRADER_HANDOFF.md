@@ -7,6 +7,10 @@ are preserved. `build.gradle` adds two tasks; `StackAnalyserLogic.visitInsn` use
 The nine Scala sources, Scala 2.11.5 dependency, source layout, and normal Gradle entry points remain in place.
 Production tasks do not read a frozen jar or any files under `run/jvmdg-trial/`.
 
+The subsequent `StackAnalyser` initializer extraction is recorded in `JAVA_MIGRATION_HANDOFF.md`. The exact-byte
+comparisons and frozen-version reproduction below describe checkpoint `5f0e329`; later helper edits need their own
+reference comparisons. The current extraction's evidence is in `run/migration-stack-initialization-reference/`.
+
 ## Build arrangement
 
 1. Normal Java and joint Scala/Java compilation remain on Java 8. `compileScala` excludes the helper from javac's

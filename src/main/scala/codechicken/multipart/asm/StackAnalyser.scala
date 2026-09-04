@@ -2,10 +2,8 @@ package codechicken.multipart.asm
 
 import scala.collection.mutable.{Map => MMap, ListBuffer => MList}
 import org.objectweb.asm.tree._
-import org.objectweb.asm.Opcodes._
 import org.objectweb.asm.Type
 import org.objectweb.asm.Type._
-import scala.collection.JavaConversions._
 
 object StackAnalyser {
   def width(t: Type): Int = t.getSize
@@ -119,16 +117,13 @@ class StackAnalyser(val owner: Type, val m: MethodNode) {
   val locals = MList[LocalEntry]()
   private val catchHandlers = MMap[LabelNode, TryCatchBlockNode]()
 
-  {
-    if ((m.access & ACC_STATIC) == 0)
-      pushL(This(owner))
-
-    val ptypes = getArgumentTypes(m.desc)
-    for (i <- 0 until ptypes.length)
-      pushL(Param(i, ptypes(i)))
-
-    m.tryCatchBlocks.foreach(b => catchHandlers.put(b.handler, b))
-  }
+  // The callback preserves Scala's mangled catchHandlers accessor.
+  StackAnalyserLogic.initialize(
+    this,
+    owner,
+    m,
+    b => catchHandlers.put(b.handler, b)
+  )
 
   def pushL(entry: LocalEntry) = setL(locals.size, entry)
 

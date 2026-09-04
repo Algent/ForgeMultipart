@@ -1,6 +1,6 @@
 # Java migration — working handoff
 
-Start here. Work in `C:\Users\Algent\IdeaProjects\ForgeMultipart` on **`algent/java`**, based on `master`; inspect
+Start here. Work in this migration checkout on **`algent/java`**, based on `master`; inspect
 branch, status and recent commits before editing and preserve existing work. The detached review worktree is not the
 migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes reached `algent/java`.
 
@@ -16,32 +16,33 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**398 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
-files and 9 Scala files / 782 nonblank Scala lines**. The packaged inventory has 445 classes.
+**407 plain-JVM tests and 237 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+files and 9 Scala files / 779 nonblank Scala lines**. The packaged inventory has 444 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
 virtual tile accessor dispatch throughout `TMultiPart`, and null-safe equality for scheduled-tick deduplication.
 Six JVM and two Forge regression cases cover the fixes. Callable signatures remain unchanged; the packet traversal
 callback adds one anonymous class. See the latest history entries for the individual fixes and validation.
 
-Latest bounded target: `TMicroOcclusionClient` delegates bounds copying and mask updates to
-`TMicroOcclusionClientLogic.java`. Scala retains inheritance metadata, mutable state/accessors and the three
-lifecycle super/recalc bridges. Characterization was committed first as `d69d12b`: frozen Scala forwarders pin
-super/recalc order, argument identity, virtual copying, mask replacement and partial publication on failure.
-Forge exercises live Stone/Glass neighbors through the hollow client probe and real factories. Clean checks
-preserve all 443 original class/member APIs, all 17 ScalaSignature payloads, 3,725 unrelated method bodies and
-all 116 generated dumps. Only the Java helper is added. Evidence: `run/migration-micro-occlusion-client-reference/`.
+Latest bounded target: `StackAnalyser` delegates constructor control flow to `StackAnalyserLogic.initialize`.
+Nine characterization tests were committed first as `929a704`. They pin constructor argument use, virtual
+`pushL`/`setL` ordering, descriptor mutation/parsing failures, wide slots, partial publication and handler behavior.
+Scala retains the class/companion/models, field initialization, default-argument bridges and a handler callback
+that preserves its mangled virtual map accessor. Handler traversal retains Scala-backed buffers' `foreach` dispatch.
+All 407 frozen JVM consumers pass; checks preserve 443 retained class/member APIs, all 17 ScalaSignature payloads,
+3,727 unrelated method bodies and all 116 generated dumps. The obsolete parameter-loop closure disappears;
+the handler callback changes only its compiler number. Evidence: `run/migration-stack-initialization-reference/`.
 
-**Next: extract `StackAnalyser` constructor initialization to its existing Java helper.** Characterize receiver
-and parameter slot setup, virtual `pushL` ordering, malformed descriptors and duplicate exception-handler
-precedence before editing. Keep the Scala class/companion/models, field initialization and default-argument
-bridges; this is an initialization extraction, not a full shell replacement or opcode algorithm fix.
+**Next bounded candidate: `StackAnalyser.Const.getType`.** Characterize boxed constant classification, null/String
+handling, unsupported-value formatting/failure and virtual `c` access before extracting to the existing helper.
+Keep case-class/product/serialization shapes and simple model accessors. Broader shell replacement and opcode
+algorithm fixes remain separate work.
 The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client
 generation, GPU output and full-pack checks remain manual.
 
 The JVM Downgrader checkpoint now supports Java 21 method-body syntax in `StackAnalyserLogic` while retaining
-Scala 2.11.5 on Java 8. Its integrated normal/clean builds preserve all retained Scala binaries and all 116 dumps;
-398 JVM tests, the same 398 frozen JVM consumer tests, and 237 Forge tests pass. See `JVM_DOWNGRADER_HANDOFF.md`.
+Scala 2.11.5 on Java 8. The constructor extraction uses that existing build stage; it adds no build configuration
+or runtime dependencies. See `JVM_DOWNGRADER_HANDOFF.md` for the original 398-test integration checkpoint.
 Finish the remaining useful behavior extractions and define the retained compilation boundary before a broad
 modern-syntax pass. Removing every remaining Scala declaration still requires the documented consumer/ABI work.
 
@@ -51,7 +52,7 @@ Remaining Scala units:
 | --- | --- |
 | `multipart/asm/ASMMixinCompiler.scala` | Retained nested models, construction callbacks and Scala entry-point shell |
 | `multipart/asm/ScalaSignature.scala` | Named models, primitive/erased bridges and five generic inner-construction branches |
-| `multipart/asm/StackAnalyser.scala` | Class/companion/models over Java `StackAnalyserLogic`; initialization and model queries remain Scala |
+| `multipart/asm/StackAnalyser.scala` | Class/companion/models over Java `StackAnalyserLogic`; state, handler callback, bridges and model queries remain Scala |
 | `microblock/MicroblockTraits.scala`, `FaceMicroblockTraits.scala`, `CornerMicroblockTraits.scala`, `EdgeMicroblockTraits.scala` | Nine retained state/inheritance/bridge shells over Java implementation, including post lifecycle/super dispatch |
 | `microblock/HollowMicroblockTraits.scala` | Hollow server/client inheritance, initializer and super shells over Java behavior |
 | `microblock/TMicroOcclusion.scala` | Occlusion/client inheritance, state/accessor and lifecycle/super shells over Java behavior |

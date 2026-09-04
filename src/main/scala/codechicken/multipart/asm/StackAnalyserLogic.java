@@ -14,6 +14,7 @@ import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.MultiANewArrayInsnNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
@@ -33,21 +34,33 @@ import codechicken.multipart.asm.StackAnalyser.LocalEntry;
 import codechicken.multipart.asm.StackAnalyser.New;
 import codechicken.multipart.asm.StackAnalyser.NewArray;
 import codechicken.multipart.asm.StackAnalyser.NewMultiArray;
+import codechicken.multipart.asm.StackAnalyser.Param;
 import codechicken.multipart.asm.StackAnalyser.PrimitiveCast;
 import codechicken.multipart.asm.StackAnalyser.ReturnAddress;
 import codechicken.multipart.asm.StackAnalyser.StackEntry;
 import codechicken.multipart.asm.StackAnalyser.Store;
+import codechicken.multipart.asm.StackAnalyser.This;
 import codechicken.multipart.asm.StackAnalyser.UnaryOp;
+import scala.Function1;
 import scala.MatchError;
 import scala.None$;
 import scala.Option;
 import scala.Predef;
 import scala.Some;
+import scala.collection.JavaConversions;
 
 /** Analyser control flow behind the retained Scala model and default-argument API. */
 final class StackAnalyserLogic {
 
     private StackAnalyserLogic() {}
+
+    static void initialize(StackAnalyser a, Type owner, MethodNode method,
+            Function1<TryCatchBlockNode, Option<TryCatchBlockNode>> addHandler) {
+        if ((method.access & ACC_STATIC) == 0) a.pushL(new This(owner));
+        Type[] parameters = getArgumentTypes(method.desc);
+        for (int i = 0; i < parameters.length; i++) a.pushL(new Param(i, parameters[i]));
+        JavaConversions.asScalaBuffer(method.tryCatchBlocks).foreach(addHandler);
+    }
 
     static void setL(StackAnalyser a, int i, LocalEntry entry) {
         while (i + entry.getType().getSize() > a.locals().size()) a.locals().$plus$eq(null);

@@ -1311,3 +1311,31 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   pass. Evidence and reproduction commands are in `JVM_DOWNGRADER_HANDOFF.md` and ignored `run/jvmdg-trial/`.
 - Prefer completing useful remaining Scala behavior extractions before broad Java syntax changes. Most remaining
   Scala declarations preserve model/trait binary contracts; zero Scala is a separate compatibility decision.
+
+### 2026-09-04 — StackAnalyser constructor initialization
+
+- Committed nine JVM characterization cases first as `929a704`, against the untouched Scala constructor.
+  They cover direct constructor arguments despite overridden getters, virtual receiver/parameter pushes and
+  `setL` slot order, descriptor mutation and malformed descriptors, wide aliases and formal parameter indices,
+  receiver/parameter callback failures, delayed handler publication, duplicate/null keys, node identity, partial
+  maps on failure, repeated virtual map reads and Scala-backed handler buffers' `foreach` dispatch.
+- Moved initialization control flow to the existing `StackAnalyserLogic.initialize` Java helper. Scala retains
+  field initialization and one handler callback: accessing its private map from that closure preserves the
+  mangled field/accessor and virtual reads before each handler key. Java retains `asScalaBuffer(...).foreach`
+  so wrapping a Scala buffer as a Java list does not bypass its overrides. Constructor arguments are passed
+  directly; callback changes to the descriptor and handler list remain visible at the original points.
+- Normal and clean formatting/checkstyle/build/Forge checks pass with 407 JVM tests, the same 407 frozen JVM
+  consumers, and 237 Java 8 Forge tests, with zero failures/errors/skips. The frozen baseline jar, sources,
+  compiled tests, reports, comparison tools and 116 matching ASM dumps are saved under ignored
+  `run/migration-stack-initialization-reference/`. The version override matches the frozen test commit because
+  two existing consumers inline that version; the normal final build still uses the actual Git version.
+- Preserved all 443 retained class/member APIs, all 17 ScalaSignature payloads and 3,727 unrelated method bodies.
+  The parameter-loop closure disappears and the handler closure is identical after compiler renumbering. Forty
+  retained model/companion classes differ only in debug metadata after import removal. The helper adds two
+  references to existing nested models in its `InnerClasses` table. These are covered compiler artifacts, with
+  no new effective divergence. Dev/release jars contain 444 Java 8 classes; packaged sources match both edited
+  sources and the helper introduces no JVM Downgrader runtime-stub reference.
+- Reused the scoped modern Java build without configuration changes. Sources remain 224 Java files and nine
+  Scala files / 779 nonblank lines. Next bounded candidate: `StackAnalyser.Const.getType`, preserving its
+  case-class, product and serialization contracts. The simple model getters and full Scala shell replacement
+  remain separate from useful behavior extraction.
