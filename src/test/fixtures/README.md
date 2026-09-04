@@ -374,3 +374,19 @@ Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouche
 | Class | SHA-256 |
 | --- | --- |
 | `ReferenceScalaMethodSymbolFull` | `82aad2c3f67b61337d7f9daf853ccdd5e68bd30ccf82abd084195e7b66e0846d` |
+
+### `ReferenceScalaClassParent`
+
+`scala/codechicken/multipart/compat/ReferenceScalaClassParent.scala` freezes a Scala caller, ClassType subclass and
+direct ClassSymbolRef implementation. Tests use them to preserve the old trait helper and info/parent lookup order.
+
+Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouched dev jar at `a670ea3`
+(SHA-256 `c633ae5c5eeb98cd06fd8dbc81d138f1f241b59534708a1fbf59f4681df5eede`). Source SHA-256 is
+`81be49b2c65c62df5de9e1d3d3eb785f25049889ef8dc1b8ad308a943ebdad6b`. Frozen class files are under
+`src/test/resources/compat/`; do not regenerate them against the port.
+
+| Class | SHA-256 |
+| --- | --- |
+| `ReferenceScalaClassParent` | `38001778088d012f62256291ede409203138b396cbc28f208e980a29f2b9418f` |
+| `ReferenceScalaClassParent$$anon$1` | `91fee2779c962b2b970383ef965b0ec5f2e8d1d44cfc026b7394804f1e56993d` |
+| `ReferenceScalaClassParent$$anon$2` | `941a3dce5726e8f355159ae001007f54ad4a307e7d91887909eb84f11952802c` |
