@@ -1622,3 +1622,25 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   frozen tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
   committed version. Sources remain 224 Java files and nine Scala files / 744 nonblank lines. Next:
   `ClassSymbolRef.jParent`, preserving info/parent/name lookup order and failures.
+
+### 2026-09-04 — ScalaSignature class parent names
+
+- Committed seven JVM characterization cases first as `6e3a301` against the untouched `ClassSymbolRef.jParent`.
+  They pin ClassSymbol/ObjectSymbol results, repeated virtual info/parent/jName order, first-parent selection without
+  interface reads, empty-list behavior, null results/chains, getter failures and the static trait-helper descriptor.
+- Added `ReferenceScalaClassParent`, compiled once with Scala 2.11.5 under Java 8 against the unchanged dev jar at
+  `a670ea3`. Its frozen Scala caller, direct `ClassSymbolRef` implementation and `ClassType` subclass preserve the old
+  `$class.jParent` forwarder and virtual dispatch. A frozen Scala constructor also covers default head/empty-list
+  behavior because javac's accepted extra-outer `ClassType` call resolves to a nonexistent descriptor at runtime.
+  Source, encoded classes and SHA-256 provenance are committed under `src/test/fixtures/` and resources.
+- Extracted the lookup chain into `ScalaSignatureParser.classParentName(Object)`. Java retains virtual info, parent
+  and `jName` order and passes through a null name. Scala keeps the inferred return type, trait helper, case-class
+  forwarders, path-dependent declarations, products and serialization shapes.
+- Normal and clean validation pass 505 JVM tests, all 505 frozen consumers and 237 Java 8 Forge tests with zero
+  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
+  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,742 unrelated method
+  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Evidence is under ignored `run/migration-class-parent-reference/`, including the reference/fixture jars, frozen
+  tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
+  committed version. Sources remain 224 Java files and nine Scala files / 744 nonblank lines. Next:
+  `MethodSymbol.jDesc`, preserving info/descriptor lookup order and failures.

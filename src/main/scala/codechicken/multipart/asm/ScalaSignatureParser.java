@@ -82,6 +82,11 @@ final class ScalaSignatureParser {
         return symbol.owner().full() + "." + symbol.name();
     }
 
+    static String classParentName(Object value) {
+        ScalaSignature.ClassSymbolRef symbol = (ScalaSignature.ClassSymbolRef) value;
+        return symbol.info().parent().jName();
+    }
+
     static String classSymbolString(Object value) {
         ScalaSignature.ClassSymbolRef symbol = (ScalaSignature.ClassSymbolRef) value;
         return symbol.getClass().getName().replaceAll(".+\\$", "") + "("
