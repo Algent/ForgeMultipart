@@ -21,6 +21,7 @@ import net.minecraft.util.Vec3;
 import org.junit.jupiter.api.Test;
 
 import codechicken.lib.raytracer.ExtendedMOP;
+import scala.Function1;
 import scala.Tuple2;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
@@ -81,6 +82,23 @@ class TileMultipartCharacterizationTest {
         assertEquals(1, tile.jPartList().size());
         assertSame(part, tile.jPartList().get(0));
         assertSame(part, tile.partList().apply(0));
+    }
+
+    @Test
+    void jPartListKeepsItsCapturedSequenceWhenTheTilePublishesAnother() {
+        TileMultipart tile = new TileMultipart();
+        CountingPart first = new CountingPart("first");
+        CountingPart second = new CountingPart("second");
+        tile.addPart_do(first);
+        List<TMultiPart> captured = tile.jPartList();
+
+        tile.addPart_do(second);
+        assertEquals(Arrays.asList(first), captured);
+        assertEquals(Arrays.asList(first, second), tile.jPartList());
+        assertThrows(UnsupportedOperationException.class, () -> captured.add(second));
+        tile.clearParts();
+        assertEquals(Arrays.asList(first), captured);
+        assertTrue(tile.jPartList().isEmpty());
     }
 
     @Test
@@ -271,6 +289,47 @@ class TileMultipartCharacterizationTest {
 
         assertEquals(1, first.chunkLoads);
         assertEquals(1, second.chunkLoads);
+    }
+
+    @Test
+    void lifecycleCallbacksStillDispatchThroughAnOperateOverride() {
+        List<String> calls = new ArrayList<>();
+        TileMultipart tile = new TileMultipart() {
+
+            @Override
+            public void operate(Function1<TMultiPart, BoxedUnit> f) {
+                calls.add("operate");
+                super.operate(f);
+            }
+        };
+        CountingPart part = new CountingPart("part");
+        tile.addPart_do(part);
+
+        tile.onChunkLoad();
+        tile.onNeighborBlockChange();
+        assertEquals(Arrays.asList("operate", "operate"), calls);
+        assertEquals(1, part.chunkLoads);
+    }
+
+    @Test
+    void operateChecksForAnyBindingAndStopsAtTheOriginalCallbackFailure() {
+        TileMultipart tile = new TileMultipart();
+        CountingPart detached = new CountingPart("detached");
+        CountingPart rebound = new CountingPart("rebound");
+        CountingPart last = new CountingPart("last");
+        tile.addPart_do(detached);
+        tile.addPart_do(rebound);
+        tile.addPart_do(last);
+        detached.bind(null);
+        rebound.bind(new TileMultipart());
+        List<String> visited = new ArrayList<>();
+        IllegalStateException failure = new IllegalStateException("callback failed");
+
+        assertSame(failure, assertThrows(IllegalStateException.class, () -> tile.operate(action(part -> {
+            visited.add(part.getType());
+            throw failure;
+        }))));
+        assertEquals(Arrays.asList("rebound"), visited);
     }
 
     @Test
