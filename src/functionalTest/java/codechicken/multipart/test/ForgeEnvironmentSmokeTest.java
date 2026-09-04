@@ -583,6 +583,8 @@ class ForgeEnvironmentSmokeTest {
                 tile.getClass().getMethod("partialOcclusionTest", scala.collection.Seq.class).getReturnType());
         assertTrue(tile.canAddPart(new PartialPart(voxel(1))));
         assertFalse(tile.canAddPart(new PartialPart(voxel(0))));
+        assertTrue(tile.occlusionTest(tile.partList(), new PartialPart(voxel(1))));
+        assertFalse(tile.occlusionTest(tile.partList(), new PartialPart(voxel(0))));
     }
 
     @Test
