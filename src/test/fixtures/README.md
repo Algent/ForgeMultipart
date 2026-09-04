@@ -405,3 +405,17 @@ Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouche
 | --- | --- |
 | `ReferenceScalaMethodSymbolDescriptor` | `47731de0986ab2701a3d5acae0b0a93b24c979495c288383fcab4a925370c192` |
 | `ReferenceScalaMethodSymbolDescriptor$$anon$1` | `9fbfb463190e14a9be53a27add9d460d2e8e45bedb0054059806798aa098d2e1` |
+
+### `ReferenceScalaMethodSymbolInfo`
+
+`scala/codechicken/multipart/compat/ReferenceScalaMethodSymbolInfo.scala` freezes a Scala caller of
+`MethodSymbol.info`. Tests preserve the path-dependent return descriptor, virtual info-ID evaluation and failures.
+
+Compiled with Scala 2.11.5 under Java 8, `-target:jvm-1.8`, against the untouched dev jar at `257d0e4`
+(SHA-256 `1d671a402ec0fe06fcf44c0edbcca350372c05886ad2a7b3cb5fb8688ab95267`). Source SHA-256 is
+`53c16080dcd7fe271a9c89b2c869bcb8410baad88e72641d73668aea1cbfd8b8`. The frozen class file is under
+`src/test/resources/compat/`; do not regenerate it against the port.
+
+| Class | SHA-256 |
+| --- | --- |
+| `ReferenceScalaMethodSymbolInfo` | `0d89ef63187efc9f7959e292ba8e6cee1f4b68794891b913c53c3e96032c869e` |
