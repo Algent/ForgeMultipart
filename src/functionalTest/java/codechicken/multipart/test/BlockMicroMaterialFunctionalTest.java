@@ -22,6 +22,18 @@ import codechicken.microblock.MicroMaterialRegistry;
 class BlockMicroMaterialFunctionalTest {
 
     @Test
+    void registeredMaterialsExposeBlockAndMetadataWithoutClientInitialization() throws Exception {
+        int id = MicroMaterialRegistry.materialID("minecraft:stone");
+        BlockMicroMaterial material = (BlockMicroMaterial) MicroMaterialRegistry.getMaterial(id);
+        assertSame(MicroMaterialRegistry.getMaterial("minecraft:stone"), material);
+        assertSame(Blocks.stone, material.block());
+        assertEquals(0, material.meta());
+        assertSame(Blocks.wool, new BlockMicroMaterial(Blocks.wool, 23).block());
+        assertEquals(23, new BlockMicroMaterial(Blocks.wool, 23).meta());
+        assertEquals("minecraft:stone", net.minecraft.block.Block.blockRegistry.getNameForObject(material.block()));
+    }
+
+    @Test
     void dedicatedServerKeepsCommonMaterialBehaviorAndStripsClientMembers() throws Exception {
         BlockMicroMaterial material = (BlockMicroMaterial) MicroMaterialRegistry.getMaterial("minecraft:stone");
         assertSame(Blocks.stone, material.block());

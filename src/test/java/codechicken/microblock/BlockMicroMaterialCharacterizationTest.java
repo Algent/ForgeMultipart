@@ -42,6 +42,53 @@ import scala.collection.JavaConversions;
 
 class BlockMicroMaterialCharacterizationTest {
 
+    @Test
+    void publicMaterialAccessPreservesStoredBlockIdentityAndAllMetadataBits() throws Exception {
+        Block block = new Block(Material.rock) {};
+        Field blockField = BlockMicroMaterial.class.getDeclaredField("block");
+        Field metaField = BlockMicroMaterial.class.getDeclaredField("meta");
+        blockField.setAccessible(true);
+        metaField.setAccessible(true);
+        for (int meta : new int[] { Integer.MIN_VALUE, -1, 0, 15, 17, Integer.MAX_VALUE }) {
+            BlockMicroMaterial material = new BlockMicroMaterial(block, meta);
+            assertSame(block, material.block());
+            assertSame(blockField.get(material), material.block());
+            assertEquals(meta, material.meta());
+            assertEquals(metaField.getInt(material), material.meta());
+        }
+    }
+
+    @Test
+    void publicMaterialAccessDispatchesOverridesWhileLegacyFieldsKeepConstructorValues() throws Exception {
+        Block stored = new Block(Material.rock) {};
+        Block exposed = new Block(Material.glass) {};
+        List<String> reads = new ArrayList<>();
+        BlockMicroMaterial material = new BlockMicroMaterial(stored, 3) {
+
+            @Override
+            public Block block() {
+                reads.add("block");
+                return exposed;
+            }
+
+            @Override
+            public int meta() {
+                reads.add("meta");
+                return 23;
+            }
+        };
+        assertSame(exposed, material.block());
+        assertEquals(23, material.meta());
+        assertEquals(Arrays.asList("block", "meta"), reads);
+        Field blockField = BlockMicroMaterial.class.getDeclaredField("block");
+        Field metaField = BlockMicroMaterial.class.getDeclaredField("meta");
+        blockField.setAccessible(true);
+        metaField.setAccessible(true);
+        assertSame(stored, blockField.get(material));
+        assertEquals(3, metaField.getInt(material));
+        assertEquals(Arrays.asList("block", "meta"), reads, "Raw field access bypasses the virtual API");
+    }
+
     private static final Set<String> THREAD_STATE_METHODS = signatures(
             "builder()Lcodechicken/lib/render/CCRenderPipeline$PipelineBuilder;",
             "builder_$eq(Lcodechicken/lib/render/CCRenderPipeline$PipelineBuilder;)V",
