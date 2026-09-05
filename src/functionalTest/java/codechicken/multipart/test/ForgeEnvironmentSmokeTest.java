@@ -61,6 +61,19 @@ import scala.collection.immutable.Nil$;
 class ForgeEnvironmentSmokeTest {
 
     @Test
+    void renderIdRemainsUninitializedOnTheDedicatedServerAndSharesBlockState() {
+        int previous = TileMultipart.renderID();
+        assertEquals(-1, previous);
+        try {
+            TileMultipart.renderID_$eq(37);
+            assertEquals(37, codechicken.multipart.handler.MultipartProxy.block().getRenderType());
+            assertEquals(37, codechicken.multipart.TileMultipart$.MODULE$.renderID());
+        } finally {
+            TileMultipart.renderID_$eq(previous);
+        }
+    }
+
+    @Test
     void reachesServerStartedWithWorldAndMultipartModsLoaded() {
         assertTrue(ForgeMultipartFunctionalTestMod.preInitialized);
         assertTrue(ForgeMultipartFunctionalTestMod.initialized);
