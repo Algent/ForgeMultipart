@@ -238,6 +238,10 @@ Execution order is **complete and document the Java API → migrate and release 
 the target pack → retire FMP's Scala dependencies**. Work can overlap by capability, but the removal gate cannot be
 skipped. Phases 9 and 10 now drive the remaining work; Phase 8 is the final gated milestone.
 
+After the Java API and representative extension workloads are stable, run the focused performance pass in Phase 4b.
+It can overlap consumer migration and must not wait for final Scala removal. Attribute implementation gains and
+consumer migration gains separately; performance work does not relax any compatibility or adoption gate.
+
 Candidate mappings, with final names and mutability contracts to be decided from existing behavior:
 
 | Existing Scala-facing shape | Java-first equivalent |
@@ -409,6 +413,47 @@ slot-scan closures and exception-backed return. The paired `TRedstoneTile` run r
 and improved throughput by 20.3% with an identical checksum.
 
 Exit condition: identified steady-state Scala allocation sites are removed with compatible results.
+
+### Phase 4b — Measured performance pass
+
+Status: **planned.** Phase 4's focused historical results are complete; they do not establish current whole-pack
+performance. Re-profile the corrected Java branch and representative consumer integrations, then improve the measured
+costs. The goal is useful gains from both the port and adoption of its API, not a faster language label.
+
+Prioritize hot paths by CPU/allocation evidence and user impact, while also checking intermittent and retained costs:
+
+| Representative scenario | Costs to investigate |
+| --- | --- |
+| Typical and dense mixed multipart bases with ticking parts, ProjectRed wiring and redstone activity | Main-thread CPU, tick-time median/tails, allocation and GC pauses |
+| Placement/replacement, occlusion previews and changing OpenComputers print shapes | Query/interaction latency, callback and snapshot costs, allocations |
+| Chunk load/unload, old-world reconstruction, schematic/GuideNH previews and frame moves | Load/transition latency, NBT work, cache churn and peak/retained memory |
+| Client views of ordinary and dense microblocks, including illuminated ProjectRed parts | Frame-time distributions, chunk rebuilds, render CPU and GPU limits |
+| Description updates and multiplayer chunk watches | Serialization time, bytes/packets, burst allocation and tick-time spikes |
+| Fresh startup, first trait combinations and repeated combinations | Startup/first-use latency, class generation, cache hit behavior and retained heap |
+
+These are coverage candidates, not assumed bottlenecks. Include a modest/common scene, a representative busy scene and
+an explicitly labeled stress case. Reuse the existing Forge/JFR harness for attribution; add a workload only when it
+represents an observed consumer path. Use actual client/pack runs to validate user-facing claims.
+
+- [ ] Capture a fresh baseline with exact FMP/consumer revisions, runtime, pack/config/world and repeatable actions;
+  record CPU, allocation and memory profiles before selecting targets.
+- [ ] Rank candidates by measured cost and expected user impact, including worthwhile startup/memory improvements
+  outside steady-state hot paths. Set a measurable acceptance criterion before each edit.
+- [ ] Compare unchanged consumers on baseline versus optimized FMP to isolate implementation gains. On the same FMP
+  artifact, compare a consumer's old calls with its migrated calls to isolate migration benefits and bridge overhead.
+  Include a compatible Scala/reference artifact as context where feasible; report non-comparable cases explicitly.
+- [ ] Make one bounded improvement per commit, with characterization/regression checks and paired measurements.
+  Preserve ordering, snapshots, callback/override behavior, packets, NBT and generated-extension compatibility. Do not
+  remove Scala shells or weaken an API contract just to improve a benchmark.
+- [ ] Publish absolute and relative before/after results, run variability, unchanged controls and regressions using
+  the [measurement protocol](JAVA_MIGRATION_PROFILE.md#broader-performance-pass-protocol-planned). Validate CPU wins
+  against allocation/GC, retained memory, startup and client/server tails rather than trading one cost silently for another.
+- [ ] Repeat the representative pack scenarios after integrating the changes and relevant consumer migrations.
+  Retain only justified improvements; record below-noise results and rejected candidates without claiming a speedup.
+
+Exit condition: representative scenarios have repeatable before/after evidence, selected improvements meet their
+declared criteria without unresolved correctness or material performance regressions, and consumer migration benefits
+are separately demonstrated where present. There is no preset percentage target or promised whole-pack TPS gain.
 
 ### Phase 5 — Convert built-in tile traits through the existing Java path
 

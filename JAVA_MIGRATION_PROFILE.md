@@ -4,6 +4,47 @@ This is the reproducible pre-optimization baseline for Phase 4. It runs inside t
 server, using the same generated tiles as the functional suite. It is intentionally focused rather than a claim about
 whole-pack TPS.
 
+The broader follow-up is planned in [Phase 4b](JAVA_MIGRATION.md#phase-4b--measured-performance-pass). The historical
+numbers below remain scoped to their recorded workloads and revisions; no new performance result is claimed by
+adding this plan.
+
+## Broader performance pass protocol (planned)
+
+Begin after the Java API/representative extension workloads are stable, alongside consumer migration and before
+final Scala removal. A workload manifest must identify the world/seed or reproducible world snapshot, pack and mod
+versions, FMP/consumer commits, hardware, exact JVM/flags/heap, view distance and graphics settings, part/tile/trait
+counts, and the action sequence or replay command. Restore equivalent world state before each run.
+
+Use the pack's selected modern Java runtime for primary results; check the supported Java 8 artifact separately for
+behavior and regressions. Hold the runtime and configuration fixed within every A/B comparison. Never attribute a
+JVM, renderer, pack-version or hardware change to the Java port.
+
+Measure fresh-process startup and cold first-use/class generation separately from warmed steady-state play. For each
+variant, start with at least five independent runs, alternate baseline/candidate order, use identical warm-up and
+measurement windows, and extend runs/repetitions when results are noisy. Keep profiling overhead matched; confirm
+end-to-end timing without profiling when overhead is material. Preserve raw reports and recordings under a named
+ignored evidence directory rather than overwriting the only baseline.
+
+Report median and variability across runs. Derive p95/p99 tick or frame times from enough samples within each run,
+not from five aggregate timings. Include absolute units and relative differences: CPU time, ms/tick, ms/frame,
+allocation bytes per operation or second, GC pause time, peak/retained heap, cold latency and network bytes where
+relevant. TPS alone can hide an improvement below the 50 ms tick budget. Separate CPU-bound and GPU-bound client
+scenes, and do not turn a helper microbenchmark ratio into an FPS/TPS claim.
+
+Use two controlled comparisons: baseline versus optimized FMP with consumer code unchanged; then legacy versus
+migrated consumer calls on the same FMP artifact, including adapters and any required snapshots. Where compatible,
+also compare with the Scala/reference release on the same runtime and inputs. Compare equivalent results/world state,
+packet/NBT fixtures and callback behavior; explicitly exclude scenarios whose behavior cannot be matched.
+
+Each accepted change records: hypothesis and targeted profile site; scenario/manifest and commands; before/after
+commits; raw evidence location; absolute/relative measurements with variability; correctness checks; controls,
+regressions and tradeoffs; and the acceptance decision. Define practical benefit above noise before editing. A
+below-noise result or a bottleneck outside FMP is a valid finding, not a reason to invent more optimization work.
+
+Use the existing harness and local profiling tools first. Extend only the missing representative workloads, and keep
+small microbenchmarks as attribution/regression aids alongside actual pack/client measurements. Update this document
+with results when that pass runs; performance is not established by completing the API migration table.
+
 ## Re-run
 
 The local server EULA must already contain `eula=true`. From PowerShell at the repository root:

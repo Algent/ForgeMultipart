@@ -1864,3 +1864,12 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   retains all 386 member/type/reflection rows across 27 consumers. Reference checkouts are unchanged. Physical-client
   allocation/registration/rendering remain manual gates. Next API-table entry: the tile conversion result.
   Evidence: `run/migration-render-id-reference/`.
+
+### 2026-09-05 — Planned measured performance follow-up
+
+- Added Phase 4b after checking the completed focused Phase 4 work. It covers realistic consumer/pack hot paths and
+  broader startup, transition, client rendering, networking and memory costs, with repeated controlled comparisons.
+- The protocol distinguishes changes inside FMP from the cost/benefit of migrating consumer calls on the same FMP
+  artifact, retains correctness/compatibility gates, and requires raw evidence, variability and reported regressions.
+  It can overlap consumer migration once representative API/extension workloads are stable. No new performance
+  measurements or speedup claims are introduced by this plan update.

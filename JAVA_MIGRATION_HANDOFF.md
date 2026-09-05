@@ -68,6 +68,12 @@ registry/generator/reflection replacements, extension examples and internal-boun
 patches, releases and pack adoption must precede final Scala removal and client/pack release validation; it is not
 a percentage of the whole migration.
 
+A separate [Phase 4b performance pass](JAVA_MIGRATION.md#phase-4b--measured-performance-pass) is planned once the API
+and representative extension workloads are stable, alongside consumer migration. Use fresh realistic profiles and
+repeated paired runs; distinguish FMP implementation gains from migrated-consumer gains, covering hot paths plus
+startup, transitions, rendering, network and memory costs. Follow the [measurement protocol](JAVA_MIGRATION_PROFILE.md#broader-performance-pass-protocol-planned).
+The historical Phase 4 results do not replace that pass, and no new performance gain has been measured for this update.
+
 Pause mechanical extraction of retained Scala shells unless it enables that API, fixes a demonstrated issue or has
 a measured benefit. `ScalaSignature.ClassSymbolRef.info` remains an optional bounded extraction, not the default next
 task. Keep case-class/product/serialization shapes and simple model accessors supported until their users are retired.
