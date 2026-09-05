@@ -34,6 +34,8 @@ public final class TileMultipart$ {
         return TileMultipart.getOrConvertTile(world, pos);
     }
 
+    /** @deprecated Use {@link TileMultipart#getOrConvertTileResult(World, BlockCoord)}. */
+    @Deprecated
     public Tuple2<TileMultipart, Object> getOrConvertTile2(World world, BlockCoord pos) {
         return TileMultipart.getOrConvertTile2(world, pos);
     }

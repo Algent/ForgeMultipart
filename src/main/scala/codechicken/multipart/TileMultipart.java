@@ -776,9 +776,35 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         renderID = value;
     }
 
-    /** Gets a multipart tile instance at pos, converting if necessary. */
+    /**
+     * Gets an existing tile or converted placeholder, or null. Conversion does not install the tile in the world. Use
+     * {@link #getOrConvertTileResult(World, BlockCoord)} when the conversion flag is also needed.
+     */
     public static TileMultipart getOrConvertTile(World world, BlockCoord pos) {
         return getOrConvertTile2(world, pos)._1();
+    }
+
+    /**
+     * Looks up an existing tile, otherwise asks registered block converters for a multipart representation. An existing
+     * tile is returned by identity with {@link TileConversionResult#isConverted()} false. A successful conversion
+     * returns a fresh, uninstalled placeholder with the flag true; no match returns a null tile and false.
+     *
+     * <p>
+     * A placeholder uses the world's client/server side and has its coordinates, world and converted part bound. This
+     * lookup does not replace the block, install the tile or invoke the part's placement/conversion callbacks. Repeated
+     * lookups can construct different placeholders. Converter callbacks run normally and their exceptions propagate;
+     * this is not a side-effect-free query. Use on the appropriate world thread after FMP initialization.
+     *
+     * <p>
+     * For ordinary placement, use {@link #canPlacePart(World, BlockCoord, TMultiPart)} followed by
+     * {@link #addPart(World, BlockCoord, TMultiPart)} and retain the tile returned by the addition. Do not install this
+     * placeholder directly. Use {@link #getTile(World, BlockCoord)} if conversion should not be attempted.
+     *
+     * @return a non-null result recording this lookup; its tile reference may be null
+     */
+    public static TileConversionResult getOrConvertTileResult(World world, BlockCoord pos) {
+        Tuple2<TileMultipart, Object> result = getOrConvertTile2(world, pos);
+        return new TileConversionResult(result._1(), (Boolean) result._2());
     }
 
     /**
@@ -787,7 +813,9 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
      * their space.
      *
      * @return the tile or null if there was none, and true if the tile is a result of a conversion
+     * @deprecated Use {@link #getOrConvertTileResult(World, BlockCoord)} for a Java result with named accessors.
      */
+    @Deprecated
     public static Tuple2<TileMultipart, Object> getOrConvertTile2(World world, BlockCoord pos) {
         TileEntity t = world.getTileEntity(pos.x, pos.y, pos.z);
         if (t instanceof TileMultipart) {

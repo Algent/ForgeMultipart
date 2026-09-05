@@ -21,6 +21,7 @@ without converting the rest of its code to Java.
 | Test a candidate against a selected collection of parts | `testOcclusion(Collection, candidate)` — [occlusion queries and generated hooks](api/OCCLUSION.md) |
 | Test two groups of bounding boxes directly | `NormalOcclusionTest.testBoxes(Iterable, Iterable)` — [box-versus-box queries](api/OCCLUSION.md#box-versus-box-queries) |
 | Read FMP's global render registration ID | `TileMultipart.getRenderID()` — [render-ID meaning, lifecycle and setter](api/RENDER_ID.md) |
+| Inspect an existing tile or converted placeholder with a named result | `getOrConvertTileResult(World, BlockCoord)` — [conversion outcomes and placement lifecycle](api/TILE_CONVERSION.md) |
 
 Each guide explains ownership, lifecycle, legacy replacements and limitations, and links to a compiling Java example
 exercised by the test suite. The loading/setter APIs are advanced reconstruction operations; ordinary placement and
@@ -53,6 +54,9 @@ must select the intended parameter types when a method is overloaded.
 Registry lookup/converter documentation, generator/reflection replacements
 and complete external microblock extension guidance are still pending. In particular, ProjectRed's Scala microblock traits
 remain a supported dependency; registration signatures alone do not prove a complete Java replacement.
+
+All ten entries in the plan's Phase 9.1 API table have Java replacements. That table is a bounded list of signatures;
+the broader API, extension and consumer adoption work above remains open.
 
 FMP-side implementation is separate from consumer releases and target-pack adoption. Retiring legacy bridges or the
 Scala dependency requires those gates and removal of FMP's remaining internal Scala users.

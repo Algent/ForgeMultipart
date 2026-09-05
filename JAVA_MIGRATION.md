@@ -581,14 +581,14 @@ existing Java `registerParts` overload still required Scala during javac resolut
 | `TileMultipart.loadParts(scala.collection.Iterable)` | `loadPartList(Collection<TMultiPart>)` | Implemented through the legacy virtual hook; binding, world notifications, input iteration and partial failure retained. [Loading guide](docs/api/PART_LOADING.md) |
 | `TileMultipart.partList_$eq(scala.collection.Seq)` | `setPartList(List<TMultiPart>)` | Implemented through the legacy setter; Java list copied without binding, null sentinel supported. GuideNH's old reflective name remains supported |
 | `TileMultipart.renderID()` / `renderID_$eq(int)` and companion entries | `getRenderID()` / `setRenderID(int)` | Implemented over the same global value; four legacy entries deprecated. [Guide and compiling example](docs/api/RENDER_ID.md). Reading does not initialize the client renderer |
-| `TileMultipart.getOrConvertTile2(): scala.Tuple2<TileMultipart, Object>` | Small immutable result type with named accessors | No consumer in the audited set calls this |
+| `TileMultipart.getOrConvertTile2(): scala.Tuple2<TileMultipart, Object>` and companion entry | `getOrConvertTileResult(World, BlockCoord): TileConversionResult` with `getTile()` / `isConverted()` | Implemented over the retained tuple path; [guide and compiling example](docs/api/TILE_CONVERSION.md) distinguish existing tiles, uninstalled placeholders and failed conversion. No audited direct tuple caller |
 
 Explicitly **not** renamed: `TMultiPart.world()`, `x()`, `y()`, `z()`, and `tile()`. These carry Scala accessor naming
 but no Scala type, so renaming is cosmetic churn across 27 consumers with no compatibility or performance payoff.
 `tile()` is additionally unsafe to rename toward `getTile()`, which already exists with a different return type; a
 same-name overload there invites a silent wrong-overload bind.
 
-- [ ] Add the missing Java-shaped siblings over shared behavior, preserving legacy override dispatch and avoiding
+- [x] Add the ten table rows' Java-shaped siblings over shared behavior, preserving legacy override dispatch and avoiding
   recursive forwarding as required by the API migration design.
 - [x] Add and document `materialCount()` with existing indexed lookups; retain and deprecate both `getIdMap()` entries.
 - [x] Document `jPartList()` and add `forEachPart(Consumer)`; deprecate the legacy getter/callback entries while retaining
@@ -603,13 +603,15 @@ same-name overload there invites a silent wrong-overload bind.
   initialization/factory/payload contracts with a compiling example and real Forge initialization coverage.
 - [x] Add Java render-ID accessors with shared global-state/sentinel checks, retained static/companion entries and
   explicit client initialization versus assignment semantics; [guide](docs/api/RENDER_ID.md).
-- [ ] For remaining siblings, compile external Java examples with Scala excluded from the compile classpath before
+- [x] Add the named tile conversion result, preserving both tuple descriptors and documenting placeholder versus
+  installed-tile lifecycle; [guide](docs/api/TILE_CONVERSION.md). All ten table entries now have replacements.
+- [x] For these table siblings, compile external Java examples with Scala excluded from the compile classpath before
   finalizing names. The proposed `loadParts(Collection)` overload required `scala.collection.Iterable` during javac
   overload resolution; the implemented `loadPartList(Collection)` avoids that dependency. Apply this gate to the
   remaining APIs as well as checking the emitted consumer bytecode. Registration hit the same constraint with
   `scala.collection.Seq` and `scala.Function2`; `registerPartFactory` passes this gate.
-- [ ] Mark the remaining legacy entries above `@Deprecated` with javadoc naming a working replacement.
-- [ ] Confirm every original descriptor still exists in the ABI fixture after the change.
+- [x] Mark the legacy table entries above `@Deprecated` with javadoc naming a working replacement.
+- [x] Confirm every original descriptor still exists in the ABI fixture after these table changes.
 - [ ] Document the supported API with compiling usage examples and an old-to-new migration guide. Validate Java
   subclasses and generated extensions on the actual Forge path, including both sides where relevant.
 
@@ -623,12 +625,17 @@ deprecation, and no new dependency for a marker annotation.
 Verified against all 28 consumer checkouts as having **zero external callers**:
 
 `TileMultipart.addPart_impl`, `addPart_do`, `remPart_impl`, `writeAddPart`, `partAdded`, `partRemoved`, `from`,
-`copyFrom`, `loadFrom`, `setValid`, `getOrConvertTile2`; `MicroMaterialRegistry.setupIDMap`,
+`copyFrom`, `loadFrom`, `setValid`; `MicroMaterialRegistry.setupIDMap`,
 `calcMaxCuttingStrength`, `loadIcons`, `writeIDMap`, `readIDMap`.
 
 `TileMultipart.operate` also has no audited external callers, but remains a supported legacy override hook. It is
 deprecated for callers in favor of `forEachPart`; lifecycle dispatch still uses it. Keep that explicit contract rather
 than applying the internal-only marker to it. The new convenience method does not replace the lifecycle override hook.
+
+`getOrConvertTile2` also has no audited external callers. Its retained static/companion entries are deprecated for
+callers in favor of the supported `getOrConvertTileResult` API; keep the explicit placeholder contract instead of
+marking that lookup internal. Internal placement tuple users, including `MicroblockPlacement.gtile()`, still need
+their own migration before Scala removal. Completing the table does not finish the broader extension API audit.
 
 Two similar-looking members **are** externally load-bearing and must not be marked internal:
 

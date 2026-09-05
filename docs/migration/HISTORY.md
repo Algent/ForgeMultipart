@@ -1873,3 +1873,27 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   artifact, retains correctness/compatibility gates, and requires raw evidence, variability and reported regressions.
   It can overlap consumer migration once representative API/extension workloads are stable. No new performance
   measurements or speedup claims are introduced by this plan update.
+
+### 2026-09-05 — Named Java tile conversion result
+
+- Committed three Forge characterization cases as `7396f2d` before production edits. Both legacy entries preserve
+  existing-tile identity, null/false for nonconvertible blocks (including unrelated tile entities), and bound torch
+  placeholders without world installation. Repeated conversion produces fresh objects; subsequent normal placement
+  installs its own tile. Saved the reference jar, sources, 566 compiled JVM tests, Forge test mod and generated dumps.
+- Added `getOrConvertTileResult(World, BlockCoord)` and immutable `TileConversionResult` with `getTile()` and
+  `isConverted()`. The wrapper delegates to the unchanged tuple method; both old tuple entries are deprecated. The
+  tile-only method remains supported, and internal generator/placement tuple calls are unchanged. The result uses
+  Java 8 syntax at the existing joint-compilation boundary without new compiler machinery.
+- Three additional Forge cases exercise the Java entry and example against the same characterization. The example
+  lives in the Forge source set because lookup needs an initialized world; it also compiles standalone without Scala.
+  Normal/clean style/build checks pass with 566 JVM and 255 Forge tests, zero failures/errors/skips. All 566 frozen
+  JVM tests and the byte-identical archived Forge mod's 252 cases pass against the addition.
+- All 443 old class APIs, 17 ScalaSignature payloads, 3,755 existing method bodies and 116 generated dumps remain.
+  Added one result class and one static entry; only intended deprecation/build-version metadata changes on old
+  members. All 444 packaged classes target Java 8. Source inventory is 225 Java and 9 Scala / 747 nonblank Scala lines.
+- Added the conversion lifecycle guide and index entry, completed all ten Phase 9.1 table rows, and clarified that
+  the broader extension/API audit is still open. No direct tuple consumer or new-name collision was found; the
+  installed `+719` scan retains all 386 member/type/reflection rows across 27 consumers. Reference checkouts remain
+  unchanged. Next bounded candidate: Schematica registry lookup. Consumer adoption, internal tuple users, external
+  Java extensions, measured performance work and actual client/pack checks remain separate gates.
+  Evidence: `run/migration-tile-conversion-reference/`.

@@ -491,7 +491,8 @@ behavior:
 ## Java API adoption ledger
 
 This ledger tracks migration of a specific legacy contract, not completion of an entire consumer's migration.
-Factory registration, material enumeration, tile collection/traversal access, tile loading/storage assignment, tile occlusion and box queries are implemented on
+Factory registration, material enumeration, tile collection/traversal access, tile loading/storage assignment,
+tile occlusion and box queries, render-ID accessors and named tile conversion results are implemented on
 `algent/java`. The [API index](docs/API.md) links the guides and compiling Java examples. These additions are not yet
 tied to a released minimum dependency version. Unlisted contracts remain governed by the inventories above.
 
@@ -583,6 +584,19 @@ Internal block/renderer calls retain the old paths and share the same global val
 with deprecations. This addition does not replace GuideNH's renderer reflection or allocate/register a renderer.
 JVM and dedicated-server checks preserve the -1 sentinel, unrestricted integer assignment and shared block state;
 physical-client rendering remains a separate gate. Evidence: `run/migration-render-id-reference/`.
+
+Tile conversion is available as `TileMultipart.getOrConvertTileResult(World, BlockCoord)`, returning an immutable
+`TileConversionResult` with `getTile()` / `isConverted()`; see the [guide](docs/api/TILE_CONVERSION.md). Both legacy
+static/companion tuple methods remain with deprecations and unchanged bodies/descriptors. The new API wraps their
+existing path, retaining existing-tile identity, converter dispatch and uninstalled-placeholder behavior.
+
+The supplied consumer source search found no `getOrConvertTile2` caller or new-name collision. The frozen member
+inventory likewise has no direct tuple-method reference. AE2, Chisel, OpenComputers and Extra Utilities already call
+the supported tile-only `getOrConvertTile`; they need no rename for this contract. Internal generator and microblock
+placement tuple calls remain, including `MicroblockPlacement.gtile()`; their migration is a separate Scala-removal
+gate. All 566 archived JVM tests and the unchanged archived Forge test mod's 252 cases pass against this addition.
+The `+719` rescan retains all 386 member/type/reflection rows across 27 consumers. Reference checkouts remain unchanged.
+Evidence: `run/migration-tile-conversion-reference/`.
 
 ## Practical priority for the current branch
 
