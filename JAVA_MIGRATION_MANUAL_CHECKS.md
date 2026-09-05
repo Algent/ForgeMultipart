@@ -121,3 +121,12 @@ committed callback order and example state round trips. Before adopting consumer
   without duplicate drops, lost contents or ghost connections. Exercise rejection as well as successful placement.
 - [ ] Recheck consumer side-specific constructors and descriptions; the headless example packet test does not cover
   physical-client class selection or rendering. Record consumer release and actual pack adoption separately.
+
+## Stable tile capability adoption
+
+- [ ] Rebuild ProjectRed's open-connection query against `IRedstoneTile`, retaining its rotation/mask logic; validate
+  face/framed wires with face covers and edge blockers on a physical client/server, including part changes and moves.
+- [ ] Verify consumer bytecode uses the stable interface/base owner rather than raw transformed trait class calls or
+  fields. The [Forge fixture](docs/api/TILE_TRAIT_ACCESS.md) proves server linkage, not all client-side capabilities.
+- [ ] Treat OpenComputers print slot-array mutation as still pending a supported API; retain its old binary accessor
+  until an equivalent source migration, release and pack adoption are validated.

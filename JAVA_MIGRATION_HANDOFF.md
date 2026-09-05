@@ -17,7 +17,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**573 plain-JVM tests and 280 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
+**573 plain-JVM tests and 283 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 444 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
@@ -32,15 +32,17 @@ use, but no override triggering these three regressions was found. All 443 class
 payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
 followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
-Latest API work documents existing block converter registration and the committed conversion lifecycle, with a
-[compiling Java example](docs/api/BLOCK_CONVERTERS.md). Two JVM tests and one Forge baseline were committed first as
-`a56f90c`, covering registration ownership/duplicates, failure propagation, rejected probes and callback ordering.
-One further Forge case exercises the initialized example, fresh conversion, NBT/packet state and normal installation.
-All 573 JVM / 280 Forge tests pass; 573 archived JVM / 279 archived Forge tests pass without rebuilding their callers.
-Production APIs and all 3,761 method bodies remain unchanged (444 classes, 17 ScalaSignature payloads), as do all 130
-generated dumps. The example compiles as Java 8 without Scala. Evidence: `run/migration-converter-reference/`.
-Consumer state-transfer rules, physical-client validation and release/adoption remain separate gates. The previous
-[illuminated extension](docs/api/MICROBLOCK_EXTENSIONS.md) likewise still needs physical-client/ProjectRed adoption.
+Latest API work adds [safe Java access guidance for transformed tile traits](docs/api/TILE_TRAIT_ACCESS.md).
+Two Forge baseline cases, committed first as `bfe5b86`, execute actual raw javac callers: class-method invocation on
+TRedstoneTile throws IncompatibleClassChangeError and a TSlottedTile field read throws NoSuchFieldError. Stable
+IRedstoneTile/TileMultipart access works on those same generated tiles. IRedstoneTile's old internal label is corrected
+in Javadocs; no production descriptor/body changes. The example compiles as Java 8 without Scala and uses the stable
+interface, with an additional Forge case covering all five-bit masks and absent capabilities.
+All 573 JVM / 283 Forge tests pass; 573 archived JVM / 282 archived Forge callers pass without recompilation using
+their recorded version. All 444 production class APIs, 17 ScalaSignature payloads and 3,761 methods are unchanged.
+Of 130 generated dumps, 128 are byte-identical; two helpers differ only by Javadoc line offsets (+4/+5). Evidence: `run/migration-tile-trait-access-reference/`. ProjectRed's cast migration, physical
+client validation and consumer adoption remain pending. Converter guidance is complete; custom tile-trait authoring
+and OpenComputers' slot-array mutation still need their own supported path.
 
 Direct typed calls are the intended end state for supported integrations. Optional dependencies should isolate typed
 compatibility code behind presence/version checks; reflection snippets in earlier guides are temporary legacy
@@ -64,16 +66,17 @@ adoption remain pending. Checkouts remain reference-only. The installed `+719` p
 Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
 subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
 are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
-The next bounded candidate is Java source-compilation guidance for transformed tile traits: characterize consumer
-calls against the published dev artifact, document safe stable-base/capability access, and determine whether any
-remaining trait-only calls need a supported Java entry or transformed compile stubs. Other audited reflection use
-cases remain separate work. Converter registration and lifecycle guidance are complete.
+The next bounded candidate is a supported slot-refresh operation for OpenComputers PrintPart.toggleState. Characterize
+its live-array equality clearing followed by virtual bindPart dispatch before choosing the API. Preserve other parts'
+slots, current ownership and consumer-controlled notifications; do not substitute a whole loadPartList reconstruction.
+The broader custom tile-trait authoring example and other audited reflection use cases remain separate work.
+Converter registration/lifecycle and stable tile capability access guidance are complete.
 The illuminated microblock example supplies the representative Java extension, but physical-client construction,
 connector-dependent halos, lighting and consumer adoption still need their recorded checks.
 
 Progress: all ten Phase 9.1 table rows and Phase 9.2's internal markers are complete, plus Schematica registry lookup,
 staged Java tile generation, microblock creation, typed material access and the Java illuminated extension example.
-Remaining work includes broader extension/compilation guidance and other audited reflection use cases. Consumer patches,
+Remaining work includes slot mutation and custom tile-trait authoring and other audited reflection use cases. Consumer patches,
 releases and pack adoption still precede final Scala removal and client/pack release validation.
 
 Extra Utilities remains an active supported consumer. UtilitiesInExcess is the intended replacement, but the support
@@ -348,8 +351,9 @@ composite has already invoked the real base constructor, then preserves the rema
   placement crash is fixed (`36e1a58`), but that does not establish all rendering, particles, selection/collision,
   pick-block, activation or lighting behavior. The headless renderer tests cover compiled dispatch, not GPU output.
 - Existing binaries retain the runtime tile interfaces. Recompilation against raw Java mixin inputs can emit invalid
-  class/field opcodes after Forge transforms them; provide transformed compile stubs or source guidance before
-  claiming source-compatible rebuilds. The server pass-through fixture does not cover client exclusion.
+  class/field opcodes after Forge transforms them. [Stable capability guidance](docs/api/TILE_TRAIT_ACCESS.md) covers
+  redstone and ordinary base/interface calls; slot mutation and custom tile-trait authoring remain open. The server
+  pass-through fixture does not cover client exclusion.
 - Run representative full-pack CPU/allocation and packaged modern-Java validation before performance/release claims.
   Focused results and reruns are in the profile. The current deobfuscated dedicated-server harness uses Java 8.
 - Core NBT, descriptions and one-byte shape updates are frozen; characterize each remaining shape's state immediately

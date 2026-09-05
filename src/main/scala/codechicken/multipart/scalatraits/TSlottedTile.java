@@ -7,7 +7,12 @@ import codechicken.multipart.TMultiPart;
 import codechicken.multipart.TSlottedPart;
 import codechicken.multipart.TileMultipart;
 
-/** Mixin implementation for slotted parts. */
+/**
+ * Mixin implementation for slotted parts. Raw compiler input transformed into a runtime interface; consumer Java reads
+ * slots through {@link TileMultipart#partMap(int)}. Do not compile field accesses against this class: the runtime
+ * interface has accessor methods instead of fields. Existing binary accessor callers remain supported. Slot-map
+ * mutation, including clearing old slots before bindPart, is a separate advanced contract; partMap is read-only.
+ */
 public class TSlottedTile extends TileMultipart {
 
     public TMultiPart[] v_partMap = new TMultiPart[27];

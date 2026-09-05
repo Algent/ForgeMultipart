@@ -263,3 +263,11 @@ remain in force. The example itself lives only in the functional-test source set
 existing ownership and lifecycle behavior; [guide](docs/api/BLOCK_CONVERTERS.md). All static/companion descriptors,
 production method bodies and ScalaSignature payloads remain unchanged. The compiling example is functional-test
 content only. Existing converter consumers need no API rename; their factory migration and adoption gates remain.
+
+### Stable Java tile capability access
+
+The [guide](docs/api/TILE_TRAIT_ACCESS.md) provides ProjectRed's `TRedstoneTile.openConnections` source migration to
+existing `IRedstoneTile.openConnections`. All descriptors and production method bodies remain unchanged; legacy
+interface calls still link. The dev jar's raw trait classes are not safe replacements for original compile-time
+interfaces: executable javac fixtures demonstrate class-call and field-read linkage failures. OpenComputers' live
+`TSlottedTile.v_partMap()` array mutation remains a separate API gap and its runtime accessor must remain supported.

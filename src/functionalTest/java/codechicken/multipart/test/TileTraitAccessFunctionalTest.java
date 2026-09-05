@@ -1,6 +1,7 @@
 package codechicken.multipart.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,8 +16,20 @@ import codechicken.multipart.MultipartHelper;
 import codechicken.multipart.TFacePart;
 import codechicken.multipart.TMultiPart;
 import codechicken.multipart.TileMultipart;
+import codechicken.multipart.examples.TileTraitAccessExample;
 
 class TileTraitAccessFunctionalTest {
+
+    @Test
+    void javaExampleUsesGeneratedCapabilityAndHandlesAbsentCapability() {
+        TileMultipart tile = MultipartHelper.createTileFromParts(Arrays.asList(new PowerPart(), new CoverPart()));
+        for (int mask = 0; mask < 32; mask++) {
+            assertEquals((mask & 0x15) != 0, TileTraitAccessExample.hasOpenConnection(tile, 0, mask));
+        }
+        TileMultipart noRedstone = MultipartHelper.createTileFromParts(Arrays.asList(new CoverPart()));
+        assertFalse(TileTraitAccessExample.hasOpenConnection(noRedstone, 0, 0x1F));
+        assertFalse(TileTraitAccessExample.hasOpenConnection(null, 0, 0x1F));
+    }
 
     @Test
     void rawClassInvocationFailsWhileTheStableRedstoneInterfaceDispatches() throws Exception {

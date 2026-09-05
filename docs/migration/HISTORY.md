@@ -2106,3 +2106,31 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Evidence: `run/migration-converter-reference/`. Updated the API index, plan, audits, handoff and manual integration
   checks. Next: source-compilation guidance and safe public access for transformed tile traits. Remaining reflection
   capabilities, client validation, downstream releases/adoption and final Scala removal stay open.
+
+### 2026-09-05 — Stable Java access to transformed tile traits
+
+- Committed baseline `bfe5b86` before production documentation changes. Two Forge tests execute javac-compiled raw
+  consumer calls: `TRedstoneTile.openConnections` fails with IncompatibleClassChangeError and `TSlottedTile.v_partMap`
+  field access fails with NoSuchFieldError after runtime transformation. Stable IRedstoneTile and TileMultipart calls
+  succeed on the same generated tiles. This characterizes a known source-compilation constraint, not a new runtime
+  regression in existing interface-compiled consumers.
+- Added the [safe access guide](../api/TILE_TRAIT_ACCESS.md) and a Java example using the existing IRedstoneTile
+  interface. An additional Forge case covers all five-bit masks and null/non-redstone tiles. Corrected IRedstoneTile's
+  old internal label to a supported capability contract and warned on both raw trait inputs. No new interface,
+  reflection workaround, compile-stub artifact or production method body was needed.
+- Confirmed ProjectRed's redwire query can change its cast owner to IRedstoneTile while retaining its existing mask
+  and rotation calculation. Added that adoption-ledger row. OpenComputers PrintPart's slot mutation is explicitly
+  separate: it clears array entries equal to itself, then dispatches bindPart before its own notifications. A focused
+  slot-refresh API is the next bounded candidate; whole-tile reload and bindPart alone are not equivalent.
+- Normal and clean formatting/checkstyle/build/Forge validation passes: **573 JVM / 283 Forge** cases, zero
+  failures/errors/skips. **573 archived JVM / 282 archived Forge** callers pass without recompilation using their
+  recorded version; the archived Forge test jar is byte-identical. The example compiles with Java 8 targeting and no
+  Scala library against the dev artifact, and javap confirms invokeinterface through IRedstoneTile. Its bytecode has
+  no Scala, reflection or raw trait-class references.
+- All **444** production class APIs, **17** ScalaSignature payloads and **3,761** method bodies remain unchanged.
+  Of **130** generated dumps, **128** are byte-identical; the TRedstoneTile/TSlottedTile helpers differ only by exact
+  LINENUMBER offsets of +4/+5 from Javadoc additions. No executable generation difference or new divergence exists.
+  Release/dev jars remain Java 8 and their five @Mod versions are checked after the final commit.
+- Updated API index, plan, audits, handoff and physical-client adoption checks. Reference consumers were not edited,
+  released or counted as adopted. Custom tile-trait authoring examples, slot mutation, remaining reflection APIs and
+  physical-client/full-pack validation remain open. Evidence: `run/migration-tile-trait-access-reference/`.

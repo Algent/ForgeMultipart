@@ -15,6 +15,10 @@ import scala.collection.Seq;
 /**
  * Mixin implementation for multipart redstone queries. Direct list walks avoid measured iterator/wrapper allocations;
  * the public part-list setter also accepts other Seq types, which need the iterator fallback.
+ *
+ * <p>
+ * Raw compiler input: Forge transforms this class into a runtime interface. Consumer Java calls must use the stable
+ * {@link IRedstoneTile} / {@link TileMultipart} contracts, not method invocations compiled against this raw class.
  */
 public class TRedstoneTile extends TileMultipart implements IRedstoneTile {
 
