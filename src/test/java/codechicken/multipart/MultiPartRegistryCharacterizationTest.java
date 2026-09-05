@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.Function;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -32,6 +33,44 @@ import scala.Option;
  * neither FML nor the logger, so they are covered here.
  */
 class MultiPartRegistryCharacterizationTest {
+
+    @Test
+    void reflectedFactoryLookupTracksRegistryWithoutConstructingParts() throws IllegalAccessException {
+        checkFactoryLookup(reflectedFactoryLookup());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Function<String, IPartFactory2> reflectedFactoryLookup() throws IllegalAccessException {
+        Field field = ReflectionHelper
+                .findField(MultiPartRegistry$.class, "codechicken$multipart$MultiPartRegistry$$typeMap");
+        scala.collection.mutable.Map<String, IPartFactory2> map = (scala.collection.mutable.Map<String, IPartFactory2>) field
+                .get(MultiPartRegistry$.MODULE$);
+        return name -> {
+            Option<IPartFactory2> factory = map.get(name);
+            return factory.isEmpty() ? null : factory.get();
+        };
+    }
+
+    private static void checkFactoryLookup(Function<String, IPartFactory2> lookup) {
+        String name = "test:factory_lookup";
+        TestFactory first = new TestFactory(new TestPart());
+        TestFactory second = new TestFactory(new TestPart());
+        assertNull(lookup.apply(name));
+        assertNull(lookup.apply(""));
+        try {
+            MultiPartRegistry.typeMapBacking().put(name, first);
+            assertSame(first, lookup.apply(new String(name)));
+            assertNull(lookup.apply("TEST:factory_lookup"));
+            MultiPartRegistry.typeMapBacking().put(name, second);
+            assertSame(second, lookup.apply(name));
+            MultiPartRegistry.typeMapBacking().remove(name);
+            assertNull(lookup.apply(name));
+            assertEquals(0, first.calls);
+            assertEquals(0, second.calls);
+        } finally {
+            MultiPartRegistry.typeMapBacking().remove(name);
+        }
+    }
 
     @Test
     void noPartsAreLoadedBeforeRegistrationRuns() {
@@ -144,6 +183,7 @@ class MultiPartRegistryCharacterizationTest {
     private static final class TestFactory implements IPartFactory2 {
 
         private final TMultiPart part;
+        private int calls;
 
         private TestFactory(TMultiPart part) {
             this.part = part;
@@ -151,11 +191,13 @@ class MultiPartRegistryCharacterizationTest {
 
         @Override
         public TMultiPart createPart(String name, NBTTagCompound nbt) {
+            calls++;
             return part;
         }
 
         @Override
         public TMultiPart createPart(String name, MCDataInput packet) {
+            calls++;
             return part;
         }
     }
