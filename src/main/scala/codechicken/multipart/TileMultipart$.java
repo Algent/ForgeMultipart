@@ -18,10 +18,14 @@ public final class TileMultipart$ {
 
     private TileMultipart$() {}
 
+    /** @deprecated Use {@link TileMultipart#getRenderID()}. Retained for compiled companion callers. */
+    @Deprecated
     public int renderID() {
         return TileMultipart.renderID();
     }
 
+    /** @deprecated Use {@link TileMultipart#setRenderID(int)}. Retained for compiled companion callers. */
+    @Deprecated
     public void renderID_$eq(int value) {
         TileMultipart.renderID_$eq(value);
     }

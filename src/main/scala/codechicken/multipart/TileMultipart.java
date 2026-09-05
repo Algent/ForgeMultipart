@@ -746,10 +746,32 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
 
     private static int renderID = -1;
 
+    /**
+     * Returns FMP's global block-render registration ID. Initially -1; reading it does not initialize the client
+     * renderer or allocate an ID. This is shared state, not a per-tile or persistent part ID.
+     */
+    public static int getRenderID() {
+        return renderID();
+    }
+
+    /**
+     * Assigns the global render ID, preserving all integer values including -1. Intended for controlled render setup;
+     * this only changes the stored value and does not allocate an ID, register a handler or update Forge's mapping.
+     * FMP's client renderer still performs its own allocation when first initialized. Use on the initialization/game
+     * thread, not as a per-tile rendering control.
+     */
+    public static void setRenderID(int value) {
+        renderID_$eq(value);
+    }
+
+    /** @deprecated Use {@link #getRenderID()}. Retained for existing static/companion callers. */
+    @Deprecated
     public static int renderID() {
         return renderID;
     }
 
+    /** @deprecated Use {@link #setRenderID(int)}. Retained with unchanged shared-state behavior. */
+    @Deprecated
     public static void renderID_$eq(int value) {
         renderID = value;
     }

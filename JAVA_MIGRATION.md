@@ -535,7 +535,7 @@ existing Java `registerParts` overload still required Scala during javac resolut
 | `NormalOcclusionTest.apply(scala.collection.Traversable<Cuboid6>, scala.collection.Traversable<Cuboid6>)` and companion entry | `testBoxes(Iterable<? extends Cuboid6>, Iterable<? extends Cuboid6>)` | Implemented over the existing Java loop; both inputs snapshotted before geometry tests. [Guide and compiling example](docs/api/OCCLUSION.md#box-versus-box-queries). ForgeRelocationFMP/OpenComputers adoption remains pending |
 | `TileMultipart.loadParts(scala.collection.Iterable)` | `loadPartList(Collection<TMultiPart>)` | Implemented through the legacy virtual hook; binding, world notifications, input iteration and partial failure retained. [Loading guide](docs/api/PART_LOADING.md) |
 | `TileMultipart.partList_$eq(scala.collection.Seq)` | `setPartList(List<TMultiPart>)` | Implemented through the legacy setter; Java list copied without binding, null sentinel supported. GuideNH's old reflective name remains supported |
-| `TileMultipart.renderID()` / `renderID_$eq(int)` | `getRenderID()` / `setRenderID(int)` | |
+| `TileMultipart.renderID()` / `renderID_$eq(int)` and companion entries | `getRenderID()` / `setRenderID(int)` | Implemented over the same global value; four legacy entries deprecated. [Guide and compiling example](docs/api/RENDER_ID.md). Reading does not initialize the client renderer |
 | `TileMultipart.getOrConvertTile2(): scala.Tuple2<TileMultipart, Object>` | Small immutable result type with named accessors | No consumer in the audited set calls this |
 
 Explicitly **not** renamed: `TMultiPart.world()`, `x()`, `y()`, `z()`, and `tile()`. These carry Scala accessor naming
@@ -556,6 +556,8 @@ same-name overload there invites a silent wrong-overload bind.
   static/companion bridges; [migration guide](docs/api/OCCLUSION.md#box-versus-box-queries).
 - [x] Add `registerPartFactory(IPartFactory2, String...)`, deprecate the remaining Scala sequence entries, and document
   initialization/factory/payload contracts with a compiling example and real Forge initialization coverage.
+- [x] Add Java render-ID accessors with shared global-state/sentinel checks, retained static/companion entries and
+  explicit client initialization versus assignment semantics; [guide](docs/api/RENDER_ID.md).
 - [ ] For remaining siblings, compile external Java examples with Scala excluded from the compile classpath before
   finalizing names. The proposed `loadParts(Collection)` overload required `scala.collection.Iterable` during javac
   overload resolution; the implemented `loadPartList(Collection)` avoids that dependency. Apply this gate to the

@@ -576,6 +576,14 @@ Forge test mod's 247 cases pass against the new implementation. The `+719` resca
 across 27 consumers. Schematica's private registry-map dependency is separate and remains pending; the supplied
 checkouts remain unchanged. Evidence: `run/migration-registration-reference/`.
 
+Render-ID access is implemented as `TileMultipart.getRenderID()` / `setRenderID(int)`, with a
+[lifecycle guide](docs/api/RENDER_ID.md). No direct use of the four old static/companion accessors or new-name collision
+was found in FMP-related consumer source, and the frozen member inventory contains none of those descriptors.
+Internal block/renderer calls retain the old paths and share the same global value; all four legacy entries remain
+with deprecations. This addition does not replace GuideNH's renderer reflection or allocate/register a renderer.
+JVM and dedicated-server checks preserve the -1 sentinel, unrestricted integer assignment and shared block state;
+physical-client rendering remains a separate gate. Evidence: `run/migration-render-id-reference/`.
+
 ## Practical priority for the current branch
 
 1. Keep the existing `+678` ABI fixture as the exact binary floor and correct failures before source cleanup.

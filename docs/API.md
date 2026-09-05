@@ -20,6 +20,7 @@ without converting the rest of its code to Java.
 | Assign stored parts during reconstruction, without binding or notifications | `setPartList(List)` — [storage assignment](api/PART_LOADING.md#storage-assignment) |
 | Test a candidate against a selected collection of parts | `testOcclusion(Collection, candidate)` — [occlusion queries and generated hooks](api/OCCLUSION.md) |
 | Test two groups of bounding boxes directly | `NormalOcclusionTest.testBoxes(Iterable, Iterable)` — [box-versus-box queries](api/OCCLUSION.md#box-versus-box-queries) |
+| Read FMP's global render registration ID | `TileMultipart.getRenderID()` — [render-ID meaning, lifecycle and setter](api/RENDER_ID.md) |
 
 Each guide explains ownership, lifecycle, legacy replacements and limitations, and links to a compiling Java example
 exercised by the test suite. The loading/setter APIs are advanced reconstruction operations; ordinary placement and

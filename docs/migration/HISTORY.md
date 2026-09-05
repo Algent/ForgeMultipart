@@ -1847,3 +1847,20 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   reflection rows across 27 consumers. Reference checkouts and adoption status are unchanged. Registry lookup,
   external trait migration and physical-client/pack checks remain separate. Next API-table entry: render-ID accessors.
   Evidence: `run/migration-registration-reference/`.
+
+### 2026-09-05 — Java render-ID accessors
+
+- Committed two JVM cases and one Forge case as `3c22ab6` before changing production code. They pin the initial -1
+  sentinel, shared static/companion storage, all integer values and block render-type reads. Saved the reference jar,
+  sources, 565 compiled JVM fixtures, the Forge test mod, reports and 116 generated dumps.
+- Added `getRenderID()` / `setRenderID(int)` as adapters over existing accessors. The four old static/companion
+  accessors are deprecated, preserving their bodies/descriptors. Client renderer initialization/ID allocation and
+  internal block/renderer call sites are unchanged. The Java example compiles without Scala.
+- Normal/clean build/style checks pass: 566 JVM and 249 Forge tests. All 565 frozen JVM fixtures and the archived
+  Forge mod's 249 cases pass without recompiling their callers. All 443 classes, 17 ScalaSignature payloads,
+  3,753 existing method bodies and 116 generated dumps remain, with exactly two public methods and four deprecations
+  added; only expected deprecation/build-version metadata differs.
+- Added a lifecycle guide and API index entry. No direct consumer use/name collision was found; the `+719` scan still
+  retains all 386 member/type/reflection rows across 27 consumers. Reference checkouts are unchanged. Physical-client
+  allocation/registration/rendering remain manual gates. Next API-table entry: the tile conversion result.
+  Evidence: `run/migration-render-id-reference/`.

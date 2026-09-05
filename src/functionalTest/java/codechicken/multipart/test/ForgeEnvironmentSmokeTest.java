@@ -64,10 +64,15 @@ class ForgeEnvironmentSmokeTest {
     void renderIdRemainsUninitializedOnTheDedicatedServerAndSharesBlockState() {
         int previous = TileMultipart.renderID();
         assertEquals(-1, previous);
+        assertEquals(previous, TileMultipart.getRenderID());
         try {
             TileMultipart.renderID_$eq(37);
             assertEquals(37, codechicken.multipart.handler.MultipartProxy.block().getRenderType());
             assertEquals(37, codechicken.multipart.TileMultipart$.MODULE$.renderID());
+            assertEquals(37, TileMultipart.getRenderID());
+            TileMultipart.setRenderID(38);
+            assertEquals(38, codechicken.multipart.handler.MultipartProxy.block().getRenderType());
+            assertEquals(38, TileMultipart.renderID());
         } finally {
             TileMultipart.renderID_$eq(previous);
         }

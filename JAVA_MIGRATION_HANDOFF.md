@@ -17,7 +17,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**563 plain-JVM tests and 248 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
+**566 plain-JVM tests and 249 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **224 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 443 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
@@ -32,13 +32,13 @@ use, but no override triggering these three regressions was found. All 443 class
 payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
 followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
-Latest API addition: `MultiPartRegistry.registerPartFactory(IPartFactory2, String...)` delegates to existing Java
-registration. Four Forge baseline cases were committed first as `e4deac8`; the new entry runs through those contracts
-plus a compiling example registered in real mod initialization. All 563 frozen JVM tests and the archived Forge test
-mod's 247 cases pass against the new implementation. All 443 classes retain existing members, with one method added
-and two legacy entries deprecated; 17 ScalaSignature payloads, 3,752 existing method bodies and 116 generated dumps
-are unchanged apart from deprecation metadata and build-version literals. Evidence: `run/migration-registration-reference/`;
-[guide](docs/api/PART_REGISTRATION.md).
+Latest API addition: `TileMultipart.getRenderID()` / `setRenderID(int)` share the existing global render ID, retaining
+the -1 sentinel and unrestricted integer assignment without client initialization. Two JVM cases and one Forge case
+were committed first as `3c22ab6`; one further JVM case and stronger Forge assertions cover the Java entry/example.
+All 565 frozen JVM tests and the archived Forge test mod's 249 cases pass against the new implementation. All 443
+classes retain existing members, with two methods added and four legacy accessors deprecated; 17 ScalaSignature
+payloads, 3,753 existing method bodies and 116 generated dumps are unchanged apart from deprecation metadata and build
+versions. Evidence: `run/migration-render-id-reference/`; [guide](docs/api/RENDER_ID.md).
 
 Naming correction: the planned `loadParts(Collection)` overload made javac require `scala.collection.Iterable` even
 for Java arguments. The distinct `loadPartList` name allows compilation without Scala on the example's classpath.
@@ -57,12 +57,13 @@ adoption remain pending. Checkouts remain reference-only. The installed `+719` p
 Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
 subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
 are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
-The next API-table entry is `TileMultipart` render-ID accessors: add `getRenderID`/`setRenderID` over the existing
-static state with baseline initial-value/shared-state checks and retained static/companion descriptors. Document that
-this is a global render registration ID, not per-tile state. Registry lookup for Schematica remains a separate gap.
+The final API-table entry is `TileMultipart.getOrConvertTile2`, whose Scala tuple exposes the tile and conversion flag.
+Characterize existing-tile, missing-tile and converted-placeholder behavior before adding a named Java result; retain
+the legacy descriptor and clarify that a converted placeholder has not been installed in the world. Registry lookup
+for Schematica remains a separate gap.
 
-Progress: eight of the ten Phase 9.1 rows now have implemented/documented Java replacements. The remaining rows are
-render-ID accessors and the tuple-returning tile conversion result. That count excludes supported
+Progress: nine of the ten Phase 9.1 rows now have implemented/documented Java replacements. The remaining row is
+the tuple-returning tile conversion result. That count excludes supported
 registry/generator/reflection replacements, extension examples and internal-boundary documentation. Then consumer
 patches, releases and pack adoption must precede final Scala removal and client/pack release validation; it is not
 a percentage of the whole migration.
