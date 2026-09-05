@@ -2,13 +2,18 @@ package codechicken.multipart.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Proxy;
 import java.util.BitSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import net.minecraft.nbt.NBTTagCompound;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,10 +22,88 @@ import codechicken.microblock.FaceMicroblock;
 import codechicken.microblock.MicroMaterialRegistry;
 import codechicken.microblock.MicroMaterialRegistry.IMicroMaterial;
 import codechicken.microblock.Microblock;
+import codechicken.microblock.MicroblockClass;
 import codechicken.microblock.MicroblockGenerator;
+import codechicken.microblock.MicroblockGenerator$;
+import codechicken.multipart.TileMultipart;
 import scala.Tuple2;
 
 class MicroblockGeneratorFunctionalTest {
+
+    @Test
+    void staticAndCompanionReflectionCreateFreshPartsBeforeCallerOwnedShapeLoading() throws Exception {
+        MicroblockClass factory = FaceMicroClass$.MODULE$;
+        int material = MicroMaterialRegistry.materialID("minecraft:stone");
+        Microblock source = factory.create(false, material);
+        source.shape_$eq((byte) 0x25);
+        TileMultipart sourceTile = new TileMultipart();
+        source.bind(sourceTile);
+        for (Class<?> owner : new Class<?>[] { MicroblockGenerator.class, MicroblockGenerator$.class }) {
+            Object receiver = owner == MicroblockGenerator.class ? null : MicroblockGenerator$.MODULE$;
+            Microblock created = (Microblock) owner.getMethod("create", MicroblockClass.class, int.class, boolean.class)
+                    .invoke(receiver, factory, material, false);
+            assertNotSame(source, created);
+            assertSame(source.getClass(), created.getClass());
+            assertSame(factory, created.microClass());
+            assertEquals(material, created.material());
+            assertEquals(0, created.shape());
+            assertNull(created.tile());
+            created.shape_$eq(source.shape());
+            assertEquals(0x25, created.shape());
+            NBTTagCompound tag = new NBTTagCompound();
+            tag.setString("material", "minecraft:stone");
+            tag.setByte("shape", (byte) 0x31);
+            created.load(tag);
+            assertEquals(0x31, created.shape());
+            assertEquals(material, created.material());
+            assertNull(created.tile());
+            assertSame(sourceTile, source.tile());
+            assertEquals(0x25, source.shape());
+        }
+    }
+
+    @Test
+    void materialCallbackFailurePropagatesAndTheNextCreationClearsScratch() {
+        Tuple2<String, IMicroMaterial>[] materials = MicroMaterialRegistry.getIdMap();
+        Tuple2<String, IMicroMaterial> original = materials[0];
+        IllegalStateException failure = new IllegalStateException("material trait failure");
+        BitSet scratch = MicroblockGenerator.getBitSet();
+        IMicroMaterial material = (IMicroMaterial) Proxy.newProxyInstance(
+                getClass().getClassLoader(),
+                new Class<?>[] { IMicroMaterial.class, MicroblockGenerator.IGeneratedMaterial.class },
+                (proxy, method, args) -> {
+                    if ("addTraits".equals(method.getName())) {
+                        assertSame(scratch, args[0]);
+                        assertSame(FaceMicroClass$.MODULE$, args[1]);
+                        assertEquals(Boolean.FALSE, args[2]);
+                        ((BitSet) args[0]).set(2048);
+                        throw failure;
+                    }
+                    return defaultValue(method.getReturnType());
+                });
+        materials[0] = new Tuple2<>(original._1(), material);
+        try {
+            assertSame(
+                    failure,
+                    assertThrows(
+                            IllegalStateException.class,
+                            () -> MicroblockGenerator.create(FaceMicroClass$.MODULE$, 0, false)));
+            assertTrue(scratch.get(2048));
+            assertSame(
+                    failure,
+                    assertThrows(
+                            IllegalStateException.class,
+                            () -> MicroblockGenerator$.MODULE$.create(FaceMicroClass$.MODULE$, 0, false)));
+            materials[0] = original;
+            Microblock created = MicroblockGenerator.create(FaceMicroClass$.MODULE$, 0, false);
+            assertFalse(scratch.get(2048));
+            assertSame(FaceMicroClass$.MODULE$, created.microClass());
+            assertNull(created.tile());
+        } finally {
+            materials[0] = original;
+            MicroblockGenerator.freshBitSet();
+        }
+    }
 
     @Test
     void generatedMaterialAddsExternalScalaTraitBeforeConstruction() throws Exception {
