@@ -256,3 +256,10 @@ The [three-file example](docs/api/MICROBLOCK_EXTENSIONS.md) uses typed FMP entry
 to the production API. ProjectRed still ships its external Scala trait; the Java example does not authorize retiring
 its old class/helper contracts or signature ingestion. Consumer release, pack adoption and internal dependency gates
 remain in force. The example itself lives only in the functional-test source set.
+
+### Java block converter guidance
+
+`IPartConverter`, `registerConverter`, `convertBlock`, `invalidateConvertedTile` and `onConverted` now document their
+existing ownership and lifecycle behavior; [guide](docs/api/BLOCK_CONVERTERS.md). All static/companion descriptors,
+production method bodies and ScalaSignature payloads remain unchanged. The compiling example is functional-test
+content only. Existing converter consumers need no API rename; their factory migration and adoption gates remain.

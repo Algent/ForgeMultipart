@@ -109,3 +109,15 @@ translation keys; these are examples for running the checks, not claims that the
 | AE2 | `assets/appliedenergistics2/lang/en_US.lang`: `item.appliedenergistics2.ItemPart.CableGlass`, `CableCovered`, `CableDense`; `appeng/fmp/CableBusPart.getHollowSize` supplies connected cable bounds |
 | ForgeRelocation / MatterManipulator | `assets/mcframes/lang/en_US.lang`: `tile.mcframes.frame`; `assets/matter-manipulator/lang/en_US.lang`: `item.itemMatterManipulator3`; the MKIII tier permits moving |
 | FMP shapes and saws | This repository's `src/main/resources/assets/multipart/lang/en_US.lang`: `mcr_face`, `mcr_hllw`, `mcr_edge`, `mcr_cnr`, and `item.microblock:sawStone/sawIron/sawDiamond` |
+
+## Converter integration follow-up
+
+The [converter guide](docs/api/BLOCK_CONVERTERS.md) and Forge fixtures establish registration, discarded probes,
+committed callback order and example state round trips. Before adopting consumer changes:
+
+- [ ] On a physical client/server, preview and cancel conversion of Chisel torches, OpenComputers cables/prints,
+  AE2 cable buses and supported converter blocks; the source state/network must remain intact.
+- [ ] Commit conversion, reconnect/reload, and confirm metadata, inventory and network state survive exactly once,
+  without duplicate drops, lost contents or ghost connections. Exercise rejection as well as successful placement.
+- [ ] Recheck consumer side-specific constructors and descriptions; the headless example packet test does not cover
+  physical-client class selection or rendering. Record consumer release and actual pack adoption separately.

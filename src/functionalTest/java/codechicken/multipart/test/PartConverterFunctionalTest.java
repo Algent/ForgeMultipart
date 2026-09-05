@@ -14,19 +14,82 @@ import java.util.List;
 
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
 import org.junit.jupiter.api.Test;
 
+import codechicken.lib.packet.PacketCustom;
 import codechicken.lib.vec.BlockCoord;
 import codechicken.multipart.MultiPartRegistry;
 import codechicken.multipart.MultiPartRegistry.IPartConverter;
 import codechicken.multipart.TMultiPart;
 import codechicken.multipart.TileMultipart;
+import codechicken.multipart.examples.BlockConversionExample;
 
 class PartConverterFunctionalTest {
+
+    @Test
+    void javaExampleRegistersConvertsAndPreservesStateThroughNbtAndPackets() {
+        World world = MinecraftServer.getServer().worldServers[0];
+        BlockCoord pos = new BlockCoord(60, 200, 48);
+        Block source = ForgeMultipartFunctionalTestMod.illuminatedLamp;
+        world.getChunkFromBlockCoords(pos.x, pos.z);
+        BlockConversionExample converter = (BlockConversionExample) MultiPartRegistry
+                .getPartFactory(BlockConversionExample.PART_TYPE);
+        assertEquals(Collections.singletonList(source), converter.blockTypes());
+        try {
+            world.setBlock(pos.x, pos.y, pos.z, Blocks.stone, 0, 0);
+            assertNull(converter.convert(world, pos));
+            world.setBlock(pos.x, pos.y, pos.z, source, 11, 0);
+            TMultiPart converted = MultiPartRegistry.convertBlock(world, pos, source);
+            assertTrue(converted instanceof BlockConversionExample.ConvertedPart);
+            assertNull(converted.tile());
+            assertNotSame(converted, MultiPartRegistry.convertBlock(world, pos, source));
+            assertSame(source, world.getBlock(pos.x, pos.y, pos.z));
+            NBTTagCompound saved = new NBTTagCompound();
+            converted.save(saved);
+            assertEquals(11, saved.getInteger("metadata"));
+
+            TMultiPart restored = MultiPartRegistry.loadPart(converted.getType(), saved);
+            assertNotSame(converted, restored);
+            assertNull(restored.tile());
+            restored.load(saved);
+            NBTTagCompound copy = new NBTTagCompound();
+            restored.save(copy);
+            assertEquals(saved, copy);
+
+            PacketCustom outgoing = new PacketCustom("test", 1);
+            MultiPartRegistry.writePartID(outgoing, converted);
+            converted.writeDesc(outgoing);
+            outgoing.writeByte(37);
+            PacketCustom incoming = new PacketCustom(outgoing.getByteBuf().copy());
+            TMultiPart client = MultiPartRegistry.readPart(incoming);
+            assertNotSame(converted, client);
+            assertNull(client.tile());
+            client.readDesc(incoming);
+            copy = new NBTTagCompound();
+            client.save(copy);
+            assertEquals(saved, copy);
+            assertEquals(37, incoming.readUByte());
+
+            TMultiPart added = new MultipartGeneratorFunctionalTest.PlainPart();
+            assertTrue(TileMultipart.canPlacePart(world, pos, added));
+            TileMultipart installed = TileMultipart.addPart(world, pos, added);
+            TMultiPart committed = installed.jPartList().get(0);
+            assertEquals(converted.getType(), committed.getType());
+            assertNotSame(converted, committed);
+            copy = new NBTTagCompound();
+            committed.save(copy);
+            assertEquals(saved, copy);
+            assertSame(installed, committed.tile());
+            assertSame(installed, world.getTileEntity(pos.x, pos.y, pos.z));
+        } finally {
+            world.setBlockToAir(pos.x, pos.y, pos.z);
+        }
+    }
 
     @Test
     void probesLeaveOriginalTileIntactAndCommitRunsConversionHooksInOrder() {

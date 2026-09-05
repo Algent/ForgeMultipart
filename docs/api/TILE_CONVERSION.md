@@ -29,6 +29,8 @@ dispatch and uses the world's client/server side when generating the tile.
 The result is an immutable record of one lookup; the referenced tile and its parts remain mutable. There is no
 snapshot of tile contents, ownership transfer, synchronization or automatic update when the world later changes.
 
+To implement conversion, see [block converter registration and lifecycle](BLOCK_CONVERTERS.md).
+
 ## Placeholder lifecycle
 
 A converted placeholder has world and position assigned and its converted part bound. FMP has not replaced the

@@ -71,15 +71,29 @@ public final class MultiPartRegistry {
         TMultiPart createPart(String name, MCDataInput packet);
     }
 
-    /** An interface for converting existing blocks/tile entities to multipart versions. */
+    /**
+     * Converts an existing block/tile into a fresh, unbound part. Register once during common mod initialization on
+     * both sides with {@link MultiPartRegistry#registerConverter(IPartConverter)}, separately from its persistent part
+     * factory. Conversion may run repeatedly for inspection, placement checks and eventual placement; do not remove the
+     * source block or transfer live resources here. See {@link TMultiPart#invalidateConvertedTile()} and
+     * {@link TMultiPart#onConverted()} for the committed conversion lifecycle.
+     */
     public interface IPartConverter {
 
         /**
-         * Return true if this converter can handle the specific blockID (may or may not actually convert the block).
+         * Returns the block instances this converter may handle. Enumerated immediately during registration; the
+         * iterable is not retained. Return non-null blocks without duplicates. Metadata/tile eligibility is checked by
+         * convert, not by registration.
          */
         Iterable<Block> blockTypes();
 
-        /** Return a multipart version of the block at pos in world. Return null if no conversion is possible. */
+        /**
+         * Inspect the source at pos and return a fresh, unbound part, or null to let the next converter try. World and
+         * position are borrowed, unchanged references; do not mutate the position. Use world.isRemote for side-specific
+         * construction. Copy required state without consuming it: the candidate may be discarded and this callback may
+         * run again. FMP does not invoke load/readDesc on this result or validate its registered type. Exceptions
+         * propagate and stop dispatch; they do not mean "try the next converter".
+         */
         TMultiPart convert(World world, BlockCoord pos);
     }
 
@@ -198,7 +212,16 @@ public final class MultiPartRegistry {
         registerParts(partFactory, types);
     }
 
-    /** Register a part converter instance. */
+    /**
+     * Registers a converter for each block returned by blockTypes, in iteration order. Retains the converter object and
+     * appends to each block's ordered list; duplicate blocks or calls create duplicate entries. Registration does not
+     * call convert, register a part factory or copy the iterable. Iterator failures leave earlier entries present.
+     *
+     * <p>
+     * Call once from common preInit/init after source blocks exist, on both sides. Unlike part-factory registration,
+     * this legacy entry does not enforce an active mod container or a registry-state gate. It provides no unregister,
+     * deduplication or synchronization; do not use world-load callbacks to repeatedly register converters.
+     */
     public static void registerConverter(IPartConverter c) {
         for (Block block : c.blockTypes()) {
             converters.put(block, c);
@@ -320,7 +343,14 @@ public final class MultiPartRegistry {
         return client ? factory.createPart(name, (MCDataInput) null) : factory.createPart(name, (NBTTagCompound) null);
     }
 
-    /** Calls converters to create a multipart version of the block at pos. */
+    /**
+     * Tries converters registered for the supplied block, in registration order, and returns the first non-null result
+     * unchanged. The block argument selects the list; this method does not read or verify the world's block. Callbacks
+     * receive the original world/pos references. Returns null when all decline or none are registered; failures
+     * propagate. Does not load, bind, install or invoke conversion lifecycle hooks on the result. Ordinary callers
+     * should use {@link TileMultipart#getOrConvertTileResult(World, BlockCoord)} for a bound placeholder, or the
+     * placement APIs.
+     */
     public static TMultiPart convertBlock(World world, BlockCoord pos, Block block) {
         for (IPartConverter c : converters.get(block)) {
             TMultiPart ret = c.convert(world, pos);

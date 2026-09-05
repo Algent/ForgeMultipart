@@ -68,7 +68,7 @@ factory results or promise that a later NBT/packet will be accepted.
 - `IPartFactory` or Scala `(String, Boolean) => TMultiPart` callers: implement `IPartFactory2`; route the NBT method to
   the old constructor with `false` and the packet method with `true`. Keep any side-specific class selection. A factory
   that ignores the old Boolean, such as ForgeRelocationFMP's frame factory, can construct the same part class in both.
-- Keep converter registration and trait registration separate. This change neither replaces `registerConverter` nor
+- Keep [converter registration](BLOCK_CONVERTERS.md) and trait registration separate. This change neither replaces `registerConverter` nor
   completes ProjectRed's external microblock trait migration or Schematica's private registry-map migration.
 
 All eight old static/companion registration descriptors remain. Both `IPartFactory2` sequence entries are now

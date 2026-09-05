@@ -738,3 +738,18 @@ Full downstream mixed tiles and client-side selection remain Phase 7 integration
 
 With these gates, the source audit is actionable: the port can simplify internals freely where no listed observation
 changes, while each externally observed behavior has a named consumer and a focused way to prove compatibility.
+
+## Java block converter guidance
+
+The existing `IPartConverter` and static `registerConverter` now have a [Java guide and compiling example](docs/api/BLOCK_CONVERTERS.md).
+No production descriptor or method body changed. Reference calls confirm Chisel's block/metadata selection,
+ForgeRelocationFMP's frame construction, OpenComputers' original cable/print tile lookup and AE2's cable-bus state copy.
+Their converter registrations need no replacement API; companion users can select the existing static entry.
+Keep separate factory registrations and published IDs, and preserve consumer-specific state-transfer/cleanup rules.
+Extra Utilities remains an active supported converter consumer. Reference checkouts were neither changed nor adopted.
+
+Two new JVM tests characterize registration snapshots/duplicates and exception propagation. A Forge baseline pins
+fresh candidates, rejected probes, original-tile ownership and invalidate/replace/onConverted/onAdded ordering.
+The example adds initialized converter/factory registration and NBT/packet/placement coverage, compiled without Scala.
+Evidence: `run/migration-converter-reference/`; physical-client conversion and real inventory/network transfers still
+require integration validation. This is FMP API coverage, not a released consumer migration.

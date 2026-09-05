@@ -320,14 +320,22 @@ public abstract class TMultiPart {
      */
     public void onWorldJoin() {}
 
-    /** Called when this part is converted from a normal block/tile (only applicable if a converter is registered). */
+    /**
+     * Called on committed server conversion after FMP replaces the source block and installs this part's tile, before
+     * writing its add-part description and adding the requested new part. Not called for conversion probes. The default
+     * delegates to onAdded; preserve that lifecycle when overriding unless the part intentionally replaces it. A later
+     * capability promotion may replace the tile again, so do not retain this tile as a permanent owner.
+     */
     public void onConverted() {
         onAdded();
     }
 
     /**
-     * Called when this part is converted from a normal block/tile (only applicable if a converter has been registered)
-     * before the original tile has been replaced. Use this to clear out things like inventory from the old tile.
+     * Called on committed server conversion immediately before the source block/tile is replaced. This part is already
+     * bound to a placeholder, while the world still contains the original tile. Use this to clear resources copied from
+     * the old tile so its removal does not drop them again. Never perform that destructive transfer in the converter,
+     * which also runs for discarded probes. The default is a no-op. Failures propagate; conversion is not
+     * transactional.
      */
     public void invalidateConvertedTile() {}
 

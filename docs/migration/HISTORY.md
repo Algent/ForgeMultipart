@@ -2075,3 +2075,34 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Updated the API index, plan, adoption ledger and manual checklist. Next bounded task: converter registration and
   lifecycle guidance; broader transformed-tile compilation guidance and remaining audited reflection replacements
   remain separate. The performance pass, consumer release/adoption and final Scala removal gates are unchanged.
+
+### 2026-09-05 — Java block converter registration and lifecycle
+
+- Reused existing `IPartConverter` / `registerConverter` / `convertBlock`; no API addition, descriptor change or
+  production method-body change. Javadocs now describe block iterable ownership, ordered/duplicate registration,
+  borrowed inputs, fresh candidates, failure propagation and server conversion hooks. Fixed the old Boolean/blockID
+  description on `blockTypes`, whose actual result is `Iterable<Block>`.
+- Committed the untouched-implementation baseline as `a56f90c`: two JVM tests cover captured block lists, duplicate
+  entries and exception propagation; one Forge test covers direct unbound conversion, rejected and accepted probes,
+  original tile ownership, fresh placement conversion, hook order and existing-tile short-circuiting.
+- Added the [Java converter guide](../api/BLOCK_CONVERTERS.md) and `BlockConversionExample` in the functional-test
+  source set. It registers a separate persistent factory, copies source metadata without mutation and preserves it
+  through NBT/descriptions. One Forge example test covers registration, rejection, fresh candidates, both payload
+  paths and normal installation. The test reuses the existing fixture lamp; no extra block/world mapping is added.
+  Real geometry/gameplay, consumer inventory/network transfers and physical-client behavior are explicitly outside
+  this state/registration sample.
+- Confirmed consumer patterns in reference-only Chisel, ForgeRelocationFMP, OpenComputers and AE2 checkouts.
+  Converter registration already has a usable static Java entry. Preserve eligibility, state-copy and cleanup rules,
+  with factory migration separate. Extra Utilities remains supported; no consumer source/release/adoption changed.
+- Validation: normal and clean formatting/checkstyle/build/Forge runs pass, with **573 JVM / 280 Forge** tests and
+  zero failures/errors/skips. The **573 archived JVM / 279 archived Forge** callers pass without recompilation,
+  using their recorded build version for embedded version assertions; the archived Forge jar is byte-identical.
+  Initial frozen execution at the new version failed only the two expected literal-version comparisons; rerunning
+  with the recorded version passes without exclusions or fixture edits.
+- All **444** production class APIs, **17** ScalaSignature payloads, **3,761** method bodies and **130** generated
+  dumps are unchanged. The example compiles with `javac --release 8` without Scala and has no Scala/reflection
+  bytecode references. Production jars exclude it. Packaged classes remain Java 8; both jar variants' five `@Mod`
+  annotations are checked against the final clean filename version after committing.
+- Evidence: `run/migration-converter-reference/`. Updated the API index, plan, audits, handoff and manual integration
+  checks. Next: source-compilation guidance and safe public access for transformed tile traits. Remaining reflection
+  capabilities, client validation, downstream releases/adoption and final Scala removal stay open.

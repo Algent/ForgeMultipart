@@ -20,6 +20,7 @@ Existing reflective binaries remain supported until consumer release and pack ad
 
 | Task | API and guide |
 | --- | --- |
+| Register block converters | `registerConverter(IPartConverter)` — [registration, state ownership and committed lifecycle](api/BLOCK_CONVERTERS.md) |
 | Register part factories during mod initialization | `registerPartFactory(IPartFactory2, String...)` — [factory timing, payload ownership and migration](api/PART_REGISTRATION.md) |
 | Find the factory registered for a part type | `getPartFactory(String)` — [lookup ownership and Schematica reflection migration](api/FACTORY_LOOKUP.md) |
 | Enumerate microblock materials by numeric ID | `materialCount()`, `materialName(int)`, `getMaterial(int)` — [material enumeration](api/MATERIAL_ENUMERATION.md) |
@@ -49,7 +50,6 @@ compile classpath for overload resolution, as the [loading guide](api/PART_LOADI
 | Area | Starting points |
 | --- | --- |
 | Define a custom part | Extend [TMultiPart](../src/main/scala/codechicken/multipart/TMultiPart.java); implement the required capability interfaces. The [built-in parts](../src/main/scala/codechicken/multipart/minecraft) show Java implementations |
-| Register block converters | [MultiPartRegistry](../src/main/scala/codechicken/multipart/MultiPartRegistry.java): `registerConverter(IPartConverter)`; part factories have a [separate Java guide](api/PART_REGISTRATION.md) |
 | Find, place and remove parts | [TileMultipart](../src/main/scala/codechicken/multipart/TileMultipart.java): `getTile`, `canPlacePart`, `addPart`, `remPart`. Retain the tile returned by changes because generated capabilities can replace the instance |
 | Construct a server composite tile from parts, or restore saved multipart NBT | [MultipartHelper](../src/main/scala/codechicken/multipart/MultipartHelper.java): `createTileFromParts(Iterable)`, `createTileFromNBT(World, NBTTagCompound)` |
 | Register microblock materials | [MicroMaterialRegistry](../src/main/scala/codechicken/microblock/MicroMaterialRegistry.java) and [BlockMicroMaterial](../src/main/scala/codechicken/microblock/BlockMicroMaterial.java) |
@@ -105,8 +105,8 @@ must select the intended parameter types when a method is overloaded.
 
 An [illuminated Java microblock extension](api/MICROBLOCK_EXTENSIONS.md) now covers registration, material traits,
 light aggregation and halo geometry, with compiling examples and Forge coverage. Its physical-client rendering and
-ProjectRed adoption remain open. Converter documentation, broader extension/compilation guidance and the remaining
-audited reflection replacements are still pending. ProjectRed's existing Scala traits remain supported until adoption.
+ProjectRed adoption remain open. [Converter registration and lifecycle](api/BLOCK_CONVERTERS.md) are documented and
+tested; broader extension/compilation guidance and the remaining audited reflection replacements are still pending. ProjectRed's existing Scala traits remain supported until adoption.
 
 All ten entries in the plan's Phase 9.1 API table have Java replacements. That table is a bounded list of signatures;
 the broader API, extension and consumer adoption work above remains open.

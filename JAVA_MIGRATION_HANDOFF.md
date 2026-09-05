@@ -17,7 +17,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**571 plain-JVM tests and 278 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
+**573 plain-JVM tests and 280 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 444 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
@@ -32,18 +32,15 @@ use, but no override triggering these three regressions was found. All 443 class
 payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
 followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
-Latest API work adds a ProjectRed-style Java illuminated microblock example. Existing `registerTrait(String)` selects
-Java input without loading it first; `IGeneratedMaterial` adds the extension for all shapes/sides. Thin trait methods
-pass Object to an ordinary helper, which uses typed Java traversal and geometry. Registration, metadata/cutter
-semantics, shape/persistence, light aggregation and ordinary/hollow halo bounds are documented and tested. One Forge
-baseline was committed first as `c41ed8d`, covering external Scala composition across all five shapes. Four Java
-example cases bring the suite to 571 JVM / 278 Forge tests. The three example files compile without Scala.
-All 571 archived JVM and 274 archived Forge tests pass; the archived Forge mod is unchanged. Production APIs/bodies
-remain unchanged (444 classes, 17 ScalaSignature payloads, 3,761 methods). The 120 baseline dump bodies are
-retained after mapping only allocation-order microblock self-names; ten additional dumps cover the Java trait, five shapes and retained client-body compiler probe.
-That probe is headless, not a physical-client render check. ProjectRed's config/halo wiring, released migration and
-pack adoption remain pending. Evidence: `run/migration-illuminated-extension-reference/`;
-[extension guide](docs/api/MICROBLOCK_EXTENSIONS.md).
+Latest API work documents existing block converter registration and the committed conversion lifecycle, with a
+[compiling Java example](docs/api/BLOCK_CONVERTERS.md). Two JVM tests and one Forge baseline were committed first as
+`a56f90c`, covering registration ownership/duplicates, failure propagation, rejected probes and callback ordering.
+One further Forge case exercises the initialized example, fresh conversion, NBT/packet state and normal installation.
+All 573 JVM / 280 Forge tests pass; 573 archived JVM / 279 archived Forge tests pass without rebuilding their callers.
+Production APIs and all 3,761 method bodies remain unchanged (444 classes, 17 ScalaSignature payloads), as do all 130
+generated dumps. The example compiles as Java 8 without Scala. Evidence: `run/migration-converter-reference/`.
+Consumer state-transfer rules, physical-client validation and release/adoption remain separate gates. The previous
+[illuminated extension](docs/api/MICROBLOCK_EXTENSIONS.md) likewise still needs physical-client/ProjectRed adoption.
 
 Direct typed calls are the intended end state for supported integrations. Optional dependencies should isolate typed
 compatibility code behind presence/version checks; reflection snippets in earlier guides are temporary legacy
@@ -67,15 +64,16 @@ adoption remain pending. Checkouts remain reference-only. The installed `+719` p
 Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
 subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
 are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
-The next bounded candidate is converter registration and lifecycle guidance: trace `IPartConverter` callers,
-conversion selection and ownership, then add a compiling Java example with focused characterization. The broader
-source-compilation story for transformed tile traits and other audited reflection use cases remain separate work.
+The next bounded candidate is Java source-compilation guidance for transformed tile traits: characterize consumer
+calls against the published dev artifact, document safe stable-base/capability access, and determine whether any
+remaining trait-only calls need a supported Java entry or transformed compile stubs. Other audited reflection use
+cases remain separate work. Converter registration and lifecycle guidance are complete.
 The illuminated microblock example supplies the representative Java extension, but physical-client construction,
 connector-dependent halos, lighting and consumer adoption still need their recorded checks.
 
 Progress: all ten Phase 9.1 table rows and Phase 9.2's internal markers are complete, plus Schematica registry lookup,
 staged Java tile generation, microblock creation, typed material access and the Java illuminated extension example.
-Remaining work includes converter/broader extension guidance and other audited reflection use cases. Consumer patches,
+Remaining work includes broader extension/compilation guidance and other audited reflection use cases. Consumer patches,
 releases and pack adoption still precede final Scala removal and client/pack release validation.
 
 Extra Utilities remains an active supported consumer. UtilitiesInExcess is the intended replacement, but the support
