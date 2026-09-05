@@ -1947,3 +1947,27 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   reference-only and releases/adoption are pending. Client tile generation/worldless loading are tested; actual client
   microblock construction and preview rendering remain manual. Next bounded task: GuideNH's existing Java microblock
   creation entry and its documented contract. Evidence: `run/migration-composite-generation-reference/`.
+
+### 2026-09-05 — Existing Java microblock creation contract
+
+- Traced GuideNH's exact companion selection and shape-only promotion. The static Java creation method already
+  delegates to that implementation, so no API addition, deprecation or production behavior change was needed.
+  Added Javadocs for creation and borrowed `IGeneratedMaterial` trait-set ownership, plus a consumer guide/example.
+- Committed two Forge baseline cases first as `5d572ef`, with saved reference artifacts. Exact static/companion
+  reflection returns fresh unbound parts with the stock factory/material identity; shape/NBT loading is caller-owned.
+  Material callback exceptions propagate, leaving scratch changes until the next creation clears the reused set.
+  Existing generated-material coverage retains the external Scala trait path and its generated behavior.
+- Added two example cases: all 256 encoded shape bytes survive public `setShape` recreation without copying bindings,
+  and factory/material/shape are captured before material callbacks, matching GuideNH's read order. A callback that
+  changes source shape verifies the original value is copied. This is a core-data recreation example, not a clone of
+  custom state. Public setter dispatch differs from GuideNH's private-field write; custom overrides remain an adoption check.
+- The example compiles without Scala. Normal style/build checks and the final clean build pass; the final suite has
+  568 JVM and 269 Forge tests, zero failures/errors/skips. All 568 archived JVM tests and 267 cases from the byte-identical
+  archived Forge mod pass with no exclusions. All 444 class APIs, 17 ScalaSignature payloads, 3,761 method bodies and
+  116 generated dumps remain apart from build versions. No production source inventory or Java 8 target change.
+- Added the GuideNH adoption ledger row and corrected the historical companion-only wording: this consumer explicitly
+  selects the companion even though the static replacement exists. Its source patch/release/adoption are pending.
+  The `+719` scan retains all 386 member/type/reflection rows across 27 consumers; reference checkouts remain unchanged.
+  Physical-client creation/previews remain manual because the dedicated server strips client factory methods.
+  Next bounded task: GuideNH's private material access versus existing public accessors.
+  Evidence: `run/migration-microblock-creation-reference/`.

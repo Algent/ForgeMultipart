@@ -15,6 +15,7 @@ without converting the rest of its code to Java.
 | Register part factories during mod initialization | `registerPartFactory(IPartFactory2, String...)` — [factory timing, payload ownership and migration](api/PART_REGISTRATION.md) |
 | Find the factory registered for a part type | `getPartFactory(String)` — [lookup ownership and Schematica reflection migration](api/FACTORY_LOOKUP.md) |
 | Enumerate microblock materials by numeric ID | `materialCount()`, `materialName(int)`, `getMaterial(int)` — [material enumeration](api/MATERIAL_ENUMERATION.md) |
+| Create a microblock with the requested material and side | `MicroblockGenerator.create(MicroblockClass, int, boolean)` — [construction, material traits and GuideNH migration](api/MICROBLOCK_CREATION.md) |
 | Read/index/search a tile's parts | `jPartList()` — [part collection ownership and order](api/PART_TRAVERSAL.md#collection-ownership-and-ordering) |
 | Run callbacks while skipping detached parts | `forEachPart(Consumer)` — [callback and override behavior](api/PART_TRAVERSAL.md#callback-behavior) |
 | Rebuild parts on an already prepared composite tile | `loadPartList(Collection)` — [part loading](api/PART_LOADING.md) |

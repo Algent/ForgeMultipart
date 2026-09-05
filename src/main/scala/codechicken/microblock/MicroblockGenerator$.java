@@ -40,6 +40,10 @@ public final class MicroblockGenerator$ extends ASMMixinFactory<Microblock> impl
         return ScratchBitSet$class.freshBitSet(this);
     }
 
+    /**
+     * Retained companion entry for compiled and reflective consumers. Java callers can use
+     * {@link MicroblockGenerator#create(MicroblockClass, int, boolean)} with the same construction contract.
+     */
     public Microblock create(MicroblockClass microClass, int materialId, boolean client) {
         BitSet traits = freshBitSet();
         traits.set(microClass.baseTraitId());

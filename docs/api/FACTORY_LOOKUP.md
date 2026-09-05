@@ -29,6 +29,8 @@ looks up a `MicroblockClass` and calls `create(client, materialId)` before loadi
 `loadPart` instead would select the server/NBT construction path, even for a client preview. Passing a null packet or
 using deprecated `createPart(name, true)` is also unsuitable: microblock packet factories read a material ID from it.
 
+See [microblock creation](MICROBLOCK_CREATION.md) for side selection, material traits and caller-owned shape/NBT state.
+
 The [compiling Java example](../../src/functionalTest/java/codechicken/multipart/examples/PartFactoryLookupExample.java)
 checks for `MicroblockClass` and creates a fresh unbound microblock. The caller must resolve a valid material ID,
 load the part's NBT, prepare the correct composite tile and complete its existing lifecycle. This example only covers

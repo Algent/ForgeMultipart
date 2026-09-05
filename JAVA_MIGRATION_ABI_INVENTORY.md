@@ -193,7 +193,7 @@ method on it. So for most entries the companion is a fallback. The exceptions be
 | `MultipartGenerator` | `generateCompositeTile(TileEntity, scala.collection.Iterable, boolean)` | **companion only for the Scala descriptor**; new static Java-Iterable entry is additive |
 | `BlockMicroMaterial` | `register(material)`, plus a constructor of arity 2 `(Block, int)` or 1 `(Block)` | static; companion is fallback |
 | `MicroMaterialRegistry` | `getMaterial(int)` | static; companion is fallback |
-| `MicroblockGenerator$` | `create(MicroblockClass, int, boolean)` | **companion only**, matched by exact parameter types |
+| `MicroblockGenerator$` | `create(MicroblockClass, int, boolean)` | GuideNH explicitly selects the companion, matched by exact parameter types; static Java replacement exists |
 | `TileMultipart` | `partList()`, `partList_$eq(scala.collection.Seq)`, `loadParts(...)`, `notifyTileChange()`, `markRender()` | instance |
 | `Microblock` | `microClass()`, `material()`, `shape()` | instance |
 | `TMultiPart` | `getDrops()` | instance |
@@ -218,6 +218,11 @@ Types used only for `isInstanceOf`: `BlockMultipart`, `TileMultipart`, `TileMult
    against `"codechicken.microblock.MicroblockClass"`. That pins `create(MicroblockClass, int, boolean)` on the
    companion and pins `MicroblockClass`'s fully qualified name. Widening a parameter or renaming the class breaks the
    lookup even though every call site still links.
+
+   The existing static `MicroblockGenerator.create(MicroblockClass, int, boolean)` now has a
+   [guide and compiling example](docs/api/MICROBLOCK_CREATION.md). Both exact reflective entries are tested; no API
+   shape or production method body changes were needed. GuideNH must change its explicitly selected owner and receiver
+   before it stops using the companion. Release/adoption, shape-setter override checks and client previews remain gates.
 
 3. **`TileMultipart.partList_$eq(scala.collection.Seq)` is reflectively load-bearing.** The branch now supplies
    `setPartList(java.util.List)` and `loadPartList(java.util.Collection)`, while retaining the exact legacy setter and

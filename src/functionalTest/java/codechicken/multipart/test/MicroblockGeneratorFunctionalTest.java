@@ -26,9 +26,53 @@ import codechicken.microblock.MicroblockClass;
 import codechicken.microblock.MicroblockGenerator;
 import codechicken.microblock.MicroblockGenerator$;
 import codechicken.multipart.TileMultipart;
+import codechicken.multipart.examples.MicroblockCreationExample;
 import scala.Tuple2;
 
 class MicroblockGeneratorFunctionalTest {
+
+    @Test
+    void javaExampleCapturesSourceShapeBeforeMaterialCallbacksRun() {
+        Microblock source = MicroblockGenerator.create(FaceMicroClass$.MODULE$, 0, false);
+        source.shape_$eq((byte) 0x25);
+        Tuple2<String, IMicroMaterial>[] materials = MicroMaterialRegistry.getIdMap();
+        Tuple2<String, IMicroMaterial> original = materials[0];
+        IMicroMaterial material = (IMicroMaterial) Proxy.newProxyInstance(
+                getClass().getClassLoader(),
+                new Class<?>[] { IMicroMaterial.class, MicroblockGenerator.IGeneratedMaterial.class },
+                (proxy, method, args) -> {
+                    if ("addTraits".equals(method.getName())) source.shape_$eq((byte) 0x51);
+                    return defaultValue(method.getReturnType());
+                });
+        materials[0] = new Tuple2<>(original._1(), material);
+        try {
+            Microblock created = MicroblockCreationExample.recreateForSide(source, false);
+            assertEquals(0x25, created.shape());
+            assertEquals(0x51, source.shape(), "Material callbacks can have side effects");
+        } finally {
+            materials[0] = original;
+            MicroblockGenerator.freshBitSet();
+        }
+    }
+
+    @Test
+    void javaExamplePreservesEveryShapeByteWithoutCopyingBindingsOrChangingTheSource() {
+        Microblock source = MicroblockGenerator.create(FaceMicroClass$.MODULE$, 0, false);
+        TileMultipart sourceTile = new TileMultipart();
+        source.bind(sourceTile);
+        for (int shape = Byte.MIN_VALUE; shape <= Byte.MAX_VALUE; shape++) {
+            source.shape_$eq((byte) shape);
+            Microblock created = MicroblockCreationExample.recreateForSide(source, false);
+            assertNotSame(source, created);
+            assertSame(source.getClass(), created.getClass());
+            assertSame(source.microClass(), created.microClass());
+            assertEquals(source.material(), created.material());
+            assertEquals((byte) shape, created.shape());
+            assertNull(created.tile());
+            assertSame(sourceTile, source.tile());
+            assertEquals((byte) shape, source.shape());
+        }
+    }
 
     @Test
     void staticAndCompanionReflectionCreateFreshPartsBeforeCallerOwnedShapeLoading() throws Exception {

@@ -17,7 +17,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**568 plain-JVM tests and 265 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
+**568 plain-JVM tests and 269 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 444 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
@@ -32,17 +32,15 @@ use, but no override triggering these three regressions was found. All 443 class
 payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
 followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
-Latest API addition: static `MultipartGenerator.generateCompositeTile(TileEntity, java.lang.Iterable<TMultiPart>,
-boolean)` exposes staged client/server generation. Three Forge baseline cases were committed first as `ab5654b`;
-four more cases cover the Java entry, exact reflection and a compiling setup/loading example. Exact reuse, no implicit
-state copying/loading/installation, input traversal and failures remain unchanged. Both consumers' old Scala reflection
-paths still work; the companion entry retains its descriptor/body with deprecation. Of 568 archived JVM tests, 567 pass;
-one obsolete exact facade inventory assertion is excluded, updated in the full current suite and supplemented
-by the independent ABI comparison. All 261 archived Forge cases pass without recompilation. All 444 class APIs,
-17 ScalaSignature payloads, 3,760 existing method bodies and 116 generated dumps remain, with one public static entry
-and one deprecation added. The example compiles without Scala. Client tile generation/worldless loading are covered;
-physical-client microblock construction and GPU previews remain manual.
-Evidence: `run/migration-composite-generation-reference/`; [guide](docs/api/COMPOSITE_GENERATION.md).
+Latest API work documents and validates existing `MicroblockGenerator.create(MicroblockClass, int, boolean)` for
+GuideNH. Two Forge baseline cases were committed first as `5d572ef`; two more test the compiling recreation example,
+all encoded shape bytes and capturing source state before material callbacks. Static/companion reflection, fresh
+parts, caller-owned shape/NBT, material trait injection and callback failure/scratch reuse are covered. No production
+API or behavior changed: all 444 class APIs, 17 ScalaSignature payloads, 3,761 method bodies and 116 generated dumps
+remain, with no additions/deprecations. All 568 archived JVM tests and the unchanged archived Forge mod's 267 cases
+pass. The example compiles without Scala. Physical-client creation/previews and custom shape-setter override checks
+remain consumer validation gates; GuideNH's old private shape write bypassed the public setter's virtual dispatch.
+Evidence: `run/migration-microblock-creation-reference/`; [guide](docs/api/MICROBLOCK_CREATION.md).
 
 Naming correction: the planned `loadParts(Collection)` overload made javac require `scala.collection.Iterable` even
 for Java arguments. The distinct `loadPartList` name allows compilation without Scala on the example's classpath.
@@ -61,14 +59,14 @@ adoption remain pending. Checkouts remain reference-only. The installed `+719` p
 Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
 subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
 are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
-The next bounded candidate is GuideNH's microblock creation contract: document and validate the existing static
-`MicroblockGenerator.create(MicroblockClass, int, boolean)` as the replacement for its exact companion reflection.
-Reuse that Java entry rather than adding a second one. Trace material-provided traits, side selection, class/factory
-identity and caller-owned NBT loading, with a compiling example and explicit physical-client limits. The representative
-external Java extension, private-material access migration and internal-boundary documentation remain separate work.
+The next bounded candidate is GuideNH's private `BlockMicroMaterial.block` / `meta` access. Trace its accessor mixin
+and reflection fallbacks, then document/test the existing public material accessors wherever they cover the same
+contract. Preserve private fields until consumer release/adoption and keep virtual-accessor behavior explicit.
+The representative external Java extension and internal-boundary documentation remain separate work.
 
 Progress: all ten Phase 9.1 table rows now have implemented/documented Java replacements, plus the separate Schematica
-registry lookup and staged Java tile generation. Remaining work includes microblock/reflection guidance, extension examples and internal-boundary
+registry lookup, staged Java tile generation and existing Java microblock-creation guidance. Remaining work includes
+private material/reflection guidance, extension examples and internal-boundary
 documentation. Then consumer
 patches, releases and pack adoption must precede final Scala removal and client/pack release validation; it is not
 a percentage of the whole migration.

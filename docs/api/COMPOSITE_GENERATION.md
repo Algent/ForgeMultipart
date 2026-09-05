@@ -76,7 +76,8 @@ The old companion's `generateCompositeTile(TileEntity, scala.collection.Iterable
 body, deprecated for callers in favor of the static Java entry. Existing internal calls remain unchanged. GuideNH's
 argument-assignability matcher still rejects the Java parameter for a Scala sequence and falls back to the companion;
 Schematica's exact old reflective lookup remains valid. Consumer source patches/releases and pack adoption remain pending.
-GuideNH's separate microblock-generator and private-material dependencies are not closed by this tile API.
+GuideNH's separate microblock-generator call has an [existing Java replacement](MICROBLOCK_CREATION.md).
+Private-material access remains a separate migration contract; neither is closed by this tile API alone.
 
 ## Validation
 
