@@ -36,7 +36,10 @@ public final class MicroMaterialRegistry {
         @SideOnly(Side.CLIENT)
         IIcon getBreakingIcon(int side);
 
-        /** Callback to load icons from the underlying block/etc. */
+        /**
+         * Supported material extension callback to load icons from the underlying block/etc., invoked by FMP on the
+         * client.
+         */
         @SideOnly(Side.CLIENT)
         default void loadIcons() {}
 
@@ -148,6 +151,10 @@ public final class MicroMaterialRegistry {
         remap.put(oldName, newName);
     }
 
+    /**
+     * Internal FMP lifecycle step that rebuilds material IDs. Consumers register materials during initialization and
+     * enumerate the initialized map through {@link #materialCount()}; do not rebuild IDs from consumer code.
+     */
     @SuppressWarnings("unchecked")
     public static void setupIDMap() {
         List<Map.Entry<String, IMicroMaterial>> entries = new ArrayList<>(typeMap.entrySet());
@@ -176,6 +183,7 @@ public final class MicroMaterialRegistry {
         return missingId;
     }
 
+    /** Internal FMP lifecycle calculation; consumers read {@link #getMaxCuttingStrength()} after initialization. */
     public static void calcMaxCuttingStrength() {
         int max = Integer.MIN_VALUE;
         boolean found = false;
@@ -193,6 +201,10 @@ public final class MicroMaterialRegistry {
         maxCuttingStrength = max;
     }
 
+    /**
+     * Internal FMP client texture-lifecycle dispatcher; do not call directly from consumers. The per-material
+     * {@link IMicroMaterial#loadIcons()} callback remains a supported extension hook.
+     */
     public static void loadIcons() {
         if (idMap != null) {
             for (Tuple2<String, IMicroMaterial> entry : idMap) {
@@ -205,6 +217,10 @@ public final class MicroMaterialRegistry {
         return maxCuttingStrength;
     }
 
+    /**
+     * Internal FMP handshake writer for the entire material map. Consumer part packets use
+     * {@link #writeMaterialID(MCDataOutput, int)} for an individual material ID instead.
+     */
     public static void writeIDMap(PacketCustom packet) {
         packet.writeInt(idMap.length);
         for (Tuple2<String, IMicroMaterial> entry : idMap) {
@@ -212,7 +228,10 @@ public final class MicroMaterialRegistry {
         }
     }
 
-    /** Reads the server's id map, returning the names this client has no material for. */
+    /**
+     * Internal FMP handshake reader: replaces this client's ID map with the server's, returning missing material names.
+     * Consumer part packets use {@link #readMaterialID(MCDataInput)} for an individual material ID instead.
+     */
     @SuppressWarnings("unchecked")
     public static List<String> readIDMap(PacketCustom packet) {
         int k = packet.readInt();

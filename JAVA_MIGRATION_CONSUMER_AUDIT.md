@@ -96,6 +96,8 @@ present. Only the plugin is one of the 27 FMP consumers.
 | Dynamic composite tiles | ProjectRed, Extra Utilities, AE2, ForgeRelocationFMP, WR-CBE, WitchingGadgets, UtilitiesInExcess; GuideNH and Schematica reconstruct them | Trait-bit selection, generated subclass caching, pass-through interfaces, client/server selection, promotion of an existing tile |
 | External Scala trait generation | ProjectRed illuminated microblocks | `MicroblockGenerator.registerTrait`, ScalaSignature decoding, `$class` helper handling, correct trait initialization and dispatch |
 | Tile collections and slot state | ProjectRed, Extra Utilities, OpenComputers, AE2, ProjectBlue, GT5U, BuildCraftCompat, WitchingGadgets, MatterManipulator, GuideNH | `partList(): Seq`, `jPartList(): List`, ordering, `partMap(int)`, mutable `TSlottedTile.v_partMap`, `bindPart`, slot-map rebuilds |
+| Capability-cache refresh | OpenComputers `PrintPart.toggleState` | Supported `TileMultipart.bindPart` dispatch, caller-cleared old slot entries, no implicit list insertion or part binding |
+| Local part-change notification | ProjectRed `RedstoneGatePart.onOutputChange` | Supported `TileMultipart.internalPartChange`, equality filtering and `operate` dispatch; caller retains packet/dirty/external-neighbor policy |
 | Placement/removal/replacement | Most custom-part mods | `getTile`/`getOrConvertTile`, `canPlacePart`, `canAddPart`, `canReplacePart`, `addPart`, `remPart`, binding and notifications in their current order |
 | Move lifecycle | ForgeRelocationFMP, MatterManipulator | A live `TileMultipart` can be detached/reinserted, coordinates rewritten, then `onMoved`; render, dirty, lighting, and description synchronization remain coherent |
 | Occlusion and geometry | ProjectRed, Extra Utilities, OpenComputers, AE2, ForgeRelocationFMP, Chisel, WR-CBE, WitchingGadgets, UtilitiesInExcess | Normal and partial occlusion, collision/subpart boxes, `PartMap` numbering, Java iterable adapters, Scala `Traversable` overload |
@@ -655,6 +657,29 @@ them while its reflective fallback respects them. No new accessors or production
 Consumer migrations should use direct calls, including optional integrations gated on presence/version. Reflection
 snippets remain legacy interoperability options only. Supplied consumer checkouts remain reference-only.
 Evidence: `run/migration-material-access-reference/`; archived validation retains 570 JVM and 270 Forge cases.
+
+## API boundary audit
+
+Rechecked 2026-09-05 against 28 source checkouts and the Extra Utilities decompiled reference. Searches cover method
+names, FMP-importing Java/Scala source, reflective names and the installed `+719` constant-pool inventory. No external
+calls were found to the 15 tile/material-registry hooks listed in [Phase 9.2](JAVA_MIGRATION.md#92--mark-the-internal-boundary).
+The registry's five companion forwarders carry matching Javadocs. Common-name matches included GuideNH comments
+explicitly avoiding `from` / `copyFrom` and WR-CBE's unrelated `RenderWireless.loadIcons`; neither calls these hooks.
+This is an audit of the supplied references, not proof about every possible external mod or dynamic lookup.
+
+The supported exceptions are actual calls: OpenComputers `2c00f79be24b`, `PrintPart.scala:171`, clears the old slot
+entries before `tile.bindPart(this)`; ProjectRed `e173952e96a4`, `gatepartrs.scala:74`, calls
+`tile.internalPartChange(this)` between its own packet/dirty work and selective external-neighbor notification.
+The [API guide](docs/API.md#supported-api-and-internal-hooks) preserves both contracts. The old `bindPart` comment's
+blanket prohibition on external calls was incorrect. Cache binding does not place/rebind a part, and it is not a
+universal idempotent refresh; local part notification does not implicitly perform world updates.
+
+One new JVM baseline pins captured traversal, detachment/rebinding, callback failure propagation and worldless local
+notification. One new Forge baseline pins cache-only binding and the old-slot clearing requirement. Existing equality,
+loading, generated-trait, registry and handshake fixtures remain in the full suite. No API/member/behavior changes or
+new deprecations are introduced; `operate`, `getOrConvertTile2` and material `loadIcons` keep their distinct supported
+legacy/extension contracts. No consumer checkout was modified or counted as migrated.
+Evidence: `run/migration-api-boundary-reference/`, including source revisions and reviewed caller searches.
 
 ## Practical priority for the current branch
 

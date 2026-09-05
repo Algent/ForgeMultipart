@@ -17,7 +17,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**570 plain-JVM tests and 272 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
+**571 plain-JVM tests and 273 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 444 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
@@ -32,16 +32,16 @@ use, but no override triggering these three regressions was found. All 443 class
 payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
 followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
-Latest API work documents GuideNH's material query through direct `jPartList()`, `Microblock.material()`,
-`MicroMaterialRegistry.getMaterial(int)` and existing `BlockMicroMaterial.block()` / `meta()` calls. Two JVM and one
-Forge baseline cases were committed first as `079739e`; two Forge example cases cover ordering/filtering, metadata
-formatting, registry aliases, getter overrides and failure propagation. No production API or behavior changed:
-all 444 class APIs, 17 ScalaSignature payloads and 3,761 method bodies remain. Of 116 generated dumps, 114 match
-exactly; the face/post pair matches after swapping only allocation-order class names. All 570 archived
-JVM tests and the unchanged archived Forge mod's 270 cases pass. The example compiles without Scala or reflection.
-The old private-field mixin bypasses virtual getters; the supported API honors them, like GuideNH's reflective
-fallback. Consumer patches, custom-material exports and absent/present optional loading remain adoption gates.
-Evidence: `run/migration-material-access-reference/`; [guide](docs/api/MATERIAL_ACCESS.md).
+Latest API work completes the bounded Phase 9.2 internal-boundary documentation. A fresh search of 28 source
+checkouts plus the Extra Utilities decompiled reference confirms no external calls to the 15 listed hooks; the five
+material-registry companion bridges carry the same internal marker. `bindPart` and `internalPartChange` remain
+supported for OpenComputers/ProjectRed. The material `IMicroMaterial.loadIcons` callback and existing legacy override
+contracts remain supported. One JVM and one Forge baseline were committed first as `8b12dfe`, pinning local callback
+mutation/failures and cache-only binding with caller-cleared old slots. All 571 archived JVM tests and the unchanged
+archived Forge mod's 273 cases pass. Production APIs and behavior remain unchanged: 444 class APIs, 17 ScalaSignature
+payloads, 3,761 method bodies and all 116 generated dump names/hashes match. No visibility changes, deprecations or
+annotation dependency were added. Evidence: `run/migration-api-boundary-reference/`;
+[boundary guide](docs/API.md#supported-api-and-internal-hooks), [caller audit](JAVA_MIGRATION_CONSUMER_AUDIT.md#api-boundary-audit).
 
 Direct typed calls are the intended end state for supported integrations. Optional dependencies should isolate typed
 compatibility code behind presence/version checks; reflection snippets in earlier guides are temporary legacy
@@ -65,16 +65,17 @@ adoption remain pending. Checkouts remain reference-only. The installed `+719` p
 Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
 subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
 are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
-The next bounded candidate is Phase 9.2: recheck the audited internal-hook caller inventory, document those hooks
-as internal, and document externally used `bindPart` / `internalPartChange` as supported API. Keep descriptors and
-behavior unchanged and preserve explicit legacy override contracts. The representative external Java microblock
-extension remains separate work; use it before claiming complete consumer extension coverage.
+The next bounded candidate is a representative external Java microblock extension based on ProjectRed's
+`LightMicroblock` / `LightMicroMaterial` contract. Trace its registration, material behavior, state and side-only
+callbacks; provide a compiling Java example with generated Forge coverage. Keep the reference checkout untouched
+and retain the external Scala trait path until consumer release/adoption. Compiler prerequisites are complete, but
+that alone does not establish the complete extension contract or physical-client rendering.
 
-Progress: all ten Phase 9.1 table rows now have implemented/documented Java replacements, plus the separate Schematica
-registry lookup, staged Java tile generation, microblock-creation guidance and typed GuideNH material query. Remaining
-work includes internal-boundary documentation, converter/extension guidance and other audited reflection use cases.
-Then consumer patches, releases and pack adoption must precede final Scala removal and client/pack release validation;
-it is not a percentage of the whole migration.
+Progress: all ten Phase 9.1 table rows and Phase 9.2's internal markers are complete, plus the separate Schematica
+registry lookup, staged Java tile generation, microblock-creation guidance and typed GuideNH material query.
+Remaining work includes converter/extension guidance and other audited reflection use cases. Then consumer patches,
+releases and pack adoption must precede final Scala removal and client/pack release validation; it is not a percentage
+of the whole migration.
 
 A separate [Phase 4b performance pass](JAVA_MIGRATION.md#phase-4b--measured-performance-pass) is planned once the API
 and representative extension workloads are stable, alongside consumer migration. Use fresh realistic profiles and

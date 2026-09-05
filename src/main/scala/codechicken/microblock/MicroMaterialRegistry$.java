@@ -37,6 +37,7 @@ public final class MicroMaterialRegistry$ {
         MicroMaterialRegistry.remapName(oldName, newName);
     }
 
+    /** Internal FMP lifecycle bridge; see {@link MicroMaterialRegistry#setupIDMap()}. */
     public void setupIDMap() {
         MicroMaterialRegistry.setupIDMap();
     }
@@ -45,10 +46,12 @@ public final class MicroMaterialRegistry$ {
         return MicroMaterialRegistry.getMissingId();
     }
 
+    /** Internal FMP lifecycle bridge; see {@link MicroMaterialRegistry#calcMaxCuttingStrength()}. */
     public void calcMaxCuttingStrength() {
         MicroMaterialRegistry.calcMaxCuttingStrength();
     }
 
+    /** Internal FMP client texture-lifecycle bridge; see {@link MicroMaterialRegistry#loadIcons()}. */
     public void loadIcons() {
         MicroMaterialRegistry.loadIcons();
     }
@@ -57,10 +60,12 @@ public final class MicroMaterialRegistry$ {
         return MicroMaterialRegistry.getMaxCuttingStrength();
     }
 
+    /** Internal FMP handshake bridge; see {@link MicroMaterialRegistry#writeIDMap(PacketCustom)}. */
     public void writeIDMap(PacketCustom packet) {
         MicroMaterialRegistry.writeIDMap(packet);
     }
 
+    /** Internal FMP handshake bridge; see {@link MicroMaterialRegistry#readIDMap(PacketCustom)}. */
     public List<String> readIDMap(PacketCustom packet) {
         return MicroMaterialRegistry.readIDMap(packet);
     }

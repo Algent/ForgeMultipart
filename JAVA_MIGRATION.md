@@ -632,7 +632,10 @@ hooks as though they were API, and a consumer author cannot distinguish `addPart
 practical API defect than the Scala types above, and the fix is javadoc only: no rename, no descriptor change, no
 deprecation, and no new dependency for a marker annotation.
 
-Verified against all 28 consumer checkouts as having **zero external callers**:
+Completed with a fresh 2026-09-05 search across 28 source checkouts plus the Extra Utilities decompiled reference:
+**no external calls to these FMP members were found**. The installed `+719` binary scan retains the same baseline.
+Javadocs on the declarations below and the five matching material-registry companion bridges mark them internal;
+see the [API boundary guide](docs/API.md#supported-api-and-internal-hooks).
 
 `TileMultipart.addPart_impl`, `addPart_do`, `remPart_impl`, `writeAddPart`, `partAdded`, `partRemoved`, `from`,
 `copyFrom`, `loadFrom`, `setValid`; `MicroMaterialRegistry.setupIDMap`,
@@ -654,10 +657,14 @@ Two similar-looking members **are** externally load-bearing and must not be mark
 | `TileMultipart.bindPart` | OpenComputers | `li/cil/oc/integration/fmp/PrintPart.scala:171` |
 | `TileMultipart.internalPartChange` | ProjectRed | `mrtjp/projectred/integration/gatepartrs.scala:74` |
 
-- [ ] Add an internal-marker javadoc line to each zero-caller member listed above.
-- [ ] Leave `bindPart` and `internalPartChange` documented as supported API and add them to the consumer audit's
+- [x] Add an internal-marker javadoc line to each zero-caller member listed above, including registry companion bridges.
+- [x] Leave `bindPart` and `internalPartChange` documented as supported API and add them to the consumer audit's
   cross-cutting map.
-- [ ] Do not add an annotations dependency for this; javadoc is sufficient and changes no descriptor.
+- [x] Do not add an annotations dependency for this; javadoc is sufficient and changes no descriptor.
+
+The registry-wide `loadIcons` dispatcher is internal; `IMicroMaterial.loadIcons` remains a supported material
+extension callback. Internal tile lifecycle hooks still participate in trait overrides and generated state copying.
+This slice changes documentation only, and does not complete the broader extension-example exit condition below.
 
 Exit condition: every Scala-typed public entry has a documented Java-shaped replacement and a deprecation pointing at
 it, supported extension paths have buildable examples and Forge coverage, implementation-hook members are documented

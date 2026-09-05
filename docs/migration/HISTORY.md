@@ -2000,3 +2000,31 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   `run/migration-material-access-reference/`.
 - Next bounded task: Phase 9.2 internal-boundary Javadocs with a fresh caller audit, including supported `bindPart`
   and `internalPartChange`; external Java extension guidance and the measured performance pass remain separate.
+
+### 2026-09-05 — Document the internal API boundary
+
+- Rechecked Phase 9.2 against 28 source checkouts plus decompiled Extra Utilities. Found no external calls to the
+  15 listed implementation hooks. Reviewed name collisions: WR-CBE calls its own renderer's `loadIcons`; GuideNH
+  explicitly avoids `from` / `copyFrom` in comments. OpenComputers still calls `bindPart` at `PrintPart.scala:171`,
+  and ProjectRed calls `internalPartChange` at `gatepartrs.scala:74`. Recorded source revisions and searches locally.
+- Committed the passing baseline first as `8b12dfe`: one JVM test pins local callback order under list replacement,
+  detachment/rebinding and failure, with no world required; one Forge test pins cache-only slot binding, no list
+  insertion or part rebinding, and the requirement to clear old slot entries after a slot-mask change.
+- Added internal Javadocs to all 15 hooks and the five registry companion bridges. Corrected the blanket prohibition
+  on externally calling `bindPart`, and documented both supported advanced methods and their caller responsibilities.
+  Repeated binding is not a universal cache refresh; local notifications exclude equal parts, retain legacy `operate`
+  dispatch and do not send packets or external-world notifications. Marked only the registry-wide texture dispatcher
+  internal; material `IMicroMaterial.loadIcons` remains a supported extension callback. Lifecycle override behavior,
+  including generated `copyFrom`, remains unchanged. No new methods, deprecations, annotations or visibility changes.
+- Updated the API index, cross-cutting consumer map and plan's Phase 9.2 checkboxes. The boundary list is bounded and
+  does not imply every unlisted public member is supported. Complete external extension guidance remains open.
+- Validation: normal and clean formatting/checkstyle/build plus the Java 8 Forge lane pass with **571 JVM / 273 Forge
+  tests**, zero failures/errors/skips. The **571 archived JVM / 273 archived Forge** cases pass without recompilation;
+  the archived Forge mod is byte-identical. All **444 class APIs, 17 ScalaSignature payloads, 3,761 production method
+  bodies and 116 generated dump names/hashes** remain unchanged. The installed `+719` scan retains all 386 ABI/reflection
+  rows across 27 consumers. Source-jar contents match the three edited production files; packaged classes remain
+  Java 8, and the post-commit rebuild verifies all five mod versions in both dev/release jars. Evidence:
+  `run/migration-api-boundary-reference/`.
+- Next: a compiling representative Java microblock extension based on ProjectRed's illuminated material/trait,
+  with generated Forge coverage. Reference consumers remain unmodified; consumer releases/adoption, physical-client
+  rendering and the focused measured performance pass remain separate gates.

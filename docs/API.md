@@ -57,6 +57,45 @@ compile classpath for overload resolution, as the [loading guide](api/PART_LOADI
 New API examples use Java 8 language/library features. The source path `src/main/scala` also contains Java classes
 because of the current joint-compilation layout; it does not imply that those APIs require Scala source in a consumer.
 
+## Supported API and internal hooks
+
+Public visibility alone does not make a method a consumer entry point. Scala's former package-private methods are
+public in bytecode. Source Javadocs now mark the following audited implementation hooks **Internal FMP**; keep
+consumer code on the public operations in the right column. These markers change no visibility, descriptor or
+behavior and do not deprecate or authorize removing a method. Trait callbacks and generated overrides still run.
+
+| Internal hooks | Consumer operation or responsibility |
+| --- | --- |
+| `TileMultipart.addPart_impl`, `addPart_do`, `writeAddPart` | Place through `TileMultipart.addPart(world, pos, part)`; use [part loading](api/PART_LOADING.md) for prepared reconstruction |
+| `TileMultipart.remPart_impl` | Remove through `tile.remPart(part)` on the server and retain the returned tile |
+| `TileMultipart.partAdded`, `partRemoved` | Lifecycle callbacks for trait overrides; callers use placement/removal APIs |
+| `TileMultipart.from`, `copyFrom`, `loadFrom`, `setValid` | FMP composite transitions; use [staged generation](api/COMPOSITE_GENERATION.md) and [loading](api/PART_LOADING.md) for consumer reconstruction |
+| `MicroMaterialRegistry.setupIDMap`, `calcMaxCuttingStrength` | FMP initializes IDs and cutting strength; register materials at initialization and read the resulting values |
+| `MicroMaterialRegistry.loadIcons` | FMP dispatches client texture callbacks; override the supported `IMicroMaterial.loadIcons()` material callback |
+| `MicroMaterialRegistry.writeIDMap`, `readIDMap` | FMP's whole-map handshake; part packets use `writeMaterialID` / `readMaterialID` for individual IDs |
+
+The registry's matching companion methods carry the same internal marker. This is the bounded Phase 9.2 audit,
+not a claim that every other public member is a supported API. See [TileMultipart's Javadocs](../src/main/scala/codechicken/multipart/TileMultipart.java)
+and [registry Javadocs](../src/main/scala/codechicken/microblock/MicroMaterialRegistry.java) for method-specific details.
+
+Two advanced methods remain supported because consumers use them directly:
+
+- **`bindPart(part)`** updates capability caches through generated overrides. It does not insert the part, change
+  its tile binding or perform placement/notifications. OpenComputers clears a print part's old slot entries before
+  calling it to populate a changed slot mask. A repeated call does not clear obsolete slots and may append entries
+  in other trait caches. Use it only with known cache semantics; full reconstruction uses `loadPartList`.
+- **`internalPartChange(part)`** sends local `onPartChanged` callbacks through the retained `operate` hook. The base
+  traversal captures list order, skips parts whose binding is null at callback time, and excludes parts equal to the
+  changed part using `part.equals(p)`. Null broadcasts to all eligible parts. A non-null binding to another tile
+  still qualifies. Callback failures stop traversal and propagate. ProjectRed deliberately handles dirty state,
+  packets and external neighbors separately; this method does none of those. `notifyPartChange` also performs world
+  update/neighbor/lighting notifications when needed.
+
+No reflection is needed to call either method. `operate` and `getOrConvertTile2` retain their documented legacy
+contracts and Java replacements; neither receives an internal-only marker. Removing those bridges still requires
+consumer and internal migration gates. The [consumer audit](../JAVA_MIGRATION_CONSUMER_AUDIT.md#api-boundary-audit)
+records the checked source calls and validation.
+
 ## Compatibility and remaining work
 
 Deprecated Scala-facing entry points remain callable, with their descriptors and supported override dispatch retained.

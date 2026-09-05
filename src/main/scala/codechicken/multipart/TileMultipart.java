@@ -78,12 +78,18 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         partList_$eq(parts == null ? null : toSeq(parts));
     }
 
+    /**
+     * Internal FMP composite-transition hook: copies trait state, then rebinds the stored parts. Not a consumer entry
+     * point.
+     */
     public void from(TileMultipart that) {
         copyFrom(that);
         loadFrom(that);
     }
 
     /**
+     * Internal FMP composite-transition hook; do not call directly from consumers.
+     *
      * This method should be used for copying all the data from the fields in that container tile. This method will be
      * automatically generated on java tile traits with fields if it is not overridden.
      */
@@ -92,6 +98,10 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         doesTick = that.doesTick;
     }
 
+    /**
+     * Internal FMP composite-transition hook: rebinds this tile's stored parts and restores ticking after state copy.
+     * For consumer reconstruction, use {@link #loadPartList(Collection)} on a prepared composite instead.
+     */
     public void loadFrom(TileMultipart that) {
         Iterator<TMultiPart> iterator = partList().iterator();
         while (iterator.hasNext()) {
@@ -198,6 +208,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         operate(action(TMultiPart::onChunkLoad));
     }
 
+    /** Internal FMP validity update that bypasses multipart lifecycle callbacks. Not a consumer entry point. */
     public final void setValid(boolean b) {
         if (b) {
             super.validate();
@@ -247,7 +258,17 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         worldObj.func_147451_t(xCoord, yCoord, zCoord);
     }
 
-    /** Notifies parts sharing this host of a change. */
+    /**
+     * Supported consumer API for local part-change notifications, used by ProjectRed. Calls
+     * {@link TMultiPart#onPartChanged(TMultiPart)} through the retained {@link #operate(Function1)} hook. Its base
+     * traversal captures the current list/order and skips parts whose tile binding is null at callback time; a non-null
+     * binding to another tile still qualifies. Parts equal to {@code part} (using {@code part.equals(p)}) are excluded;
+     * null broadcasts to all eligible parts. Callback failures propagate and stop traversal.
+     *
+     * This method does not mark the tile dirty, send updates or notify neighboring blocks/lighting. Keep the caller's
+     * synchronization and external-notification policy, or use {@link #notifyPartChange(TMultiPart)} when world
+     * notifications are needed as well.
+     */
     public void internalPartChange(TMultiPart part) {
         operate(action(p -> {
             if (part == null ? p != null : !part.equals(p)) {
@@ -467,6 +488,10 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         return MultipartSPH.getTileStream(worldObj, new BlockCoord(this));
     }
 
+    /**
+     * Internal FMP placement lifecycle and synchronization hook. Consumers use
+     * {@link #addPart(World, BlockCoord, TMultiPart)} so composite selection and world installation also run.
+     */
     public void addPart_impl(TMultiPart part) {
         if (!worldObj.isRemote) {
             writeAddPart(part);
@@ -481,12 +506,17 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         markRender();
     }
 
+    /** Internal FMP add-part packet writer; not a consumer entry point. Use the public placement API. */
     public void writeAddPart(TMultiPart part) {
         MCDataOutput stream = writeStream().writeByte(253);
         MultiPartRegistry.writePartID(stream, part);
         part.writeDesc(stream);
     }
 
+    /**
+     * Internal FMP storage/cache/binding step, without the complete placement lifecycle. Consumers use
+     * {@link #addPart(World, BlockCoord, TMultiPart)} or {@link #loadPartList(Collection)} for prepared reconstruction.
+     */
     public void addPart_do(TMultiPart part) {
         if (partList().size() >= 250) {
             throw new AssertionError(
@@ -504,10 +534,19 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         }
     }
 
-    /** Bind this part to an internal cache. Provided for trait overrides, do not call externally. */
+    /**
+     * Supported advanced consumer API and trait override hook for adding a part to this tile's capability caches. The
+     * base implementation is empty; generated traits supply cache behavior. Does not insert the part into the part
+     * list, change {@link TMultiPart#tile()}, run placement callbacks or send notifications.
+     *
+     * OpenComputers uses this to refresh a changed slot mask after clearing that part's old slot entries. Rebinding
+     * alone does not clear obsolete slots, and other traits may append cache entries on every call; this is not a
+     * general-purpose idempotent refresh. Only use it with known capability/cache semantics. For placement use
+     * {@link #addPart(World, BlockCoord, TMultiPart)}; for full reconstruction use {@link #loadPartList(Collection)}.
+     */
     public void bindPart(TMultiPart part) {}
 
-    /** Called when a part is added (placement). Provided for trait overrides, do not call externally. */
+    /** Internal FMP placement callback for trait overrides; do not call directly from consumers. */
     public void partAdded(TMultiPart part) {}
 
     /**
@@ -521,6 +560,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         return remPart_impl(part);
     }
 
+    /** Internal FMP removal/synchronization hook. Consumers use {@link #remPart(TMultiPart)} on the server. */
     public TileMultipart remPart_impl(TMultiPart part) {
         remPart_do(part, !worldObj.isRemote);
 
@@ -571,7 +611,7 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
         return r;
     }
 
-    /** Remove this part from internal cache. Provided for trait overrides, do not call externally. */
+    /** Internal FMP cache-removal callback for trait overrides; do not call directly from consumers. */
     public void partRemoved(TMultiPart part, int p) {}
 
     /**

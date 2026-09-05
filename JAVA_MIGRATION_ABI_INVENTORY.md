@@ -239,3 +239,12 @@ Existing public virtual `block()` / `meta()` now have a [typed query guide](docs
 coverage; no descriptor or method body changed. The mixin reads constructor fields whereas direct calls honor
 subclass overrides, as the old reflective fallback already did. Remove the consumer's mixin only when adopting the
 typed query; FMP field removal still waits for released-consumer adoption.
+
+### Documented internal boundary (2026-09-05)
+
+The [Phase 9.2 audit](JAVA_MIGRATION_CONSUMER_AUDIT.md#api-boundary-audit) marks 15 zero-observed-caller tile/material
+hooks and five registry companion bridges as internal in Javadocs. All binary shapes and behavior remain unchanged;
+this does not authorize removing or narrowing these members. The shipped `TileMultipart.bindPart(TMultiPart): void`
+and `internalPartChange(TMultiPart): void` calls remain supported and are documented in the API guide, as are existing
+legacy override contracts. The registry's internal `loadIcons()` dispatcher is distinct from its supported material
+interface callback. The `+719` rescan retains all 386 member/type/reflection rows across the same 27 consumers.
