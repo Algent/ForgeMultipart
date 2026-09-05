@@ -6,6 +6,9 @@ Use `MultiPartRegistry.registerPartFactory(IPartFactory2, String...)` on the `al
 existing registry and avoids the Scala types in the `registerParts` overload family. This addition does not yet have
 a minimum published dependency version.
 
+To inspect a registered factory without constructing a part, see [factory lookup](FACTORY_LOOKUP.md), including
+Schematica's replacement for private registry-map reflection.
+
 ## Example and timing
 
 The [complete compiling example](../../src/functionalTest/java/codechicken/multipart/examples/PartRegistrationExample.java)

@@ -18,12 +18,37 @@ import codechicken.microblock.MicroMaterialRegistry;
 import codechicken.microblock.Microblock;
 import codechicken.microblock.MicroblockClass;
 import codechicken.microblock.MicroblockClient;
+import codechicken.multipart.MultiPartRegistry;
 import codechicken.multipart.MultiPartRegistry$;
 import codechicken.multipart.MultiPartRegistry.IPartFactory2;
+import codechicken.multipart.examples.PartFactoryLookupExample;
 import cpw.mods.fml.relauncher.ReflectionHelper;
 import scala.Option;
 
 class PartFactoryLookupFunctionalTest {
+
+    @Test
+    void javaFactoriesSupportMicroblockConstructionAndLoading() throws Exception {
+        checkMicroblocks(MultiPartRegistry::getPartFactory);
+        assertSame(
+                MultiPartRegistry.getPartFactory("mcr_face"),
+                MultiPartRegistry.class.getMethod("getPartFactory", String.class).invoke(null, "mcr_face"));
+        assertNull(
+                MultiPartRegistry.class.getMethod("getPartFactory", String.class).invoke(null, "test:no_such_factory"));
+    }
+
+    @Test
+    void javaExampleRejectsUnsupportedTypesAndCreatesFreshUnboundMicroblocks() {
+        int material = MicroMaterialRegistry.materialID("minecraft:stone");
+        assertNull(PartFactoryLookupExample.createMicroblock("test:no_such_factory", false, material));
+        assertNull(PartFactoryLookupExample.createMicroblock("mc_torch", false, material));
+        Microblock part = PartFactoryLookupExample.createMicroblock("mcr_face", false, material);
+        assertSame(MultiPartRegistry.getPartFactory("mcr_face"), part.microClass());
+        assertEquals(material, part.material());
+        assertFalse(part instanceof MicroblockClient);
+        assertNull(part.tile());
+        assertNotSame(part, PartFactoryLookupExample.createMicroblock("mcr_face", false, material));
+    }
 
     @Test
     @SuppressWarnings("unchecked")

@@ -355,6 +355,12 @@ inventory alone shows.
 as a Scala mutable-map wrapper backed by the canonical Java `HashMap`, and a regression test performs Schematica's
 lookup and verifies that both views resolve the same factory.
 
+The branch now provides `MultiPartRegistry.getPartFactory(String)` as the supported replacement for map lookup.
+It returns the exact registered factory or null without construction or missing-name logging. Schematica can reflect
+this public static method and continue invoking `MicroblockClass.create(client, materialId)` on the returned object;
+`loadPart` would incorrectly choose the server factory path for its client preview. The old private field remains.
+See the [guide](docs/api/FACTORY_LOOKUP.md); consumer patch, generator migration and pack adoption remain pending.
+
 ### UtilitiesInExcess — future replacement, already a substantial consumer
 
 UtilitiesInExcess is not in the `+700` JAR scan but is in scope because it is intended to replace Extra Utilities.
@@ -491,7 +497,7 @@ behavior:
 ## Java API adoption ledger
 
 This ledger tracks migration of a specific legacy contract, not completion of an entire consumer's migration.
-Factory registration, material enumeration, tile collection/traversal access, tile loading/storage assignment,
+Factory registration/lookup, material enumeration, tile collection/traversal access, tile loading/storage assignment,
 tile occlusion and box queries, render-ID accessors and named tile conversion results are implemented on
 `algent/java`. The [API index](docs/API.md) links the guides and compiling Java examples. These additions are not yet
 tied to a released minimum dependency version. Unlisted contracts remain governed by the inventories above.
@@ -507,7 +513,8 @@ tied to a released minimum dependency version. Unlisted contracts remain governe
 | `TileMultipart.partList(): scala.collection.Seq` | AE2 `87f2b3817c2a`: `FMPPlacementHelper.getPart` and `removePart` | Iterate `jPartList()`; retain last-match lookup and removal/break behavior | Source patch and release pending | No migrated pack version verified; retain the getter |
 | `TileMultipart.partList(): scala.collection.Seq` | Extra Utilities 1.2.12: multipart renderer iterators | Iterate `jPartList()` without adding detached-part filtering | Retirement/replacement pending | Confirm absence or migration in the target pack before retiring the getter |
 | `TileMultipart.partList(): scala.collection.Seq` plus reflective getter/setter/loading | GuideNH `7d8fb44e77b9`: `Ae2ForgeMultipartBridge`, `ForgeMultipartHelpers` | `jPartList()` for reads, `setPartList(List)` for staging, `loadPartList(Collection)` for binding/cache reconstruction | Source patch and release pending; preserve world/position setup and following tile/render notifications | Retain the legacy getter/setter/loader until adoption; companion-only generator migration is separate |
-| `TileMultipart.loadParts(scala.collection.Iterable)` exact reflection | Schematica `3b03ee937953`: `nbt.ForgeMultipart` | Reflect `loadPartList(Collection.class)` and pass its existing Java part list directly | Source patch and release pending; registry map and generator reflection remain separate contracts | No migrated pack version verified; retain the Scala loader descriptor |
+| `TileMultipart.loadParts(scala.collection.Iterable)` exact reflection | Schematica `3b03ee937953`: `nbt.ForgeMultipart` | Reflect `loadPartList(Collection.class)` and pass its existing Java part list directly | Source patch and release pending; registry lookup now available separately, generator reflection remains pending | No migrated pack version verified; retain the Scala loader descriptor |
+| Private `MultiPartRegistry$` Scala `typeMap` field and `Map.get` / `Option` | Schematica `3b03ee937953`: `nbt.ForgeMultipart.init` and `createPart` | Reflect public static `MultiPartRegistry.getPartFactory(String.class)`; keep material lookup, `MicroblockClass.create(client, materialId)` and whole-preview rejection | Source patch/release pending; public FMP lookup implemented, generator migration remains separate | No migrated pack version verified; retain the exact private live Scala-map field |
 | `NormalOcclusionTest$.apply(Traversable, Traversable)` | OpenComputers `2c00f79be24b`: `common.block.Cable.canConnectFromSideFMP`, `server.network.Network.canConnectFromSideFMP` | `NormalOcclusionTest.testBoxes(ownBounds.asJava, otherBounds)`; `otherBounds` already comes from Java `getOcclusionBoxes()` | Source patch and release pending; retain side/color/face filtering | No migrated pack version verified; retain the companion and descriptor |
 | `NormalOcclusionTest$.apply(Traversable, Traversable)` | ForgeRelocationFMP `49a810b8c63b`: `FramePart.occlusionTest` | `NormalOcclusionTest.testBoxes(boxes.asJava, getOcclusionBoxes)`; retain combined normal/partial/collision boxes and caller order | Source patch and release pending; preserve temporary face bounds and replacement protocol | No migrated pack version verified; retain the companion and descriptor |
 
@@ -597,6 +604,16 @@ placement tuple calls remain, including `MicroblockPlacement.gtile()`; their mig
 gate. All 566 archived JVM tests and the unchanged archived Forge test mod's 252 cases pass against this addition.
 The `+719` rescan retains all 386 member/type/reflection rows across 27 consumers. Reference checkouts remain unchanged.
 Evidence: `run/migration-tile-conversion-reference/`.
+
+Registered factory lookup is implemented as `MultiPartRegistry.getPartFactory(String)`, with the same identity and
+current-map behavior as Schematica's reflected lookup. No new-name collision was found in the supplied Java/Scala
+sources. The Java example compiles without Scala; exact public reflection is exercised in Forge. Both lookup paths
+are checked without factory callbacks, including late mapping changes, equal names and misses. Forge additionally
+checks all five built-in microblock factories, server construction and NBT loading; physical-client construction and
+preview rendering remain manual because the dedicated server strips `MicroblockClass.clientTrait()`.
+All 567 archived JVM tests and the byte-identical archived Forge mod's 256 cases pass against this addition. The
+`+719` scan retains all 386 member/type/reflection rows across 27 consumers. The private map retains its exact binary
+shape and live backing. Reference checkouts remain unchanged. Evidence: `run/migration-factory-lookup-reference/`.
 
 ## Practical priority for the current branch
 

@@ -161,6 +161,11 @@ These fail at runtime, not at link time, so ABI tooling will not catch a break. 
 Note that both the class and its `$` companion are named in several cases, so renaming or removing a companion
 object breaks these even where no bytecode reference exists.
 
+The branch now offers `MultiPartRegistry.getPartFactory(String): IPartFactory2` to replace Schematica's private
+registry-map reflection, with a [migration guide](docs/api/FACTORY_LOOKUP.md). Its old companion field retains the
+exact private Scala mutable-map shape and live backing; the public addition does not authorize removing that field
+before consumer release/adoption. Generator reflection and preview lifecycle remain separate contracts.
+
 ## Consequences for the migration plan
 
 1. Phase 8 (Scala runtime removal) should be reclassified as deferred, not scheduled. Decision 4 is answered.

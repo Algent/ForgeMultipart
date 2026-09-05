@@ -279,6 +279,22 @@ public final class MultiPartRegistry {
         return e._2().createPart(e._1(), data);
     }
 
+    /**
+     * Returns the registered factory for an exact, case-sensitive part type name, or null if no factory is mapped.
+     * Reads the current registration map, independently of the network ID map, without constructing a part, logging a
+     * missing name or changing registration state. The returned object is the registered instance, not a copy.
+     *
+     * <p>
+     * Look up after the owning mod has registered its parts, on the initialization/game thread. This method neither
+     * waits for registration nor adds synchronization. It grants no right to mutate the registry or factory state. For
+     * ordinary NBT/packet construction use {@link #loadPart(String, NBTTagCompound)} or {@link #readPart(MCDataInput)}.
+     * Specialized callers may inspect the factory's supported type, for example a microblock class needed to create a
+     * client preview from a material ID. Factory construction still requires the caller to load and bind the part.
+     */
+    public static IPartFactory2 getPartFactory(String name) {
+        return typeMap.get(name);
+    }
+
     /** Uses instantiators to create a new part from a tag compound. */
     public static TMultiPart loadPart(String name, NBTTagCompound nbt) {
         IPartFactory2 factory = typeMap.get(name);

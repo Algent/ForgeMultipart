@@ -17,7 +17,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**566 plain-JVM tests and 255 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
+**568 plain-JVM tests and 258 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 444 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
@@ -32,14 +32,16 @@ use, but no override triggering these three regressions was found. All 443 class
 payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
 followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
-Latest API addition: `TileMultipart.getOrConvertTileResult(World, BlockCoord)` returns a `TileConversionResult` with
-`getTile()` / `isConverted()`. Three Forge baseline cases were committed first as `7396f2d`; three Java-entry cases
-exercise the same existing/missing/converted-placeholder contracts and the compiling example. Both tuple entries
-retain their bodies/descriptors with deprecations, and internal callers are unchanged. All 566 frozen JVM tests and
-the archived Forge mod's 252 cases pass against the new implementation. All 443 existing classes retain their members;
-one result class and one static method are added. The 17 ScalaSignature payloads, 3,755 existing method bodies and
-116 generated dumps are unchanged apart from deprecation metadata and build versions.
-Evidence: `run/migration-tile-conversion-reference/`; [guide](docs/api/TILE_CONVERSION.md).
+Latest API addition: `MultiPartRegistry.getPartFactory(String)` returns the exact registered factory or null without
+constructing a part. One JVM and one Forge baseline case were committed first as `2a52980`; one further JVM and two
+Forge cases cover the Java entry, exact public reflection and compiling example. Schematica can replace its private
+map/Scala Option lookup while retaining `MicroblockClass.create(client, materialId)`. The old private live Scala-map
+field and all existing method bodies remain unchanged. All 567 frozen JVM tests and the archived Forge mod's 256 cases
+pass against the addition. All 444 class APIs, 17 ScalaSignature payloads, 3,759 existing method bodies and 116 generated
+dumps remain; exactly one public static method is added. The example compiles without Scala. Dedicated-server tests
+cover server microblock construction; physical-client creation/preview rendering remain manual because Forge strips
+the client's `clientTrait()` method on the server.
+Evidence: `run/migration-factory-lookup-reference/`; [guide](docs/api/FACTORY_LOOKUP.md).
 
 Naming correction: the planned `loadParts(Collection)` overload made javac require `scala.collection.Iterable` even
 for Java arguments. The distinct `loadPartList` name allows compilation without Scala on the example's classpath.
@@ -58,13 +60,15 @@ adoption remain pending. Checkouts remain reference-only. The installed `+719` p
 Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
 subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
 are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
-The next bounded candidate is supported registry lookup for Schematica, replacing its private Scala-mangled map
-reflection. Read that consumer's actual lookup/use contract and existing public registry helpers, characterize the
-behavior first, then supply the smallest missing Java entry and migration guide. Generator/reflection replacements,
-the representative external Java extension and internal-boundary documentation remain separate work.
+The next bounded candidate is a supported Java client/server composite-tile generation entry for Schematica and
+GuideNH. Read their exact companion-only `generateCompositeTile` calls and the existing `MultipartHelper` helpers;
+`createTileFromParts` currently creates a server tile and loads it immediately, which is not their staged contract.
+Characterize generation, reuse, side selection and caller-owned loading before adding the smallest missing Java
+entry. The representative external Java extension and internal-boundary documentation remain separate work.
 
-Progress: all ten Phase 9.1 table rows now have implemented/documented Java replacements. That count excludes supported
-registry/generator/reflection replacements, extension examples and internal-boundary documentation. Then consumer
+Progress: all ten Phase 9.1 table rows now have implemented/documented Java replacements, plus the separate Schematica
+registry lookup. Remaining work includes generator/reflection replacements, extension examples and internal-boundary
+documentation. Then consumer
 patches, releases and pack adoption must precede final Scala removal and client/pack release validation; it is not
 a percentage of the whole migration.
 

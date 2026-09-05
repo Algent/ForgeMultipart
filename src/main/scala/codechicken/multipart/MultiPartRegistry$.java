@@ -23,7 +23,10 @@ public final class MultiPartRegistry$ {
 
     public static final MultiPartRegistry$ MODULE$ = new MultiPartRegistry$();
 
-    /** Retained with its original name and Scala type because Schematica reflects it directly. */
+    /**
+     * Retained with its original name and Scala type because Schematica reflects it directly. New callers should use
+     * {@link MultiPartRegistry#getPartFactory(String)}; this live compatibility view remains until consumer adoption.
+     */
     @SuppressWarnings("unused")
     private final scala.collection.mutable.Map<String, IPartFactory2> codechicken$multipart$MultiPartRegistry$$typeMap = JavaConversions
             .mapAsScalaMap(MultiPartRegistry.typeMapBacking());

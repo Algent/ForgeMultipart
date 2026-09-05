@@ -1897,3 +1897,28 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   unchanged. Next bounded candidate: Schematica registry lookup. Consumer adoption, internal tuple users, external
   Java extensions, measured performance work and actual client/pack checks remain separate gates.
   Evidence: `run/migration-tile-conversion-reference/`.
+
+### 2026-09-05 — Supported registered-factory lookup
+
+- Traced Schematica `3b03ee937953` from private Scala map lookup through `MicroblockClass.create(client, materialId)`
+  and NBT loading. Existing `loadPart` selects server construction, so it cannot replace that client-preview lookup.
+  Added `MultiPartRegistry.getPartFactory(String)` as a direct read of the canonical map, returning the exact factory
+  or null without logging, construction, registration mutation or dependency on the network ID map.
+- Committed one JVM and one Forge characterization case first as `2a52980`, saving the reference jar, sources,
+  compiled fixtures, reports and generated dumps. Legacy reflection and the Java API share checks for factory identity,
+  string equality, case-sensitive misses, current-map changes and no construction callbacks. Forge checks all five
+  microblock factories, exact reflective construction, server side, NBT material/shape and unbound ownership.
+- Added one JVM and two Forge cases for the Java API, exact public reflection and a compiling example. The example
+  compiles standalone without Scala. A baseline attempt at client microblock creation on the dedicated server failed
+  because Forge strips `MicroblockClass.clientTrait()` there; real client construction/preview rendering remain manual,
+  and no client coverage is claimed from the server fixture.
+- Normal and clean style/build checks pass with 568 JVM and 258 Forge tests, zero failures/errors/skips. All 567 frozen
+  JVM tests and the byte-identical archived Forge mod's 256 cases pass against the addition. All 444 class APIs,
+  17 ScalaSignature payloads, 3,759 existing method bodies and 116 generated dumps remain, with exactly one static
+  method added. The private Scala mutable-map field retains its exact name/modifiers/type and live backing.
+- Added a factory lookup guide, typed and reflective migration examples, API-index links and a Schematica adoption
+  ledger row. No new-name collision was found in supplied consumer sources; the `+719` scan still matches all 386
+  member/type/reflection rows across 27 consumers. Checkouts remain reference-only; no consumer release/adoption is
+  claimed. Next bounded task is Java client/server composite generation for Schematica and GuideNH; loading,
+  material/shape restoration, all-parts rejection and notifications must retain their staged lifecycle.
+  Evidence: `run/migration-factory-lookup-reference/`.

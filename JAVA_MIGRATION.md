@@ -683,7 +683,7 @@ does not close a row, and scans must distinguish a consumer's own Scala code fro
 | Consumer | What FMP is currently forced to preserve | Upstream fix | Can start |
 | --- | --- | --- | --- |
 | ProjectRed | Runtime Scala-signature decoding and external trait registration, reached through `MicroblockGenerator.registerTrait(classOf[LightMicroblock])` | Rewrite the ~60-line `LightMicroblock` trait as a Java mixin registered through the `registerJavaTrait` path | FMP compiler prerequisites complete; consumer rewrite and release remain |
-| Schematica | Private Scala-mangled field `codechicken$multipart$MultiPartRegistry$$typeMap`, cast to `scala.collection.mutable.Map` | FMP exposes a supported registry lookup; Schematica uses it instead of the field | After step 1 |
+| Schematica | Private Scala-mangled field `codechicken$multipart$MultiPartRegistry$$typeMap`, cast to `scala.collection.mutable.Map` | `MultiPartRegistry.getPartFactory(String)` is implemented; [guide and example](docs/api/FACTORY_LOOKUP.md). Schematica replaces map/Option lookup with the public method and retains its microblock creation/rejection policy | FMP lookup ready; consumer patch/release/adoption pending |
 | GuideNH | Companion-only `MultipartGenerator$.MODULE$.generateCompositeTile` and `MicroblockGenerator$.create`; `partList_$eq(scala.collection.Seq)`; mixin into private `BlockMicroMaterial.block` and `.meta` | FMP exposes supported static entry points and `setPartList(List)`; GuideNH targets those and public material accessors | After step 1 and Phase 9.1 |
 | Et Futurum Requiem | Mutable static `int[] ButtonPart.metaSideMap` and `sideMetaMap` must stay public and mutable | FMP exposes a supported orientation-override API; Et Futurum uses it | After step 1 |
 | IguanaTweaksTConstruct | Private `ItemSaw.harvestLevel` field name and type | FMP exposes a supported harvest-level setter; Iguana uses it | After step 1 |
@@ -733,6 +733,9 @@ UtilitiesInExcess's `extrautils:*` aliases; there is no legacy-conversion risk i
 - [ ] Land the Galacticraft reflection signature check.
 - [ ] Fix the UtilitiesInExcess `mat`/`material` key mismatch and its `getIdMap()` use before it enters the pack.
 - [ ] Add the supported public equivalents needed by Schematica, GuideNH, Et Futurum, and Iguana as additive API.
+- [x] Provide Schematica's registered-factory lookup without exposing the mutable map: `getPartFactory(String)`,
+  with identity/missing-name checks, exact public reflection, a compiling example and the retained private field.
+  Client/server composite generation remains a separate Schematica/GuideNH gap; this does not complete either migration.
 - [ ] Patch those four consumers and record the released versions that no longer need the private shapes.
 - [ ] Track all legacy FMP dependencies in the adoption ledger, including trait helper/companion calls and reflection
   outside the cleanup table; verify the released jars actually selected for the target pack.

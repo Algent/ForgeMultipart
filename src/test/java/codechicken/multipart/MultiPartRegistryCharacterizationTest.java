@@ -35,6 +35,11 @@ import scala.Option;
 class MultiPartRegistryCharacterizationTest {
 
     @Test
+    void javaFactoryLookupTracksRegistryWithoutConstructingParts() {
+        checkFactoryLookup(MultiPartRegistry::getPartFactory);
+    }
+
+    @Test
     void reflectedFactoryLookupTracksRegistryWithoutConstructingParts() throws IllegalAccessException {
         checkFactoryLookup(reflectedFactoryLookup());
     }
