@@ -1971,3 +1971,32 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   Physical-client creation/previews remain manual because the dedicated server strips client factory methods.
   Next bounded task: GuideNH's private material access versus existing public accessors.
   Evidence: `run/migration-microblock-creation-reference/`.
+
+### 2026-09-05 — Typed GuideNH material access
+
+- Confirmed that existing `BlockMicroMaterial.block()` / `meta()` cover GuideNH's private-field read use case. Added
+  Javadocs and a compiling complete material query using direct typed part traversal, material lookup and block
+  registry access. No new facade, accessor aliases or production behavior changes were necessary.
+- Committed the passing baseline first as `079739e`: two JVM cases pin constructor identity, raw integer metadata,
+  virtual override dispatch and retained private-field values; one Forge case pins initialized block/material lookup.
+- Two Forge example cases cover first usable part order, non-microblock/non-block material filtering, null/air and
+  unregistered blocks, material aliases, all metadata bits, getter ordering/overrides and failure propagation. The
+  query preserves GuideNH's positive-only metadata suffix policy; failures are handled at the consumer boundary.
+- Public getters honor overrides whereas GuideNH's old accessor mixin reads constructor fields. Its reflective
+  fallback already calls virtual getters. Documented that distinction and retained private fields until released
+  consumer adoption, rather than adding raw-field accessors. Custom exports and optional-mod loading need consumer
+  validation; reference checkouts were not modified or counted as migrated.
+- Updated the plan and API guides: supported integrations must have direct typed public access. Optional support
+  uses gated compatibility classes. Reflection snippets are legacy interoperability options, not the migration target.
+- Validation: clean formatting/checkstyle/build and Java 8 Forge run pass with **570 JVM / 272 Forge tests**, zero
+  failures/errors/skips. All **570 archived JVM / 270 archived Forge** tests pass; the frozen Forge mod is byte-identical.
+  The typed example compiles with Scala excluded and has no Scala/reflection calls. All **444 class APIs, 17
+  ScalaSignature payloads and 3,761 production method bodies** are unchanged. Of 116 generated dumps, 114 match
+  byte-for-byte; the face/post pair differs only by swapped allocation-order names (`Microblock_cmp$$0` / `$$1`)
+  because the added example tests create the face earlier. Explicit pairwise renaming proves identical bodies;
+  no generator behavior changed. The installed
+  `+719` pack retains all 386 ABI/reflection rows across 27 consumers. Packaged source and Java 8 bytecode are checked,
+  and the post-commit rebuild verifies all five mod versions in dev/release artifacts. Evidence:
+  `run/migration-material-access-reference/`.
+- Next bounded task: Phase 9.2 internal-boundary Javadocs with a fresh caller audit, including supported `bindPart`
+  and `internalPartChange`; external Java extension guidance and the measured performance pass remain separate.

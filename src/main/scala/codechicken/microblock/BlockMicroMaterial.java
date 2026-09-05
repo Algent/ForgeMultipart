@@ -84,14 +84,28 @@ public class BlockMicroMaterial implements IMicroMaterial {
         BlockMicroMaterial$.MODULE$.createAndRegister(block, meta, name, oldName);
     }
 
+    /**
+     * Returns this material's block for direct consumer access. The base implementation returns the constructor
+     * argument by identity, including null; subclasses may override it. Call this method instead of reading the private
+     * compatibility field so material overrides are respected.
+     */
     public Block block() {
         return block;
     }
 
+    /**
+     * Returns this material's metadata for direct consumer access. The base implementation returns the constructor
+     * value without masking or validation; subclasses may override it. This is not a numeric micro-material ID.
+     */
     public int meta() {
         return meta;
     }
 
+    /**
+     * Returns the block registry name cached at construction, possibly null. This is neither the micro-material's
+     * registered name nor a fresh lookup of an overridden {@link #block()}; query the returned block's registry name
+     * when exporting its current identity.
+     */
     public String blockKey() {
         return blockKey;
     }

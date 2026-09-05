@@ -51,7 +51,9 @@ or authorize removing Scala-signature support before consumer release/adoption.
 ## GuideNH migration
 
 GuideNH `7d8fb44e77b9` explicitly resolves the companion's `create(MicroblockClass, int, boolean)` and invokes it on
-`MODULE$`. It does not automatically discover the existing static method. Its optional integration can instead cache:
+`MODULE$`. It does not automatically discover the existing static method. Prefer the direct typed creation example
+below, with [gated optional integration](../API.md#direct-calls-and-optional-integration). The following cache is only
+a temporary interoperability option for consumers retaining reflection:
 
 ```java
 Class<?> generator = Class.forName("codechicken.microblock.MicroblockGenerator");
@@ -75,7 +77,7 @@ capturing shape after creation could copy a callback-modified value instead of t
 Public `setShape` uses the virtual shape setter; GuideNH's old private-field write bypassed that dispatch. Validate
 custom traits overriding these hooks before adopting the change. Preserve its existing missing/failed-promotion
 handling, part order, Java collection migration, tile state setup and subsequent loading/notifications. Do not copy
-the source tile binding to the new part. Private material-field access is a separate remaining GuideNH contract.
+the source tile binding to the new part. Private material-field access has a separate [typed query guide](MATERIAL_ACCESS.md).
 
 ## Side and validation limits
 

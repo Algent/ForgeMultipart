@@ -39,7 +39,10 @@ cause the whole preview to be rejected when matching Schematica's all-parts-requ
 
 ## Migrating Schematica's optional reflection
 
-Replace the companion singleton/private-field lookup and Scala `Map.get` / `Option` handling with:
+Prefer direct `MultiPartRegistry.getPartFactory(partID)` calls, as in the compiling example above. Isolate typed
+optional integration code behind mod-presence/version checks; see the [direct-call policy](../API.md#direct-calls-and-optional-integration).
+The following is only a legacy interoperability option for a consumer retaining reflection temporarily. It replaces
+the companion singleton/private-field lookup and Scala `Map.get` / `Option` handling:
 
 ```java
 Class<?> registry = Class.forName("codechicken.multipart.MultiPartRegistry");

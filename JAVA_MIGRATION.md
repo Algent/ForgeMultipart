@@ -211,6 +211,16 @@ implementation. Avoid two independently maintained implementations. Where an old
 preserve its virtual dispatch while it remains supported: moving an algorithm behind a new Java method must not
 bypass old subclass overrides. Define and test the dispatch path for each such pair, without recursive forwarding.
 
+### Direct consumer access
+
+Supported integration tasks must be possible through direct, statically typed public calls, without reflection,
+private-field accessor mixins or Scala companion lookup. Reuse existing methods first; expose a missing capability
+only when an audited consumer needs it. Do not turn unrelated implementation details into public contracts.
+Optional integrations should isolate FMP-typed code behind mod-presence and supported-version checks; optionality
+alone is not a reason to require reflection. Validate both absent and present mod loading in consumer adoption.
+Existing reflective integrations remain supported during migration. Reflection snippets in the guides describe
+legacy interoperability options, not the intended completion point; consumer patches should use the typed examples.
+
 ### Consumer API milestone and retained Scala stopping point
 
 The first release milestone is **a complete, documented Java API that every supported GTNH integration can migrate
@@ -684,15 +694,15 @@ does not close a row, and scans must distinguish a consumer's own Scala code fro
 | --- | --- | --- | --- |
 | ProjectRed | Runtime Scala-signature decoding and external trait registration, reached through `MicroblockGenerator.registerTrait(classOf[LightMicroblock])` | Rewrite the ~60-line `LightMicroblock` trait as a Java mixin registered through the `registerJavaTrait` path | FMP compiler prerequisites complete; consumer rewrite and release remain |
 | Schematica | Private Scala-mangled field `codechicken$multipart$MultiPartRegistry$$typeMap`, cast to `scala.collection.mutable.Map` | `MultiPartRegistry.getPartFactory(String)` is implemented; [guide and example](docs/api/FACTORY_LOOKUP.md). Schematica replaces map/Option lookup with the public method and retains its microblock creation/rejection policy | FMP lookup ready; consumer patch/release/adoption pending |
-| GuideNH | Companion `MultipartGenerator$.MODULE$.generateCompositeTile` and `MicroblockGenerator$.create`; `partList_$eq(scala.collection.Seq)`; mixin into private `BlockMicroMaterial.block` and `.meta` | Static Java tile generation/loading and existing microblock creation are documented/tested; [microblock guide](docs/api/MICROBLOCK_CREATION.md). Validate public material accessors next | Creation/loading ready; private material access and consumer adoption pending |
+| GuideNH | Companion `MultipartGenerator$.MODULE$.generateCompositeTile` and `MicroblockGenerator$.create`; `partList_$eq(scala.collection.Seq)`; mixin into private `BlockMicroMaterial.block` and `.meta` | Direct Java tile generation/loading, microblock creation and existing `block()` / `meta()` access are documented/tested; [typed material query](docs/api/MATERIAL_ACCESS.md). Remove reflection/accessor mixins when migrating | These FMP paths ready; broader consumer migration/release/adoption pending |
 | Et Futurum Requiem | Mutable static `int[] ButtonPart.metaSideMap` and `sideMetaMap` must stay public and mutable | FMP exposes a supported orientation-override API; Et Futurum uses it | After step 1 |
 | IguanaTweaksTConstruct | Private `ItemSaw.harvestLevel` field name and type | FMP exposes a supported harvest-level setter; Iguana uses it | After step 1 |
-| Galacticraft | Selects the first public method named `registerMaterial` without checking its signature, so FMP cannot add any overload of that name | Make the reflection check the parameter types | Immediately; independent of the port |
+| Galacticraft | Selects the first public method named `registerMaterial` without checking its signature, so FMP cannot add any overload of that name | Call `registerMaterial` directly from gated compatibility code; exact-signature reflection is an interim hardening option | Existing public API; consumer migration can start |
 | UtilitiesInExcess | `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | Both call sites read only the name, so `materialCount()` from Phase 9.1 plus the existing `materialName(int)` covers them; no material object is needed | After Phase 9.1, before it enters the pack |
 | UtilitiesInExcess | Not an FMP constraint, but a shipping hazard: the server factory reads NBT key `material` while `MaterialBasedPart.save` writes `mat` | Fix on the UtilitiesInExcess side; FMP must not special-case it | Immediately; no FMP change needed |
 
-Galacticraft's reflection signature check needs no FMP change. Its wrong-overload failure is silent because the
-reflection sits inside an empty `catch (Exception)`.
+Galacticraft needs no FMP change for direct registration. As interim hardening, its reflection can check exact
+parameter types; the current wrong-overload failure is silent because it sits inside an empty `catch (Exception)`.
 
 ProjectRed's `LightMicroblock` is the audited external constraint on retiring runtime Scala-signature decoding.
 Its Java rewrite removes that external dependency only after the updated consumer is released into the pack;

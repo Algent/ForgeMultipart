@@ -54,7 +54,9 @@ that must set state between generation and loading.
 
 ## Schematica and GuideNH migration
 
-The public static method can be resolved with:
+Prefer the direct call `MultipartGenerator.generateCompositeTile(candidate, parts, client)`, as in the compiling
+example. Gate optional typed integration code as described in the [API index](../API.md#direct-calls-and-optional-integration).
+For temporary interoperability with an existing reflective integration, the method can also be resolved with:
 
 ```java
 Method generate = MultipartGenerator.class.getMethod(
@@ -77,7 +79,8 @@ body, deprecated for callers in favor of the static Java entry. Existing interna
 argument-assignability matcher still rejects the Java parameter for a Scala sequence and falls back to the companion;
 Schematica's exact old reflective lookup remains valid. Consumer source patches/releases and pack adoption remain pending.
 GuideNH's separate microblock-generator call has an [existing Java replacement](MICROBLOCK_CREATION.md).
-Private-material access remains a separate migration contract; neither is closed by this tile API alone.
+Private-material access has a separate [typed material query](MATERIAL_ACCESS.md); neither consumer adoption contract
+is closed by this tile API alone.
 
 ## Validation
 

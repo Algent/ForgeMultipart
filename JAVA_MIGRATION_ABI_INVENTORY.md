@@ -197,7 +197,7 @@ method on it. So for most entries the companion is a fallback. The exceptions be
 | `TileMultipart` | `partList()`, `partList_$eq(scala.collection.Seq)`, `loadParts(...)`, `notifyTileChange()`, `markRender()` | instance |
 | `Microblock` | `microClass()`, `material()`, `shape()` | instance |
 | `TMultiPart` | `getDrops()` | instance |
-| `IMicroMaterial` | `block()`, `meta()` | instance |
+| `BlockMicroMaterial` | `block()`, `meta()` | instance; absent from general `IMicroMaterial` |
 
 Types used only for `isInstanceOf`: `BlockMultipart`, `TileMultipart`, `TileMultipartClient`, `Microblock`,
 `MicroblockClient`, `BlockMicroMaterial`.
@@ -233,3 +233,9 @@ Types used only for `isInstanceOf`: `BlockMultipart`, `TileMultipart`, `TileMult
 `MultipartHelper$` is retained on the strength of the fallback path alone: the static is found first today, so the
 companion is never reached in practice. That is a weaker justification than the two "companion only" entries above,
 but the cost of keeping a four-method forwarder is negligible against a silent break.
+
+GuideNH's private `BlockMicroMaterial.block: Block` and `meta: int` fields remain unchanged for its accessor mixin.
+Existing public virtual `block()` / `meta()` now have a [typed query guide](docs/api/MATERIAL_ACCESS.md) and regression
+coverage; no descriptor or method body changed. The mixin reads constructor fields whereas direct calls honor
+subclass overrides, as the old reflective fallback already did. Remove the consumer's mixin only when adopting the
+typed query; FMP field removal still waits for released-consumer adoption.
