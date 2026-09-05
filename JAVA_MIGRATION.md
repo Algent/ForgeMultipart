@@ -684,7 +684,7 @@ does not close a row, and scans must distinguish a consumer's own Scala code fro
 | --- | --- | --- | --- |
 | ProjectRed | Runtime Scala-signature decoding and external trait registration, reached through `MicroblockGenerator.registerTrait(classOf[LightMicroblock])` | Rewrite the ~60-line `LightMicroblock` trait as a Java mixin registered through the `registerJavaTrait` path | FMP compiler prerequisites complete; consumer rewrite and release remain |
 | Schematica | Private Scala-mangled field `codechicken$multipart$MultiPartRegistry$$typeMap`, cast to `scala.collection.mutable.Map` | `MultiPartRegistry.getPartFactory(String)` is implemented; [guide and example](docs/api/FACTORY_LOOKUP.md). Schematica replaces map/Option lookup with the public method and retains its microblock creation/rejection policy | FMP lookup ready; consumer patch/release/adoption pending |
-| GuideNH | Companion-only `MultipartGenerator$.MODULE$.generateCompositeTile` and `MicroblockGenerator$.create`; `partList_$eq(scala.collection.Seq)`; mixin into private `BlockMicroMaterial.block` and `.meta` | FMP exposes supported static entry points and `setPartList(List)`; GuideNH targets those and public material accessors | After step 1 and Phase 9.1 |
+| GuideNH | Companion `MultipartGenerator$.MODULE$.generateCompositeTile` and `MicroblockGenerator$.create`; `partList_$eq(scala.collection.Seq)`; mixin into private `BlockMicroMaterial.block` and `.meta` | Static Java tile generation and `setPartList(List)` are implemented; [generation guide](docs/api/COMPOSITE_GENERATION.md). Validate/document the existing Java microblock creation entry and public material accessors next | Tile generation/loading ready; remaining reflection contracts and consumer adoption pending |
 | Et Futurum Requiem | Mutable static `int[] ButtonPart.metaSideMap` and `sideMetaMap` must stay public and mutable | FMP exposes a supported orientation-override API; Et Futurum uses it | After step 1 |
 | IguanaTweaksTConstruct | Private `ItemSaw.harvestLevel` field name and type | FMP exposes a supported harvest-level setter; Iguana uses it | After step 1 |
 | Galacticraft | Selects the first public method named `registerMaterial` without checking its signature, so FMP cannot add any overload of that name | Make the reflection check the parameter types | Immediately; independent of the port |
@@ -735,7 +735,10 @@ UtilitiesInExcess's `extrautils:*` aliases; there is no legacy-conversion risk i
 - [ ] Add the supported public equivalents needed by Schematica, GuideNH, Et Futurum, and Iguana as additive API.
 - [x] Provide Schematica's registered-factory lookup without exposing the mutable map: `getPartFactory(String)`,
   with identity/missing-name checks, exact public reflection, a compiling example and the retained private field.
-  Client/server composite generation remains a separate Schematica/GuideNH gap; this does not complete either migration.
+  This does not complete Schematica's consumer migration.
+- [x] Provide static Java client/server composite generation for Schematica and GuideNH, preserving exact reuse,
+  staged loading, input traversal/failure behavior and the old companion reflection path; [guide](docs/api/COMPOSITE_GENERATION.md).
+  GuideNH's separate microblock creation/material reflection and both consumers' release/adoption remain pending.
 - [ ] Patch those four consumers and record the released versions that no longer need the private shapes.
 - [ ] Track all legacy FMP dependencies in the adoption ledger, including trait helper/companion calls and reflection
   outside the cleanup table; verify the released jars actually selected for the target pack.

@@ -320,7 +320,8 @@ reflective to keep the integration optional.
 - It reflects `MultipartHelper.createTileFromNBT`, `MultipartRenderer.renderWorldBlock`, material registration and
   construction, registry lookup, tile part-list getters/setters, `loadParts`, `notifyTileChange`, `markRender`,
   microblock properties, and part drops.
-- `MultipartGenerator$.MODULE$.generateCompositeTile(TileEntity, Iterable, boolean)` is companion-only.
+- `MultipartGenerator$.MODULE$.generateCompositeTile(TileEntity, scala.collection.Iterable, boolean)` remains
+  companion-only for that descriptor; a static Java-Iterable entry is now available.
 - `MicroblockGenerator$.create(MicroblockClass, int, boolean)` is companion-only and matched by exact parameter
   classes.
 - Client preview promotion replaces parts with client microblock instances, assigns
@@ -359,7 +360,8 @@ The branch now provides `MultiPartRegistry.getPartFactory(String)` as the suppor
 It returns the exact registered factory or null without construction or missing-name logging. Schematica can reflect
 this public static method and continue invoking `MicroblockClass.create(client, materialId)` on the returned object;
 `loadPart` would incorrectly choose the server factory path for its client preview. The old private field remains.
-See the [guide](docs/api/FACTORY_LOOKUP.md); consumer patch, generator migration and pack adoption remain pending.
+See the [guide](docs/api/FACTORY_LOOKUP.md) and the now-available [Java tile generator](docs/api/COMPOSITE_GENERATION.md);
+consumer patches and pack adoption remain pending.
 
 ### UtilitiesInExcess — future replacement, already a substantial consumer
 
@@ -513,8 +515,9 @@ tied to a released minimum dependency version. Unlisted contracts remain governe
 | `TileMultipart.partList(): scala.collection.Seq` | AE2 `87f2b3817c2a`: `FMPPlacementHelper.getPart` and `removePart` | Iterate `jPartList()`; retain last-match lookup and removal/break behavior | Source patch and release pending | No migrated pack version verified; retain the getter |
 | `TileMultipart.partList(): scala.collection.Seq` | Extra Utilities 1.2.12: multipart renderer iterators | Iterate `jPartList()` without adding detached-part filtering | Retirement/replacement pending | Confirm absence or migration in the target pack before retiring the getter |
 | `TileMultipart.partList(): scala.collection.Seq` plus reflective getter/setter/loading | GuideNH `7d8fb44e77b9`: `Ae2ForgeMultipartBridge`, `ForgeMultipartHelpers` | `jPartList()` for reads, `setPartList(List)` for staging, `loadPartList(Collection)` for binding/cache reconstruction | Source patch and release pending; preserve world/position setup and following tile/render notifications | Retain the legacy getter/setter/loader until adoption; companion-only generator migration is separate |
-| `TileMultipart.loadParts(scala.collection.Iterable)` exact reflection | Schematica `3b03ee937953`: `nbt.ForgeMultipart` | Reflect `loadPartList(Collection.class)` and pass its existing Java part list directly | Source patch and release pending; registry lookup now available separately, generator reflection remains pending | No migrated pack version verified; retain the Scala loader descriptor |
-| Private `MultiPartRegistry$` Scala `typeMap` field and `Map.get` / `Option` | Schematica `3b03ee937953`: `nbt.ForgeMultipart.init` and `createPart` | Reflect public static `MultiPartRegistry.getPartFactory(String.class)`; keep material lookup, `MicroblockClass.create(client, materialId)` and whole-preview rejection | Source patch/release pending; public FMP lookup implemented, generator migration remains separate | No migrated pack version verified; retain the exact private live Scala-map field |
+| `TileMultipart.loadParts(scala.collection.Iterable)` exact reflection | Schematica `3b03ee937953`: `nbt.ForgeMultipart` | Reflect `loadPartList(Collection.class)` and pass its existing Java part list directly | Source patch and release pending; registry lookup and Java tile generation available separately | No migrated pack version verified; retain the Scala loader descriptor |
+| Private `MultiPartRegistry$` Scala `typeMap` field and `Map.get` / `Option` | Schematica `3b03ee937953`: `nbt.ForgeMultipart.init` and `createPart` | Reflect public static `MultiPartRegistry.getPartFactory(String.class)`; keep material lookup, `MicroblockClass.create(client, materialId)` and whole-preview rejection | Source patch/release pending; lookup and Java tile generation implemented | No migrated pack version verified; retain the exact private live Scala-map field |
+| `MultipartGenerator$.generateCompositeTile(TileEntity, scala.collection.Iterable, boolean)` | Schematica `3b03ee937953` exact reflection; GuideNH `7d8fb44e77b9` static-first assignability matcher | Static `MultipartGenerator.generateCompositeTile(TileEntity, java.lang.Iterable, boolean)` with Java parts; retain subsequent state setup/loading | Source patches/releases pending; preserve client part construction, candidate-reuse branch and notification order | No migrated pack version verified; retain the companion and Scala descriptor |
 | `NormalOcclusionTest$.apply(Traversable, Traversable)` | OpenComputers `2c00f79be24b`: `common.block.Cable.canConnectFromSideFMP`, `server.network.Network.canConnectFromSideFMP` | `NormalOcclusionTest.testBoxes(ownBounds.asJava, otherBounds)`; `otherBounds` already comes from Java `getOcclusionBoxes()` | Source patch and release pending; retain side/color/face filtering | No migrated pack version verified; retain the companion and descriptor |
 | `NormalOcclusionTest$.apply(Traversable, Traversable)` | ForgeRelocationFMP `49a810b8c63b`: `FramePart.occlusionTest` | `NormalOcclusionTest.testBoxes(boxes.asJava, getOcclusionBoxes)`; retain combined normal/partial/collision boxes and caller order | Source patch and release pending; preserve temporary face bounds and replacement protocol | No migrated pack version verified; retain the companion and descriptor |
 
@@ -614,6 +617,16 @@ preview rendering remain manual because the dedicated server strips `MicroblockC
 All 567 archived JVM tests and the byte-identical archived Forge mod's 256 cases pass against this addition. The
 `+719` scan retains all 386 member/type/reflection rows across 27 consumers. The private map retains its exact binary
 shape and live backing. Reference checkouts remain unchanged. Evidence: `run/migration-factory-lookup-reference/`.
+
+Staged tile generation is available through static `MultipartGenerator.generateCompositeTile(TileEntity,
+java.lang.Iterable<TMultiPart>, boolean)`. The adapter passes a view to the unchanged companion method, now deprecated
+for callers. Both sides, exact candidate reuse, empty/duplicate input, no implicit copying/loading/installation,
+input traversal and failures are characterized. Old exact reflection and GuideNH's Scala-argument fallback still work;
+Java reflection and the example compile/use the Java parameter. The `+719` scan retains all 386 rows across 27 consumers.
+Archived validation runs 567 JVM tests (one obsolete exact facade inventory assertion excluded) and all 261 archived
+Forge tests; the full current suite and independent ABI comparison check the intentional method addition. Client tile
+generation/worldless loading is covered, while physical-client microblock construction and GPU previews remain manual.
+Reference checkouts and consumer adoption remain unchanged. Evidence: `run/migration-composite-generation-reference/`.
 
 ## Practical priority for the current branch
 

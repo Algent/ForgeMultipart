@@ -148,7 +148,13 @@ public final class MultipartGenerator$ implements ScratchBitSet {
         if (chunk != null) chunk.func_150812_a(pos.x & 15, pos.y, pos.z & 15, tile);
     }
 
-    /** Reuses the tile only when it has exactly the interfaces required by the parts. */
+    /**
+     * Reuses the tile only when it has exactly the interfaces required by the parts.
+     *
+     * @deprecated Use {@link MultipartGenerator#generateCompositeTile(TileEntity, java.lang.Iterable, boolean)} with
+     *             Java parts. Retained for compiled callers and exact Scala-parameter reflection.
+     */
+    @Deprecated
     public TileMultipart generateCompositeTile(TileEntity tile, Iterable<TMultiPart> parts, boolean client) {
         BitSet bitset = setTraits(parts, client);
         if (tile instanceof TileMultipart && bitset.equals(tileTraitMap.apply(tile.getClass()))) {

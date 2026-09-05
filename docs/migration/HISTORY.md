@@ -1922,3 +1922,28 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   claimed. Next bounded task is Java client/server composite generation for Schematica and GuideNH; loading,
   material/shape restoration, all-parts rejection and notifications must retain their staged lifecycle.
   Evidence: `run/migration-factory-lookup-reference/`.
+
+### 2026-09-05 — Staged Java composite-tile generation
+
+- Traced Schematica and GuideNH generation followed by their distinct NBT/world/position/loading/notification steps.
+  `MultipartHelper.createTileFromParts` constructs and loads a server tile immediately, so it cannot replace their
+  staged client paths. Added static `MultipartGenerator.generateCompositeTile(TileEntity, Iterable<TMultiPart>, boolean)`
+  through a Java iterable view over the existing companion behavior; no snapshot or new generation logic.
+- Committed three Forge characterization cases first as `ab5654b`, preserving the reference jar, sources, compiled
+  fixtures, reports and dumps. Both tile sides, exact reuse, capability changes, empty/duplicate inputs, no implicit
+  loading/copying/invalidation, iterator evaluation/failures and exact companion reflection are covered.
+- Four additional Forge cases exercise the Java entry, public reflection and staged world/coordinate setup followed
+  by loading. The example compiles without Scala. GuideNH's old Scala argument does not match the new Java parameter,
+  retaining its companion fallback; Schematica's old exact descriptor remains. The companion method is deprecated,
+  with its body and internal callers unchanged.
+- The JVM facade inventory initially rejected the intentional new public method; updated its exact expected set,
+  leaving the companion set unchanged. Archived validation excludes only that obsolete inventory assertion, running
+  the remaining 567 JVM cases and all 261 cases from the byte-identical archived Forge mod. Full normal/clean suites
+  pass with 568 JVM and 265 Forge tests, zero failures/errors/skips. An independent class/member comparison verifies
+  all 444 old class APIs with precisely one added static entry and one deprecation. All 17 ScalaSignature payloads,
+  3,760 existing method bodies and 116 generated dumps remain apart from expected metadata/build versions.
+- Added the generation guide, Java/reflection examples and consumer adoption ledger entry, and linked the loading
+  and factory guides. The `+719` scan retains all 386 member/type/reflection rows across 27 consumers. Checkouts remain
+  reference-only and releases/adoption are pending. Client tile generation/worldless loading are tested; actual client
+  microblock construction and preview rendering remain manual. Next bounded task: GuideNH's existing Java microblock
+  creation entry and its documented contract. Evidence: `run/migration-composite-generation-reference/`.

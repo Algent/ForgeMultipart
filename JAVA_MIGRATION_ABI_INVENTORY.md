@@ -190,7 +190,7 @@ method on it. So for most entries the companion is a fallback. The exceptions be
 | --- | --- | --- |
 | `MultipartHelper` | `createTileFromNBT(World, NBTTagCompound)` | static; companion is fallback |
 | `MultipartRenderer` | `renderWorldBlock(IBlockAccess, int, int, int, Block, int, RenderBlocks)` | static; companion is fallback |
-| `MultipartGenerator` | `generateCompositeTile(TileEntity, Iterable, boolean)` | **companion only** — see below |
+| `MultipartGenerator` | `generateCompositeTile(TileEntity, scala.collection.Iterable, boolean)` | **companion only for the Scala descriptor**; new static Java-Iterable entry is additive |
 | `BlockMicroMaterial` | `register(material)`, plus a constructor of arity 2 `(Block, int)` or 1 `(Block)` | static; companion is fallback |
 | `MicroMaterialRegistry` | `getMaterial(int)` | static; companion is fallback |
 | `MicroblockGenerator$` | `create(MicroblockClass, int, boolean)` | **companion only**, matched by exact parameter types |
@@ -208,6 +208,11 @@ Types used only for `isInstanceOf`: `BlockMultipart`, `TileMultipart`, `TileMult
    in Scala, so no static forwarder is emitted on `MultipartGenerator` and guidenh's static attempt always misses. It
    reaches the method only through the companion. A Phase 6/7 port that keeps the class but drops the companion, or
    promotes the method to a public static and removes it from the companion, breaks guidenh silently.
+
+   The branch now adds `MultipartGenerator.generateCompositeTile(TileEntity, java.lang.Iterable, boolean)` while
+   retaining the exact companion Scala descriptor/body. GuideNH's old Scala sequence is not assignable to the new
+   Java parameter, so its existing matcher still falls back to the companion. Both old and new reflective contracts
+   are tested; migration requires a Java parts collection. See the [guide](docs/api/COMPOSITE_GENERATION.md).
 
 2. **`MicroblockGenerator$.create` is matched by exact parameter types**, including `pts[0].getName()` string-compared
    against `"codechicken.microblock.MicroblockClass"`. That pins `create(MicroblockClass, int, boolean)` on the

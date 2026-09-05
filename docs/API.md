@@ -18,6 +18,7 @@ without converting the rest of its code to Java.
 | Read/index/search a tile's parts | `jPartList()` — [part collection ownership and order](api/PART_TRAVERSAL.md#collection-ownership-and-ordering) |
 | Run callbacks while skipping detached parts | `forEachPart(Consumer)` — [callback and override behavior](api/PART_TRAVERSAL.md#callback-behavior) |
 | Rebuild parts on an already prepared composite tile | `loadPartList(Collection)` — [part loading](api/PART_LOADING.md) |
+| Select client/server tile capabilities before preparing state and loading | `MultipartGenerator.generateCompositeTile(TileEntity, Iterable, boolean)` — [staged generation and reflection migration](api/COMPOSITE_GENERATION.md) |
 | Assign stored parts during reconstruction, without binding or notifications | `setPartList(List)` — [storage assignment](api/PART_LOADING.md#storage-assignment) |
 | Test a candidate against a selected collection of parts | `testOcclusion(Collection, candidate)` — [occlusion queries and generated hooks](api/OCCLUSION.md) |
 | Test two groups of bounding boxes directly | `NormalOcclusionTest.testBoxes(Iterable, Iterable)` — [box-versus-box queries](api/OCCLUSION.md#box-versus-box-queries) |

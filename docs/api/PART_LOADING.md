@@ -10,6 +10,9 @@ These are reconstruction operations, not normal placement/removal. Use `TileMult
 changes. Use `MultipartHelper.createTileFromParts(Iterable<TMultiPart>)` to construct a new server composite tile; the
 loader itself does not choose traits, promote a tile or install it in the world.
 
+For separate client/server generation before world/NBT setup and loading, use the
+[staged composite-generation API](COMPOSITE_GENERATION.md).
+
 ## Loading a prepared tile
 
 To rebuild a tile using its existing parts, capture them before the loader clears the tile:
@@ -84,9 +87,9 @@ hook and its name. This changes the planned Java name, not any existing entry po
 
 For GuideNH's migration, use a Java list of the promoted client parts, retain its existing world/position setup,
 replace the raw setter with `setPartList`, and call the Collection loader. Preserve its following `notifyTileChange`
-and `markRender` steps. This does not replace its companion-only generator or other reflective dependencies.
-Schematica can select the Collection loader and pass its existing Java list directly; its Scala map and generator
-reflection need separate migration.
+and `markRender` steps. Its tile generator now has a [static Java replacement](COMPOSITE_GENERATION.md); other
+reflective dependencies remain. Schematica can select the Collection loader and pass its existing Java list directly,
+using the separate [factory lookup](FACTORY_LOOKUP.md) and generation entries to remove those Scala dependencies.
 
 ## Validation and release gates
 

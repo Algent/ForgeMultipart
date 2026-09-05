@@ -54,8 +54,8 @@ Not every registered factory is a microblock class: keep the existing rejection 
 the reflected microblock class's `isInstance(factory)` explicitly before invoking. Do not silently produce a partial preview.
 
 This removes the registry-map Scala dependency. It does not finish Schematica's migration: use the
-[Java loading API](PART_LOADING.md#overrides-and-reflection) for its part collection, and retain the companion generator
-call until a supported Java client/server composite-generation entry is provided. Material lookup, saved part order,
+[Java loading API](PART_LOADING.md#overrides-and-reflection) for its part collection and the
+[static Java composite generator](COMPOSITE_GENERATION.md). Material lookup, saved part order,
 shape/material loading, tile NBT and subsequent notifications remain unchanged.
 
 The private `MultiPartRegistry$.codechicken$multipart$MultiPartRegistry$$typeMap` field keeps its exact name, modifiers,

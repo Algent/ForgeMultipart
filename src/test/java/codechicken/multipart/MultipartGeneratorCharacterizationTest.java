@@ -36,7 +36,11 @@ class MultipartGeneratorCharacterizationTest {
 
     @Test
     void keepsExactFacadeCompanionAndScalaMapSurfaceWithoutInitializingForge() throws Exception {
-        assertEquals(FACADE, publicMethods(MultipartGenerator.class));
+        Set<String> facade = new TreeSet<>(FACADE);
+        facade.add(
+                "generateCompositeTile(Lnet/minecraft/tileentity/TileEntity;Ljava/lang/Iterable;Z)"
+                        + "Lcodechicken/multipart/TileMultipart;");
+        assertEquals(facade, publicMethods(MultipartGenerator.class));
         Set<String> companion = new TreeSet<>(FACADE);
         companion.addAll(
                 signatures(

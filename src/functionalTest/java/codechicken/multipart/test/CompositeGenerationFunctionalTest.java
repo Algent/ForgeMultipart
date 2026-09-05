@@ -17,18 +17,61 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 
 import org.junit.jupiter.api.Test;
 
+import codechicken.lib.vec.BlockCoord;
 import codechicken.multipart.MultipartGenerator;
 import codechicken.multipart.MultipartGenerator$;
 import codechicken.multipart.TMultiPart;
 import codechicken.multipart.TileMultipart;
 import codechicken.multipart.TileMultipartClient;
+import codechicken.multipart.examples.CompositeGenerationExample;
 import codechicken.multipart.scalatraits.TSlottedTile;
 import scala.collection.JavaConversions;
 
 class CompositeGenerationFunctionalTest {
+
+    @Test
+    void javaGenerationSelectsCapabilitiesWithoutLoadingOrCopyingTiles() {
+        checkStaging(MultipartGenerator::generateCompositeTile);
+    }
+
+    @Test
+    void javaGenerationReadsInputOnceAndPropagatesFailuresBeforeReuse() {
+        checkInput(MultipartGenerator::generateCompositeTile);
+    }
+
+    @Test
+    void javaExactReflectionAcceptsJavaParts() throws Exception {
+        Method method = MultipartGenerator.class
+                .getMethod("generateCompositeTile", TileEntity.class, Iterable.class, boolean.class);
+        TileMultipart tile = (TileMultipart) method.invoke(null, null, Collections.emptyList(), true);
+        assertTrue(tile instanceof TileMultipartClient);
+        assertSame(tile, method.invoke(null, tile, Collections.emptyList(), true));
+        assertNull(tile.getWorldObj());
+        assertTrue(tile.jPartList().isEmpty());
+    }
+
+    @Test
+    void javaExamplePreparesWorldAndCoordinatesBeforeLoadingWithoutInstallation() {
+        for (boolean client : new boolean[] { false, true }) {
+            World world = client ? null : MinecraftServer.getServer().worldServers[0];
+            BlockCoord pos = new BlockCoord(78, 200, 48);
+            TileEntity installed = world == null ? null : world.getTileEntity(pos.x, pos.y, pos.z);
+            TMultiPart part = new MultipartGeneratorFunctionalTest.SlottedPart();
+            List<TMultiPart> parts = Collections.singletonList(part);
+            TileMultipart tile = CompositeGenerationExample.createUninstalledTile(world, pos, parts, client);
+            assertEquals(client, tile instanceof TileMultipartClient);
+            assertSame(world, tile.getWorldObj());
+            assertEquals(pos, new BlockCoord(tile));
+            assertSame(tile, part.tile());
+            assertSame(part, tile.partMap(3));
+            assertEquals(parts, tile.jPartList());
+            if (world != null) assertSame(installed, world.getTileEntity(pos.x, pos.y, pos.z));
+        }
+    }
 
     @Test
     void legacyGenerationSelectsCapabilitiesWithoutLoadingOrCopyingTiles() {
