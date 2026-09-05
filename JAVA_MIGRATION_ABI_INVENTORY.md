@@ -248,3 +248,11 @@ this does not authorize removing or narrowing these members. The shipped `TileMu
 and `internalPartChange(TMultiPart): void` calls remain supported and are documented in the API guide, as are existing
 legacy override contracts. The registry's internal `loadIcons()` dispatcher is distinct from its supported material
 interface callback. The `+719` rescan retains all 386 member/type/reflection rows across the same 27 consumers.
+
+### Java illuminated extension example
+
+`MicroblockGenerator.registerTrait(String)` now documents its existing Java input path and pre-loading constraint.
+The [three-file example](docs/api/MICROBLOCK_EXTENSIONS.md) uses typed FMP entry points, with no additions or changes
+to the production API. ProjectRed still ships its external Scala trait; the Java example does not authorize retiring
+its old class/helper contracts or signature ingestion. Consumer release, pack adoption and internal dependency gates
+remain in force. The example itself lives only in the functional-test source set.

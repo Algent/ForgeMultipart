@@ -395,6 +395,11 @@ class DefaultContentFunctionalTest {
         add(expectedNames, expectedRemaps, Blocks.grass, "minecraft:grass", 0);
         add(expectedNames, expectedRemaps, Blocks.mycelium, "minecraft:mycelium", 0);
         expectedNames.add(MissingMicroMaterial.key());
+        for (int meta = 16; meta < 32; meta++) {
+            expectedNames.add(
+                    codechicken.microblock.BlockMicroMaterial
+                            .materialKey(ForgeMultipartFunctionalTestMod.illuminatedLamp, meta));
+        }
         Collections.sort(expectedNames);
 
         Tuple2<String, IMicroMaterial>[] idMap = MicroMaterialRegistry.getIdMap();
@@ -407,12 +412,14 @@ class DefaultContentFunctionalTest {
                 assertEquals(TopMicroMaterial.class, entry._2().getClass());
             } else if (MissingMicroMaterial.key().equals(entry._1())) {
                 assertSame(MissingMicroMaterial$.MODULE$, entry._2());
+            } else if (entry._1().startsWith("ForgeMultipartTests:illuminated_lamp_")) {
+                assertEquals(codechicken.multipart.examples.IlluminatedMicroMaterial.class, entry._2().getClass());
             } else {
                 assertEquals(BlockMicroMaterial.class, entry._2().getClass(), entry._1());
             }
         }
 
-        assertEquals(103, expectedNames.size());
+        assertEquals(119, expectedNames.size());
         assertEquals(expectedNames, actualNames);
         assertEquals(expectedRemaps, materialRemaps());
     }

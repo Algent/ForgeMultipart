@@ -17,7 +17,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**571 plain-JVM tests and 273 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
+**571 plain-JVM tests and 278 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 444 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
@@ -32,16 +32,18 @@ use, but no override triggering these three regressions was found. All 443 class
 payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
 followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
-Latest API work completes the bounded Phase 9.2 internal-boundary documentation. A fresh audit of 28 source
-checkouts and active Extra Utilities compatibility found no external calls to the 15 listed hooks; the five
-material-registry companion bridges carry the same internal marker. `bindPart` and `internalPartChange` remain
-supported for OpenComputers/ProjectRed. The material `IMicroMaterial.loadIcons` callback and existing legacy override
-contracts remain supported. One JVM and one Forge baseline were committed first as `8b12dfe`, pinning local callback
-mutation/failures and cache-only binding with caller-cleared old slots. All 571 archived JVM tests and the unchanged
-archived Forge mod's 273 cases pass. Production APIs and behavior remain unchanged: 444 class APIs, 17 ScalaSignature
-payloads, 3,761 method bodies and all 116 generated dump names/hashes match. No visibility changes, deprecations or
-annotation dependency were added. Evidence: `run/migration-api-boundary-reference/`;
-[boundary guide](docs/API.md#supported-api-and-internal-hooks), [caller audit](JAVA_MIGRATION_CONSUMER_AUDIT.md#api-boundary-audit).
+Latest API work adds a ProjectRed-style Java illuminated microblock example. Existing `registerTrait(String)` selects
+Java input without loading it first; `IGeneratedMaterial` adds the extension for all shapes/sides. Thin trait methods
+pass Object to an ordinary helper, which uses typed Java traversal and geometry. Registration, metadata/cutter
+semantics, shape/persistence, light aggregation and ordinary/hollow halo bounds are documented and tested. One Forge
+baseline was committed first as `c41ed8d`, covering external Scala composition across all five shapes. Four Java
+example cases bring the suite to 571 JVM / 278 Forge tests. The three example files compile without Scala.
+All 571 archived JVM and 274 archived Forge tests pass; the archived Forge mod is unchanged. Production APIs/bodies
+remain unchanged (444 classes, 17 ScalaSignature payloads, 3,761 methods). The 120 baseline dump bodies are
+retained after mapping only allocation-order microblock self-names; ten additional dumps cover the Java trait, five shapes and retained client-body compiler probe.
+That probe is headless, not a physical-client render check. ProjectRed's config/halo wiring, released migration and
+pack adoption remain pending. Evidence: `run/migration-illuminated-extension-reference/`;
+[extension guide](docs/api/MICROBLOCK_EXTENSIONS.md).
 
 Direct typed calls are the intended end state for supported integrations. Optional dependencies should isolate typed
 compatibility code behind presence/version checks; reflection snippets in earlier guides are temporary legacy
@@ -65,17 +67,16 @@ adoption remain pending. Checkouts remain reference-only. The installed `+719` p
 Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
 subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
 are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
-The next bounded candidate is a representative external Java microblock extension based on ProjectRed's
-`LightMicroblock` / `LightMicroMaterial` contract. Trace its registration, material behavior, state and side-only
-callbacks; provide a compiling Java example with generated Forge coverage. Keep the reference checkout untouched
-and retain the external Scala trait path until consumer release/adoption. Compiler prerequisites are complete, but
-that alone does not establish the complete extension contract or physical-client rendering.
+The next bounded candidate is converter registration and lifecycle guidance: trace `IPartConverter` callers,
+conversion selection and ownership, then add a compiling Java example with focused characterization. The broader
+source-compilation story for transformed tile traits and other audited reflection use cases remain separate work.
+The illuminated microblock example supplies the representative Java extension, but physical-client construction,
+connector-dependent halos, lighting and consumer adoption still need their recorded checks.
 
-Progress: all ten Phase 9.1 table rows and Phase 9.2's internal markers are complete, plus the separate Schematica
-registry lookup, staged Java tile generation, microblock-creation guidance and typed GuideNH material query.
-Remaining work includes converter/extension guidance and other audited reflection use cases. Then consumer patches,
-releases and pack adoption must precede final Scala removal and client/pack release validation; it is not a percentage
-of the whole migration.
+Progress: all ten Phase 9.1 table rows and Phase 9.2's internal markers are complete, plus Schematica registry lookup,
+staged Java tile generation, microblock creation, typed material access and the Java illuminated extension example.
+Remaining work includes converter/broader extension guidance and other audited reflection use cases. Consumer patches,
+releases and pack adoption still precede final Scala removal and client/pack release validation.
 
 Extra Utilities remains an active supported consumer. UtilitiesInExcess is the intended replacement, but the support
 switch awaits approval and actual target-pack adoption. Retain existing contracts until those gates pass. The
@@ -151,10 +152,12 @@ persists. Six early ASM extractions lacked characterization; their backfill is c
 JUnit XML: `build/test-results/test/TEST-*.xml` and `run/server/junit-out/TEST-*.xml`. Count tests, failures, errors and
 skips; do not infer them from Gradle's task summary. The Forge runner validates its own reports, and its dependent CI
 job must stay required. The ignored local server EULA is already accepted.
+Archived test mods predating the illuminated fixture lamp must use a separate disposable world; reusing the current
+test world triggers Forge's missing-mapping prompt. Restore server.properties after such archived runs.
 
 Generated dumps: `run/server/asm/multipart/**/*.txt`; enumerate recursively and assert a nonzero expected count.
 Compare names and hashes first. Investigate differences before normalizing only proven debug/private-name changes.
-The current baseline emits 116 dumps, including the deterministic definition, compiler and feature fixtures.
+The current baseline emits 130 dumps, including the deterministic definition, compiler and feature fixtures.
 
 ### Binary and fixture checks
 

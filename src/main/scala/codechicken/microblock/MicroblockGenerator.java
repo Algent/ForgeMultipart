@@ -36,10 +36,30 @@ public final class MicroblockGenerator {
         return MicroblockGenerator$.MODULE$.getId(trait);
     }
 
+    /**
+     * Registers an already loadable trait, including retained Scala trait interfaces. For a Java source trait that FMP
+     * must rewrite into an interface, use {@link #registerTrait(String)} before its class is loaded instead.
+     */
     public static int registerTrait(Class<?> trait) {
         return MicroblockGenerator$.MODULE$.registerTrait(trait);
     }
 
+    /**
+     * Registers a microblock trait by binary name (dots or slashes accepted), returning its generator-local ID.
+     * Existing registration returns the same ID. Use this overload for Java source traits before any class literal,
+     * instance or other use loads that class; FMP must first transform its class bytes into a runtime interface.
+     * Register during mod initialization, before material registration and construction that require this trait.
+     *
+     * Java input is a top-level class extending Microblock (possibly abstract), with a no-argument constructor. Its
+     * direct superclass constructor call is discarded during trait initialization; the generated microblock receives
+     * the real material ID. Client-only overrides must carry SideOnly(CLIENT). The existing transformer has bytecode
+     * restrictions: keep inherited state access and substantial logic in an ordinary helper, passing the trait as
+     * Object and casting to Microblock there. Do not instantiate or invoke a transformed trait as a Java class. Use
+     * stable Microblock methods or a separately declared capability interface for consumer dispatch.
+     *
+     * The material's {@link IGeneratedMaterial#addTraits(BitSet, MicroblockClass, boolean)} callback adds this ID to
+     * each requested shape/side. Registration does not register a material or remove the retained Scala trait path.
+     */
     public static int registerTrait(String trait) {
         return MicroblockGenerator$.MODULE$.registerTrait(trait);
     }

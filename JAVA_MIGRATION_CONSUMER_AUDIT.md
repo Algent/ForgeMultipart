@@ -512,6 +512,7 @@ tied to a released minimum dependency version. Unlisted contracts remain governe
 
 | Legacy contract | Consumer and inspected source | Supported replacement | Consumer migration/release | Target-pack adoption and removal gate |
 | --- | --- | --- | --- | --- |
+| External Scala `LightMicroblock` registered through `MicroblockGenerator.registerTrait` | ProjectRed `e173952e96a4`: `illumination/lightmicroblocks.scala` | Java source trait registered by name, `IGeneratedMaterial`, typed sibling traversal and halo helper; [example](docs/api/MICROBLOCK_EXTENSIONS.md) | FMP example tested; consumer rewrite/release, existing config/halo wiring and physical-client checks pending | Retain external Scala trait ingestion until released-consumer adoption and internal Scala-trait removal |
 | `MultiPartRegistry$.registerParts(IPartFactory2, Seq)` and existing array calls | ProjectRed `e173952e96a4`: transmission, expansion and fabrication proxies | `MultiPartRegistry.registerPartFactory` with existing `IPartFactory2` methods and unchanged IDs | Source patch and release pending; Boolean-factory proxies separately need the two-method adapter described in the guide | No migrated pack version verified; retain all registration bridges and external trait support |
 | `MultiPartRegistry$.registerParts(Function2, Seq)` | ForgeRelocationFMP `49a810b8c63b`: proxy init registering `rfmp_frame` | `IPartFactory2` creating a fresh `FramePart` on both paths, registered through `registerPartFactory` | Source patch and release pending; preserve `rfmp_frame` and keep converter/pass-through registration | No migrated pack version verified; retain the function companion descriptor |
 | `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | UtilitiesInExcess `3e107a1fe9bc15fcb6a808242ffda1354dac7c3a`: `FMPRecipeLoader.run`, `UEMultipartItem.getSubItems` | `materialCount()` with `materialName(int)` and, when needed, `getMaterial(int)` | Source patch and first released version pending; checkout used as reference only | No migrated pack version verified; retain the bridge |
@@ -684,6 +685,22 @@ loading, generated-trait, registry and handshake fixtures remain in the full sui
 new deprecations are introduced; `operate`, `getOrConvertTile2` and material `loadIcons` keep their distinct supported
 legacy/extension contracts. No consumer checkout was modified or counted as migrated.
 Evidence: `run/migration-api-boundary-reference/`, including source revisions and reviewed caller searches.
+
+## Java illuminated microblock extension
+
+The ProjectRed-style [Java example](docs/api/MICROBLOCK_EXTENSIONS.md) uses public name-based registration and
+`IGeneratedMaterial`; no consumer reflection or Scala classpath is needed. Register the input before class loading,
+keep inherited access in an ordinary helper with Object parameters, and dispatch via the stable Microblock base.
+The example preserves metadata 16–31, cutter metadata modulo 16, all-shape trait selection, strict sibling selection,
+size-based light rounding/capping, pass-zero halo submission and the hollow opening's trimmed strips. It adds no
+part NBT or packet fields. A distinct test lamp supplies the fixture; stock materials keep their exact assertions.
+
+The baseline extends retained external Scala-trait composition to all five built-in shape families. Four added Forge
+cases cover Java registration/shape composition, material persistence, light behavior, halo geometry and a retained
+client-body compiler probe. That probe removes only the test input's side annotation to exercise generated dispatch
+headlessly; it is not physical-client evidence. Actual client construction/rendering and consumer configuration/halo
+integration remain adoption checks. Reference checkouts and released-consumer status are unchanged.
+Evidence: `run/migration-illuminated-extension-reference/`; frozen consumers retain 571 JVM and 274 Forge cases.
 
 ## Practical priority for the current branch
 

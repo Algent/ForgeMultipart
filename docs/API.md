@@ -25,6 +25,7 @@ Existing reflective binaries remain supported until consumer release and pack ad
 | Enumerate microblock materials by numeric ID | `materialCount()`, `materialName(int)`, `getMaterial(int)` — [material enumeration](api/MATERIAL_ENUMERATION.md) |
 | Read a microblock material's block and metadata | `BlockMicroMaterial.block()`, `meta()` — [typed GuideNH query, identity and overrides](api/MATERIAL_ACCESS.md) |
 | Create a microblock with the requested material and side | `MicroblockGenerator.create(MicroblockClass, int, boolean)` — [construction, material traits and GuideNH migration](api/MICROBLOCK_CREATION.md) |
+| Add material-specific behavior to generated microblocks | `registerTrait(String)` and `IGeneratedMaterial` — [illuminated Java extension, compilation and side contracts](api/MICROBLOCK_EXTENSIONS.md) |
 | Read/index/search a tile's parts | `jPartList()` — [part collection ownership and order](api/PART_TRAVERSAL.md#collection-ownership-and-ordering) |
 | Run callbacks while skipping detached parts | `forEachPart(Consumer)` — [callback and override behavior](api/PART_TRAVERSAL.md#callback-behavior) |
 | Rebuild parts on an already prepared composite tile | `loadPartList(Collection)` — [part loading](api/PART_LOADING.md) |
@@ -102,9 +103,10 @@ Deprecated Scala-facing entry points remain callable, with their descriptors and
 Follow the method-specific guide: a Java sibling is not automatically a replacement override hook, and reflection
 must select the intended parameter types when a method is overloaded.
 
-Converter documentation, remaining generator/reflection replacements
-and complete external microblock extension guidance are still pending. In particular, ProjectRed's Scala microblock traits
-remain a supported dependency; registration signatures alone do not prove a complete Java replacement.
+An [illuminated Java microblock extension](api/MICROBLOCK_EXTENSIONS.md) now covers registration, material traits,
+light aggregation and halo geometry, with compiling examples and Forge coverage. Its physical-client rendering and
+ProjectRed adoption remain open. Converter documentation, broader extension/compilation guidance and the remaining
+audited reflection replacements are still pending. ProjectRed's existing Scala traits remain supported until adoption.
 
 All ten entries in the plan's Phase 9.1 API table have Java replacements. That table is a bounded list of signatures;
 the broader API, extension and consumer adoption work above remains open.

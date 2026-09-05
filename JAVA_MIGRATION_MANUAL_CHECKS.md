@@ -83,6 +83,11 @@ entries complete.
 | [ ] | Join a server whose material set differs from the client | The client is disconnected with the missing material list, not a crash | `readIDMap` |
 | [ ] | Join a server whose multipart type set differs from the client | The client is disconnected with the ordered missing-part list, not a crash | `MultipartCPH.handlePartRegistration` |
 
+The [Java illuminated extension example](docs/api/MICROBLOCK_EXTENSIONS.md) has dedicated-server and headless halo
+coverage. When adopting it in ProjectRed, rerun the illuminated shape/lighting checks above on a physical client,
+including hollow connector widths and all sides, pass filtering and the existing halo queue/configuration. Neither
+its callback-side input tests nor its retained client-body probe validates actual client generation or GPU output.
+
 ## Not yet covered anywhere
 
 - [ ] A focused pre-optimization CPU/allocation baseline now exists in `JAVA_MIGRATION_PROFILE.md`. A representative

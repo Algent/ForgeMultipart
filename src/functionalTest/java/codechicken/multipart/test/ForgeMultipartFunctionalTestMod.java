@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 
@@ -21,12 +23,14 @@ import org.junit.platform.reporting.legacy.xml.LegacyXmlReportGeneratingListener
 
 import codechicken.microblock.MicroblockGenerator;
 import codechicken.multipart.MultipartGenerator;
+import codechicken.multipart.examples.IlluminatedMicroblockExample;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerAboutToStartEvent;
 import cpw.mods.fml.common.event.FMLServerStartedEvent;
+import cpw.mods.fml.common.registry.GameRegistry;
 
 @Mod(
         modid = "ForgeMultipartTests",
@@ -42,9 +46,12 @@ public final class ForgeMultipartFunctionalTestMod {
     static boolean serverAboutToStart;
     static boolean serverStarted;
     static int externalScalaMicroblockTraitId;
+    static Block illuminatedLamp;
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        illuminatedLamp = new Block(Material.glass) {};
+        GameRegistry.registerBlock(illuminatedLamp, "illuminated_lamp");
         preInitialized = true;
     }
 
@@ -54,6 +61,7 @@ public final class ForgeMultipartFunctionalTestMod {
         MultipartGenerator.registerPassThroughInterface(GeneratorPassThroughFixture.class.getName(), false, true);
         externalScalaMicroblockTraitId = MicroblockGenerator
                 .registerTrait("codechicken.multipart.test.ExternalScalaMicroblockFixture");
+        IlluminatedMicroblockExample.registerMaterials(illuminatedLamp);
         initialized = true;
     }
 

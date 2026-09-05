@@ -2040,3 +2040,38 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Documentation-only change: checked wording, local links and diff whitespace. No production sources or fixtures
   changed; the existing 571 JVM / 273 Forge checkpoint remains the runtime evidence. The post-commit build verifies
   clean artifact versions under the existing workflow.
+
+### 2026-09-05 — Java illuminated microblock extension example
+
+- Traced ProjectRed `e173952e96a4`'s illuminated material/trait through registration, metadata, light aggregation and
+  client halo geometry. The existing public `MicroblockGenerator.registerTrait(String)` already selects Java input;
+  no production implementation change or new API was needed. Added Javadocs for registration before class loading.
+- Committed baseline `c41ed8d` first: one Forge test proves retained external Scala-trait composition and class reuse
+  across face, hollow, corner, edge and post shapes. The baseline has 571 JVM / 274 Forge cases and 120 generated dumps.
+- Added three compiling Java example files: an abstract top-level trait, block-backed generated material and ordinary
+  helper with consumer-supplied configuration/halo rendering. The trait uses Object-parameter delegation to avoid the
+  transformer's inherited-access constraints. Consumers call only public typed FMP APIs; no reflection or Scala
+  compile dependency is needed. The common light behavior and SideOnly client callback remain separate.
+- Four Forge tests cover initialization registration of all metadata 16–31, both addTraits side inputs, all five
+  generated shape families, fresh instances/class caching, constructor material identity and saved state. Light
+  tests cover rounding/capping, matching membership, detached siblings, config switching and unbound failure. Halo
+  tests preserve collision-box ownership and the hollow opening's trimmed strips across all six orientations.
+- A uniquely named headless compiler probe retains the actual Java client method by removing only its test-input
+  side annotation, then verifies generated dispatch, pass filtering and queued coordinates/colour/bounds. It does
+  not establish physical-client generation, side selection or GPU correctness. Those checks and consumer config/halo
+  wiring remain explicit adoption gates; ProjectRed's checkout/released code were not changed.
+- The test mod registers a distinct lamp and 16 known fixture materials. The default-content test retains an exact
+  inventory assertion, including these additions, rather than ignoring unexpected entries. Archived consumers use
+  a separate disposable world: the old test mod cannot load a world containing the new fixture block without a
+  missing-mapping prompt. The original test-world configuration was restored after the archived run.
+- Validation: normal and clean formatting/checkstyle/build plus Java 8 Forge pass with **571 JVM / 278 Forge tests**,
+  zero failures/errors/skips. All **571 archived JVM / 274 archived Forge** cases pass, with a byte-identical archived
+  Forge mod. Production remains **444 class APIs, 17 ScalaSignature payloads and 3,761 unchanged method bodies**;
+  the 120 baseline dump bodies are retained after mapping only allocation-order microblock self-names, and ten
+  extension/probe dumps are added. All other baseline dump hashes match exactly. The three examples compile
+  with Scala excluded and have no Scala/reflection bytecode references. The `+719` pack retains all 386 member/type/
+  reflection rows across 27 consumers. Packaged source and Java 8 bytecode are checked; the post-commit build verifies
+  all five mod versions in dev/release jars. Evidence: `run/migration-illuminated-extension-reference/`.
+- Updated the API index, plan, adoption ledger and manual checklist. Next bounded task: converter registration and
+  lifecycle guidance; broader transformed-tile compilation guidance and remaining audited reflection replacements
+  remain separate. The performance pass, consumer release/adoption and final Scala removal gates are unchanged.

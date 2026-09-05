@@ -64,7 +64,7 @@ The phase checklists include recurring verification rules, historical work and c
 
 | Workstream | Remaining deliverables | Gate |
 | --- | --- | --- |
-| Complete the supported Java surface | ProjectRed-style illuminated microblock extension example with generated/side coverage; converter and extension/lifecycle guidance; safe Java compilation guidance for transformed traits; supported orientation customization for Et Futurum and saw-strength customization for Iguana; finish the audited reflection/legacy-use map | Next FMP milestone; direct typed calls and documented override behavior, without requiring consumer reflection |
+| Complete the supported Java surface | Physical-client validation of the documented illuminated microblock example; converter and broader extension/lifecycle guidance; safe Java compilation guidance for transformed traits; supported orientation customization for Et Futurum and saw-strength customization for Iguana; finish the audited reflection/legacy-use map | Next FMP milestone; direct typed calls and documented override behavior, without requiring consumer reflection |
 | Migrate consumers and adopt releases | Patch GuideNH/Schematica to their documented APIs; migrate ProjectRed's external trait and other Scala/helper users, including OpenComputers, ProjectBlue and ForgeRelocationFMP; direct Galacticraft integration; Et Futurum/Iguana migrations; UtilitiesInExcess enumeration and `mat`/`material` fix; complete the full adoption ledger beyond these hotspots | Source patches, released versions and actual target-pack jars must all be recorded; reference checkouts are not migrated |
 | Measure and improve performance | Fresh realistic profiles, ranked candidates, bounded improvements and repeated paired measurements; distinguish FMP implementation gains from migrated-consumer gains and report variability/regressions | Phase 4b starts when API/extension workloads are stable; it can overlap consumer adoption |
 | Validate releases | Complete client rendering/particles/lighting/interaction and integration checklist; old-world, multiplayer, movement and preview checks; packaged/obfuscated artifacts on supported runtimes; optional-mod absent/present loading; actual patched-world MCPC hook where supported | Automated Forge tests do not replace physical-client/full-pack evidence; repeat affected checks after consumer migration and Scala removal |
@@ -772,6 +772,9 @@ placeholder, rather than lost material data. Extra Utilities writes `mat` as wel
 UtilitiesInExcess's `extrautils:*` aliases; there is no legacy-conversion risk in the fix.
 
 - [x] Land the two Phase 7 Java-mixin prerequisites with generated Java-trait fixtures.
+- [x] Provide the [Java illuminated microblock example](docs/api/MICROBLOCK_EXTENSIONS.md), including real Forge
+  registration, all shape families, material/persistence/light contracts, server stripping and a headless retained
+  client-body probe. The three example sources compile without Scala. Physical-client rendering remains a release gate.
 - [ ] Land the ProjectRed `LightMicroblock` Java rewrite with a fixture proving equivalent generated microblocks on
   both sides.
 - [ ] Migrate Galacticraft to direct registration in gated compatibility code; exact-signature reflection is an interim option.
@@ -787,7 +790,7 @@ UtilitiesInExcess's `extrautils:*` aliases; there is no legacy-conversion risk i
   reflection, material trait callbacks, fresh-part/shape ownership and a compiling example. Keep physical-client
   validation and public-setter versus private-field override behavior explicit; [guide](docs/api/MICROBLOCK_CREATION.md).
 - [x] Document and validate GuideNH's direct typed material query through existing `block()` / `meta()` accessors;
-  [guide](docs/api/MATERIAL_ACCESS.md). Consumer adoption and the representative external Java extension remain open.
+  [guide](docs/api/MATERIAL_ACCESS.md). Consumer adoption and physical-client validation of the Java extension example remain open.
 - [ ] Patch those four consumers and record the released versions that no longer need the private shapes.
 - [ ] Track all legacy FMP dependencies in the adoption ledger, including trait helper/companion calls and reflection
   outside the cleanup table; verify the released jars actually selected for the target pack.
