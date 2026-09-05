@@ -50,6 +50,7 @@ public final class ForgeMultipartFunctionalTestMod {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
+        PartRegistrationFunctionalTest.registerDuringInit();
         MultipartGenerator.registerPassThroughInterface(GeneratorPassThroughFixture.class.getName(), false, true);
         externalScalaMicroblockTraitId = MicroblockGenerator
                 .registerTrait("codechicken.multipart.test.ExternalScalaMicroblockFixture");
