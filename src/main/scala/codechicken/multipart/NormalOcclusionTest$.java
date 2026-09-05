@@ -12,6 +12,11 @@ public final class NormalOcclusionTest$ {
 
     private NormalOcclusionTest$() {}
 
+    /**
+     * @deprecated Use {@link NormalOcclusionTest#testBoxes(Iterable, Iterable)} with Java iterables. This companion
+     *             entry remains available to previously compiled Scala callers.
+     */
+    @Deprecated
     public boolean apply(Traversable<Cuboid6> boxes1, Traversable<Cuboid6> boxes2) {
         return NormalOcclusionTest.apply(boxes1, boxes2);
     }

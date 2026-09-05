@@ -1,10 +1,12 @@
-# Testing part occlusion from Java
+# Testing occlusion from Java
 
 [API index](../API.md)
 
 The `algent/java` branch adds `TileMultipart.testOcclusion(Collection<? extends TMultiPart>, TMultiPart)`.
 It tests a supplied collection of parts through the tile's existing occlusion hook, including generated
 partial-occlusion checks. This addition is not yet tied to a minimum published dependency version.
+For raw geometry, `NormalOcclusionTest.testBoxes(Iterable<? extends Cuboid6>, Iterable<? extends Cuboid6>)` tests
+two groups of bounding boxes without constructing parts. See [box-versus-box queries](#box-versus-box-queries).
 
 ## Example
 
@@ -67,7 +69,54 @@ pair, following the [loader compilation finding](PART_LOADING.md#overrides-and-r
 No direct consumer calls or overrides of the two-argument tile hook were found in the supplied source/ABI audit.
 Consumers such as ProjectRed and ForgeRelocationFMP already use the Java-typed `canReplacePart` API and need no rename
 for that contract. Part-level `occlusionTest(TMultiPart)` remains supported as-is. The Scala `NormalOcclusionTest.apply`
-box-versus-box entry is a separate, still-used contract whose Java replacement remains pending.
+box-versus-box entry is a separate, still-used contract with the Java replacement below.
+
+## Box-versus-box queries
+
+Use `NormalOcclusionTest.testBoxes` when you already have box iterables, including `getOcclusionBoxes()` results:
+
+```java
+public static boolean fitsBounds(Iterable<? extends Cuboid6> occupied, Cuboid6 candidate) {
+    return NormalOcclusionTest.testBoxes(occupied, Collections.singletonList(candidate));
+}
+```
+
+The [complete example](../../src/test/java/codechicken/multipart/examples/BoxOcclusionExample.java) compiles without
+Scala on its classpath. Both arguments accept box subclasses and need only implement Java `Iterable`.
+
+The query fully consumes the first input, then the second, requesting each input's iterator once. It takes shallow
+snapshots before testing any pairs, even when one input is empty or the first pair will overlap. Iteration failures
+therefore take precedence over geometry results; a failure in the first input prevents reading the second. Input
+collections can change during intersection callbacks without changing the captured membership, but boxes themselves
+are shared: coordinate changes remain visible. Supply finite iterables and use the game thread for live geometry.
+
+Each first-group box calls `intersects` on second-group boxes in encounter order. Duplicates participate; the first
+intersection returns `false`. No intersections returns `true`. The existing `Cuboid6.intersects` tolerance is retained:
+touching faces and sub-tolerance overlaps are allowed. Only cross-group pairs are tested, not pairs within one group.
+Neither input nor its boxes is modified by the helper; custom iterators or `intersects` overrides can have side effects.
+
+Null inputs fail during copying. Null box entries are not eagerly rejected: an empty opposite group never uses them,
+and an earlier intersection may avoid them. A reached intersection involving an ordinary null box fails. Iterator and
+intersection exceptions propagate unchanged, without undoing callback side effects.
+
+This does not run part callbacks, generated aggregate partial-occlusion checks, slot checks or placement logic.
+Use `tile.testOcclusion` for the tile's occlusion protocol, and the placement/replacement APIs for their wider checks.
+The existing `NormalOcclusionTest.apply(JNormalOcclusion, TMultiPart)` part helper remains unchanged.
+
+Both Scala box-list `apply(Traversable, Traversable)` entries, static and companion, are deprecated with their original
+descriptors and bodies retained. OpenComputers' cable/network checks can pass `getOcclusionBoxes()` directly as the
+second argument; their Scala `ownBounds` collection needs a Java adapter:
+
+```scala
+import scala.collection.JavaConverters._
+NormalOcclusionTest.testBoxes(ownBounds.asJava, otherBounds)
+```
+
+ForgeRelocationFMP can similarly adapt its assembled Scala `boxes` sequence and pass its existing Java
+`getOcclusionBoxes` iterable directly. Keep its combined normal, partial and collision boxes and caller order intact.
+These are migration directions, not changes to the reference checkouts. Consumer releases and pack adoption remain
+pending, and the new method has no published minimum dependency version yet. Scala consumers can adopt this FMP API
+while keeping their own Scala code.
 
 ## Validation
 
@@ -76,3 +125,7 @@ subtype/non-list collections, override routing and the shape example. A Forge te
 partial trait rejects overlapping partial parts that plain pair tests accept. Existing descriptors, generated output,
 and frozen pre-change callers are checked separately. Actual client previews and full-pack adoption remain covered
 by the [manual release checks](../../JAVA_MIGRATION_MANUAL_CHECKS.md).
+
+Box-query tests run the same snapshot, input-failure, ordering, null and exception contracts against both legacy entries
+and the Java entry. The compiling example also covers touching tolerance and containment; frozen pre-change tests
+retain calls to both old descriptors.

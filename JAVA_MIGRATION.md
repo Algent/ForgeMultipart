@@ -532,7 +532,7 @@ Each row keeps its existing descriptor for binary compatibility and gains a Java
 | `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | `materialCount(): int` plus existing `materialName(int)` and `getMaterial(int)` | Implemented with static/companion deprecation; [guide and compiling example](docs/api/MATERIAL_ENUMERATION.md). Consumer release/adoption remains pending |
 | `TileMultipart.operate(scala.Function1<TMultiPart, BoxedUnit>)` | `forEachPart(java.util.function.Consumer<TMultiPart>)` | Implemented through the legacy virtual hook; preserves captured traversal, detached-part filtering and callback failures. Lifecycle still calls `operate` |
 | `TileMultipart.occlusionTest(scala.collection.Seq, TMultiPart)` | `testOcclusion(Collection<? extends TMultiPart>, TMultiPart)` | Implemented with an input snapshot and legacy virtual dispatch, including generated partial occlusion; [guide](docs/api/OCCLUSION.md). Distinct Java name avoids Scala overload resolution |
-| `NormalOcclusionTest.apply(scala.collection.Traversable<Cuboid6>, scala.collection.Traversable<Cuboid6>)` and companion entry | Java box-versus-box entry, with a distinct name to be chosen after characterization | Still used by ForgeRelocationFMP and OpenComputers. The existing Java `test(Iterable, Iterable)` loop is private; its public part-based sibling does not replace this box-list contract |
+| `NormalOcclusionTest.apply(scala.collection.Traversable<Cuboid6>, scala.collection.Traversable<Cuboid6>)` and companion entry | `testBoxes(Iterable<? extends Cuboid6>, Iterable<? extends Cuboid6>)` | Implemented over the existing Java loop; both inputs snapshotted before geometry tests. [Guide and compiling example](docs/api/OCCLUSION.md#box-versus-box-queries). ForgeRelocationFMP/OpenComputers adoption remains pending |
 | `TileMultipart.loadParts(scala.collection.Iterable)` | `loadPartList(Collection<TMultiPart>)` | Implemented through the legacy virtual hook; binding, world notifications, input iteration and partial failure retained. [Loading guide](docs/api/PART_LOADING.md) |
 | `TileMultipart.partList_$eq(scala.collection.Seq)` | `setPartList(List<TMultiPart>)` | Implemented through the legacy setter; Java list copied without binding, null sentinel supported. GuideNH's old reflective name remains supported |
 | `TileMultipart.renderID()` / `renderID_$eq(int)` | `getRenderID()` / `setRenderID(int)` | |
@@ -552,10 +552,12 @@ same-name overload there invites a silent wrong-overload bind.
   lifecycle contracts, and generated server/client tile checks; [guide](docs/api/PART_LOADING.md), [API index](docs/API.md).
 - [x] Add `testOcclusion(Collection, candidate)` with snapshot ownership, subtype inputs, legacy hook dispatch and
   generated partial-occlusion coverage; [guide and compiling example](docs/api/OCCLUSION.md).
+- [x] Add direct `testBoxes(Iterable, Iterable)` with eager input snapshots, ordered intersection callbacks and retained
+  static/companion bridges; [migration guide](docs/api/OCCLUSION.md#box-versus-box-queries).
 - [ ] For remaining siblings, compile external Java examples with Scala excluded from the compile classpath before
   finalizing names. The proposed `loadParts(Collection)` overload required `scala.collection.Iterable` during javac
   overload resolution; the implemented `loadPartList(Collection)` avoids that dependency. Apply this gate to the
-  remaining occlusion and registration overloads as well as checking the emitted consumer bytecode.
+  remaining registration overloads as well as checking the emitted consumer bytecode.
 - [ ] Mark the remaining legacy entries above `@Deprecated` with javadoc naming a working replacement.
 - [ ] Confirm every original descriptor still exists in the ABI fixture after the change.
 - [ ] Document the supported API with compiling usage examples and an old-to-new migration guide. Validate Java

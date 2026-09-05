@@ -16,6 +16,7 @@ import java.util.function.BiFunction;
 import org.junit.jupiter.api.Test;
 
 import codechicken.lib.vec.Cuboid6;
+import codechicken.multipart.examples.BoxOcclusionExample;
 import scala.collection.JavaConversions;
 import scala.collection.Traversable;
 
@@ -38,6 +39,31 @@ class NormalOcclusionBoxTest {
     @Test
     void legacyEntriesKeepLazyNullBoxesAndOriginalGeometryFailures() {
         LEGACY.forEach(NormalOcclusionBoxTest::assertNullsAndGeometryFailures);
+    }
+
+    @Test
+    void javaEntrySnapshotsSinglePassInputsBeforeOrderedShortCircuiting() {
+        assertSnapshotAndOrder(NormalOcclusionTest::testBoxes);
+    }
+
+    @Test
+    void javaEntryPropagatesInputFailuresBeforeTestingGeometry() {
+        assertInputFailures(NormalOcclusionTest::testBoxes);
+    }
+
+    @Test
+    void javaEntryKeepsLazyNullBoxesAndOriginalGeometryFailures() {
+        assertNullsAndGeometryFailures(NormalOcclusionTest::testBoxes);
+    }
+
+    @Test
+    void javaExampleKeepsTouchingToleranceAndOverlapRules() {
+        List<Cuboid6> occupied = Collections.singletonList(new Cuboid6(0, 0, 0, 0.5, 1, 1));
+        assertTrue(BoxOcclusionExample.fitsBounds(occupied, new Cuboid6(0.5, 0, 0, 1, 1, 1)));
+        assertTrue(BoxOcclusionExample.fitsBounds(occupied, new Cuboid6(0.499995, 0, 0, 1, 1, 1)));
+        assertFalse(BoxOcclusionExample.fitsBounds(occupied, new Cuboid6(0.49998, 0, 0, 1, 1, 1)));
+        assertFalse(BoxOcclusionExample.fitsBounds(occupied, new Cuboid6(0.1, 0.1, 0.1, 0.2, 0.2, 0.2)));
+        assertTrue(BoxOcclusionExample.fitsBounds(Collections.emptyList(), occupied.get(0)));
     }
 
     private static void assertSnapshotAndOrder(BiFunction<Iterable<Cuboid6>, Iterable<Cuboid6>, Boolean> query) {

@@ -491,7 +491,7 @@ behavior:
 ## Java API adoption ledger
 
 This ledger tracks migration of a specific legacy contract, not completion of an entire consumer's migration.
-Material enumeration, tile collection/traversal access, tile loading/storage assignment and collection occlusion queries are implemented on
+Material enumeration, tile collection/traversal access, tile loading/storage assignment, tile occlusion and box queries are implemented on
 `algent/java`. The [API index](docs/API.md) links the guides and compiling Java examples. These additions are not yet
 tied to a released minimum dependency version. Unlisted contracts remain governed by the inventories above.
 
@@ -505,6 +505,8 @@ tied to a released minimum dependency version. Unlisted contracts remain governe
 | `TileMultipart.partList(): scala.collection.Seq` | Extra Utilities 1.2.12: multipart renderer iterators | Iterate `jPartList()` without adding detached-part filtering | Retirement/replacement pending | Confirm absence or migration in the target pack before retiring the getter |
 | `TileMultipart.partList(): scala.collection.Seq` plus reflective getter/setter/loading | GuideNH `7d8fb44e77b9`: `Ae2ForgeMultipartBridge`, `ForgeMultipartHelpers` | `jPartList()` for reads, `setPartList(List)` for staging, `loadPartList(Collection)` for binding/cache reconstruction | Source patch and release pending; preserve world/position setup and following tile/render notifications | Retain the legacy getter/setter/loader until adoption; companion-only generator migration is separate |
 | `TileMultipart.loadParts(scala.collection.Iterable)` exact reflection | Schematica `3b03ee937953`: `nbt.ForgeMultipart` | Reflect `loadPartList(Collection.class)` and pass its existing Java part list directly | Source patch and release pending; registry map and generator reflection remain separate contracts | No migrated pack version verified; retain the Scala loader descriptor |
+| `NormalOcclusionTest$.apply(Traversable, Traversable)` | OpenComputers `2c00f79be24b`: `common.block.Cable.canConnectFromSideFMP`, `server.network.Network.canConnectFromSideFMP` | `NormalOcclusionTest.testBoxes(ownBounds.asJava, otherBounds)`; `otherBounds` already comes from Java `getOcclusionBoxes()` | Source patch and release pending; retain side/color/face filtering | No migrated pack version verified; retain the companion and descriptor |
+| `NormalOcclusionTest$.apply(Traversable, Traversable)` | ForgeRelocationFMP `49a810b8c63b`: `FramePart.occlusionTest` | `NormalOcclusionTest.testBoxes(boxes.asJava, getOcclusionBoxes)`; retain combined normal/partial/collision boxes and caller order | Source patch and release pending; preserve temporary face bounds and replacement protocol | No migrated pack version verified; retain the companion and descriptor |
 
 Evidence for the FMP addition is under ignored `run/migration-material-enumeration-reference/`. The original
 reference-compiled Scala consumer still exercises the companion and tuple-array descriptor. The new compiling Java
@@ -548,8 +550,16 @@ likewise contains no direct reference to that tile descriptor. The legacy hook i
 ProjectRed and ForgeRelocationFMP's `canReplacePart` callers need no rename and must retain outgoing-part exclusion.
 The new collection query is not a blanket replacement for placement checks or the part-level `occlusionTest` hook.
 `NormalOcclusionTest$.apply(Traversable, Traversable)` remains a separate box-list bridge used by ForgeRelocationFMP
-and OpenComputers. Its Java replacement is now explicit in the plan; completion of the tile query does not retire it.
+and OpenComputers. Its `testBoxes(Iterable, Iterable)` replacement is now implemented; adoption of either query does
+not retire the other contract.
 Evidence for this slice is under ignored `run/migration-part-occlusion-reference/`; reference checkouts remain unchanged.
+
+The box-query slice retains eager left-then-right input collection, shallow snapshots, ordered/short-circuit intersection
+calls, touching tolerance and original input/callback exceptions. Both legacy entries are deprecated without changing
+their descriptors or bodies. The Java example compiles with Scala excluded; the shared private copy helper only widens
+its generic input to accept box subclasses. The source check found the three box-list calls listed above and no
+`testBoxes` collision. The installed `+719` rescan retains all 386 member/type/reflection rows from `+678` across 27
+consumers. Evidence: `run/migration-box-occlusion-reference/`; [guide](docs/api/OCCLUSION.md#box-versus-box-queries).
 
 ## Practical priority for the current branch
 

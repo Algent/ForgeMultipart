@@ -17,7 +17,35 @@ public final class NormalOcclusionTest {
 
     private NormalOcclusionTest() {}
 
-    /** Performs the test, returns true if the parts may coexist. */
+    /**
+     * Tests two groups of boxes, returning true if no cross-group pair intersects according to
+     * {@link Cuboid6#intersects(Cuboid6)}, including its existing tolerance for touching bounds.
+     *
+     * <p>
+     * Fully consumes the first input, then the second, once each, before testing any pairs. These shallow snapshots
+     * preserve order, duplicates, null entries and box identities. The first input is the outer loop; the first
+     * intersection returns false. Input and intersection exceptions propagate unchanged. Null inputs fail during
+     * copying; null entries fail only if an intersection call uses them. Empty inputs allow all boxes in the other
+     * group, but both inputs are still consumed.
+     *
+     * <p>
+     * This only tests supplied geometry. It does not invoke part callbacks, perform aggregate partial-occlusion checks
+     * or approve placement. Boxes remain shared and mutable; changing their coordinates can affect the query.
+     */
+    public static boolean testBoxes(Iterable<? extends Cuboid6> boxes1, Iterable<? extends Cuboid6> boxes2) {
+        List<Cuboid6> first = new ArrayList<>();
+        addAll(first, boxes1);
+        List<Cuboid6> second = new ArrayList<>();
+        addAll(second, boxes2);
+        return test(first, second);
+    }
+
+    /**
+     * Performs the test, returns true if the parts may coexist.
+     *
+     * @deprecated Use {@link #testBoxes(Iterable, Iterable)} with Java iterables. Retained for existing Scala callers.
+     */
+    @Deprecated
     public static boolean apply(Traversable<Cuboid6> boxes1, Traversable<Cuboid6> boxes2) {
         return test(collect(boxes1), collect(boxes2));
     }
@@ -54,7 +82,7 @@ public final class NormalOcclusionTest {
         return result;
     }
 
-    private static void addAll(List<Cuboid6> target, Iterable<Cuboid6> boxes) {
+    private static void addAll(List<Cuboid6> target, Iterable<? extends Cuboid6> boxes) {
         for (Cuboid6 box : boxes) {
             target.add(box);
         }

@@ -1806,3 +1806,22 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   with the new name was found. The separately load-bearing Scala box-list `NormalOcclusionTest.apply` contract now
   has an explicit plan row and is the next candidate. Reference checkouts remain unchanged; client previews and
   consumer release/adoption remain separate gates. Evidence: `run/migration-part-occlusion-reference/`.
+
+### 2026-09-05 — Java box-versus-box occlusion query
+
+- Committed three JVM baseline cases as `c7a3ed9` before changing production code. Both static and companion entries
+  are checked for eager input collection, shallow snapshots, duplicate/callback order, short-circuiting, null handling
+  and original failures. Saved the pre-API jar, sources, all 559 compiled JVM tests, reports and 116 generated dumps.
+- Added `NormalOcclusionTest.testBoxes(Iterable<? extends Cuboid6>, Iterable<? extends Cuboid6>)` over the existing
+  private Java copy/intersection helpers. The copy helper's private generic input now accepts subtypes; its body and
+  descriptor are unchanged. Both legacy Scala box entries are deprecated without changing their bodies/descriptors.
+- Four further JVM cases run the same contracts against the new entry and exercise a compiling geometry example,
+  including touching tolerance and containment. The Java example compiles without Scala on its classpath.
+- Normal/clean build and style checks pass: 563 JVM tests, 243 Forge tests and 559 frozen pre-change JVM tests.
+  All 443 existing classes, 17 ScalaSignature payloads, 3,751 existing method bodies and 116 generated dumps remain;
+  exactly one public method and two deprecations are added. Build versions and the private helper's generic widening
+  are the only other expected metadata differences.
+- Updated the API guide/index, ABI notes and adoption ledger for OpenComputers' two connection checks and
+  ForgeRelocationFMP's combined geometry check. The installed `+719` rescan retains all 386 ABI/reflection rows across
+  27 consumers. Reference checkouts are unchanged; consumer release/adoption and manual client/pack checks remain
+  pending. Next: multipart factory registration. Evidence: `run/migration-box-occlusion-reference/`.

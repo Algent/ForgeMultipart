@@ -18,6 +18,7 @@ without converting the rest of its code to Java.
 | Rebuild parts on an already prepared composite tile | `loadPartList(Collection)` — [part loading](api/PART_LOADING.md) |
 | Assign stored parts during reconstruction, without binding or notifications | `setPartList(List)` — [storage assignment](api/PART_LOADING.md#storage-assignment) |
 | Test a candidate against a selected collection of parts | `testOcclusion(Collection, candidate)` — [occlusion queries and generated hooks](api/OCCLUSION.md) |
+| Test two groups of bounding boxes directly | `NormalOcclusionTest.testBoxes(Iterable, Iterable)` — [box-versus-box queries](api/OCCLUSION.md#box-versus-box-queries) |
 
 Each guide explains ownership, lifecycle, legacy replacements and limitations, and links to a compiling Java example
 exercised by the test suite. The loading/setter APIs are advanced reconstruction operations; ordinary placement and
@@ -47,7 +48,7 @@ Deprecated Scala-facing entry points remain callable, with their descriptors and
 Follow the method-specific guide: a Java sibling is not automatically a replacement override hook, and reflection
 must select the intended parameter types when a method is overloaded.
 
-Direct box-versus-box Java occlusion access, remaining registry bridges/documentation, generator/reflection replacements
+Remaining registry bridges/documentation, generator/reflection replacements
 and complete external microblock extension guidance are still pending. In particular, ProjectRed's Scala microblock traits
 remain a supported dependency; registration signatures alone do not prove a complete Java replacement.
 

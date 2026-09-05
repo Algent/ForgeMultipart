@@ -131,6 +131,11 @@ This is a much smaller surface than the plan assumed. `TileMultipart.jPartList()
 widely used accessor (ProjectBlue, WitchingGadgets, buildcraft-compat, extrautilities, gregtech, matter-manipulator),
 so the Java-first collection API mostly exists already and the Scala overloads are a thin retained shell.
 
+The branch now supplies `NormalOcclusionTest.testBoxes(java.lang.Iterable, java.lang.Iterable)` for the box-list
+contract. Both old `apply(Traversable, Traversable)` entries remain, with deprecations pointing to the Java entry.
+The shipping ForgeRelocationFMP/OpenComputers companion calls still require their exact descriptor until adoption;
+see the [migration guide](docs/api/OCCLUSION.md#box-versus-box-queries) and consumer ledger.
+
 `IDWriter`, ported on this branch, has **zero** downstream references. Its four deprecated Scala function accessors
 are not load-bearing and can be dropped.
 
