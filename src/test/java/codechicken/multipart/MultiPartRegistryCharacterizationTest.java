@@ -149,6 +149,49 @@ class MultiPartRegistryCharacterizationTest {
         assertEquals(2, converter.calls);
     }
 
+    @Test
+    void converterRegistrationCapturesBlocksAndRetainsDuplicateEntries() {
+        Block original = new Block(Material.rock) {};
+        Block later = new Block(Material.rock) {};
+        RecordingConverter converter = new RecordingConverter(Arrays.asList(original, original), null);
+        MultiPartRegistry.registerConverter(converter);
+        converter.blocks.clear();
+        converter.blocks.add(later);
+        MultiPartRegistry.registerConverter(converter);
+
+        assertNull(MultiPartRegistry.convertBlock(null, null, original));
+        assertEquals(2, converter.calls);
+        assertNull(MultiPartRegistry.convertBlock(null, null, later));
+        assertEquals(3, converter.calls);
+    }
+
+    @Test
+    void converterReceivesOriginalPositionAndFailureStopsDispatch() {
+        Block block = new Block(Material.rock) {};
+        BlockCoord pos = new BlockCoord(2, 3, 4);
+        IllegalStateException failure = new IllegalStateException("converter failed");
+        MultiPartRegistry.registerConverter(new IPartConverter() {
+
+            @Override
+            public Iterable<Block> blockTypes() {
+                return Arrays.asList(block);
+            }
+
+            @Override
+            public TMultiPart convert(World world, BlockCoord supplied) {
+                assertNull(world);
+                assertSame(pos, supplied);
+                throw failure;
+            }
+        });
+        RecordingConverter fallback = new RecordingConverter(block, new TestPart());
+        MultiPartRegistry.registerConverter(fallback);
+        assertSame(
+                failure,
+                assertThrows(IllegalStateException.class, () -> MultiPartRegistry.convertBlock(null, pos, block)));
+        assertEquals(0, fallback.calls);
+    }
+
     private static final class RecordingConverter implements IPartConverter {
 
         private final List<Block> blocks = new ArrayList<>();
