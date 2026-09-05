@@ -17,6 +17,42 @@ import scala.collection.Seq;
 class TileMultipartEqualityRegressionTest {
 
     @Test
+    void localChangeUsesCapturedOrderSkipsDetachedPartsAndPropagatesCallbackFailures() {
+        List<String> events = new ArrayList<>();
+        TileMultipart tile = new TileMultipart();
+        EqualPart detached = new EqualPart("detached", "detached", events);
+        EqualPart rebound = new EqualPart("rebound", "rebound", events);
+        EqualPart added = new EqualPart("added", "added", events);
+        EqualPart first = new EqualPart("first", "first", events) {
+
+            @Override
+            public void onPartChanged(TMultiPart part) {
+                super.onPartChanged(part);
+                detached.bind(null);
+                rebound.bind(new TileMultipart());
+                tile.setPartList(Arrays.asList(added));
+            }
+        };
+        RuntimeException failure = new IllegalStateException("local change failure");
+        EqualPart failing = new EqualPart("failing", "failing", events) {
+
+            @Override
+            public void onPartChanged(TMultiPart part) {
+                super.onPartChanged(part);
+                throw failure;
+            }
+        };
+        EqualPart later = new EqualPart("later", "later", events);
+        add(tile, first, detached, rebound, failing, later);
+        added.bind(tile);
+
+        assertSame(failure, assertThrows(RuntimeException.class, () -> tile.internalPartChange(null)));
+        assertEquals(Arrays.asList("first.changed:null", "rebound.changed:null", "failing.changed:null"), events);
+        assertEquals(Arrays.asList(added), tile.jPartList());
+        assertNull(tile.getWorldObj(), "Local notification requires no world and performs no world notification");
+    }
+
+    @Test
     void internalPartChangeExcludesDistinctEqualPartsAndStillBroadcastsNull() {
         List<String> events = new ArrayList<>();
         TileMultipart tile = new TileMultipart();

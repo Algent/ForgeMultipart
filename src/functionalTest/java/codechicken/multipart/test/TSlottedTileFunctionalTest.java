@@ -21,6 +21,33 @@ import scala.collection.immutable.Nil$;
 class TSlottedTileFunctionalTest {
 
     @Test
+    void cacheBindingDoesNotPlaceOrRebindThePartAndLeavesOldSlotsUntilExplicitlyCleared() throws Exception {
+        TileMultipart tile = newSlottedTile();
+        TileMultipart owner = new TileMultipart();
+        SlotPart part = new SlotPart(1 << 1);
+        part.bind(owner);
+        tile.bindPart(part);
+        assertTrue(tile.jPartList().isEmpty());
+        assertSame(owner, part.tile());
+        assertSame(part, tile.partMap(1));
+
+        part.slotMask = 1 << 5;
+        tile.bindPart(part);
+        assertSame(part, tile.partMap(1), "bindPart adds current slots; it does not remove the old mask");
+        assertSame(part, tile.partMap(5));
+
+        TMultiPart[] slots = partMap(tile);
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i] == part) slots[i] = null;
+        }
+        tile.bindPart(part);
+        assertNull(tile.partMap(1));
+        assertSame(part, tile.partMap(5));
+        assertSame(owner, part.tile());
+        assertTrue(tile.jPartList().isEmpty());
+    }
+
+    @Test
     void copyFromSharesACompatibleSlotArrayAndKeepsItForAPlainSource() throws Exception {
         TileMultipart source = newSlottedTile();
         TileMultipart target = newSlottedTile();
@@ -140,7 +167,7 @@ class TSlottedTileFunctionalTest {
 
     private static final class SlotPart extends PlainPart implements TSlottedPart {
 
-        private final int slotMask;
+        private int slotMask;
 
         private SlotPart(int slotMask) {
             this.slotMask = slotMask;
