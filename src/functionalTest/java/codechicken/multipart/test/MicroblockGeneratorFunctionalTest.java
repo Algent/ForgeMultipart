@@ -17,19 +17,58 @@ import net.minecraft.nbt.NBTTagCompound;
 
 import org.junit.jupiter.api.Test;
 
+import codechicken.microblock.CornerMicroClass$;
+import codechicken.microblock.EdgeMicroClass$;
 import codechicken.microblock.FaceMicroClass$;
 import codechicken.microblock.FaceMicroblock;
+import codechicken.microblock.HollowMicroClass$;
 import codechicken.microblock.MicroMaterialRegistry;
 import codechicken.microblock.MicroMaterialRegistry.IMicroMaterial;
 import codechicken.microblock.Microblock;
 import codechicken.microblock.MicroblockClass;
 import codechicken.microblock.MicroblockGenerator;
 import codechicken.microblock.MicroblockGenerator$;
+import codechicken.microblock.PostMicroClass$;
 import codechicken.multipart.TileMultipart;
 import codechicken.multipart.examples.MicroblockCreationExample;
 import scala.Tuple2;
 
 class MicroblockGeneratorFunctionalTest {
+
+    @Test
+    void externalMaterialTraitComposesWithEveryBuiltInShapeAndReusesClasses() throws Exception {
+        Tuple2<String, IMicroMaterial>[] materials = MicroMaterialRegistry.getIdMap();
+        Tuple2<String, IMicroMaterial> original = materials[0];
+        IMicroMaterial material = (IMicroMaterial) Proxy.newProxyInstance(
+                getClass().getClassLoader(),
+                new Class<?>[] { IMicroMaterial.class, MicroblockGenerator.IGeneratedMaterial.class },
+                (proxy, method, args) -> {
+                    if ("addTraits".equals(method.getName())) {
+                        ((BitSet) args[0]).set(ForgeMultipartFunctionalTestMod.externalScalaMicroblockTraitId);
+                    }
+                    return defaultValue(method.getReturnType());
+                });
+        materials[0] = new Tuple2<>(original._1(), material);
+        try {
+            Class<?> trait = Class.forName("codechicken.multipart.test.ExternalScalaMicroblockFixture");
+            for (MicroblockClass factory : new MicroblockClass[] { FaceMicroClass$.MODULE$, HollowMicroClass$.MODULE$,
+                    CornerMicroClass$.MODULE$, EdgeMicroClass$.MODULE$, PostMicroClass$.MODULE$ }) {
+                Microblock first = MicroblockGenerator.create(factory, 0, false);
+                Microblock second = MicroblockGenerator.create(factory, 0, false);
+                assertSame(factory, first.microClass());
+                assertSame(first.getClass(), second.getClass());
+                assertNotSame(first, second);
+                assertTrue(trait.isInstance(first));
+                assertTrue(first.shouldRenderDynamic());
+                assertEquals(41, first.getLightValue());
+                assertEquals(0, first.material());
+                assertNull(first.tile());
+            }
+        } finally {
+            materials[0] = original;
+            MicroblockGenerator.freshBitSet();
+        }
+    }
 
     @Test
     void javaExampleCapturesSourceShapeBeforeMaterialCallbacksRun() {
