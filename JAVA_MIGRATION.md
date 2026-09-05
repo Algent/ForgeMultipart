@@ -55,6 +55,31 @@ Focused traversal/redstone allocation improvements are recorded in [the profile]
 GTNHLib/UniMixins remain conditional on concrete need. Removing Scala from FMP remains the final target, gated by
 released consumer migrations and retirement of FMP's own Scala-dependent implementation.
 
+## Remaining work overall
+
+Current checkpoint: the core runtime implementation is Java; all ten Phase 9.1 API-table entries and Phase 9.2's
+internal-boundary documentation are complete. Nine Scala files / 747 nonblank lines remain, plus Scala-dependent
+storage and compatibility references in Java. A source-file count is not a measure of the remaining migration effort.
+The phase checklists include recurring verification rules, historical work and conditional ideas; this is the active queue.
+
+| Workstream | Remaining deliverables | Gate |
+| --- | --- | --- |
+| Complete the supported Java surface | ProjectRed-style illuminated microblock extension example with generated/side coverage; converter and extension/lifecycle guidance; safe Java compilation guidance for transformed traits; supported orientation customization for Et Futurum and saw-strength customization for Iguana; finish the audited reflection/legacy-use map | Next FMP milestone; direct typed calls and documented override behavior, without requiring consumer reflection |
+| Migrate consumers and adopt releases | Patch GuideNH/Schematica to their documented APIs; migrate ProjectRed's external trait and other Scala/helper users, including OpenComputers, ProjectBlue and ForgeRelocationFMP; direct Galacticraft integration; Et Futurum/Iguana migrations; UtilitiesInExcess enumeration and `mat`/`material` fix; complete the full adoption ledger beyond these hotspots | Source patches, released versions and actual target-pack jars must all be recorded; reference checkouts are not migrated |
+| Measure and improve performance | Fresh realistic profiles, ranked candidates, bounded improvements and repeated paired measurements; distinguish FMP implementation gains from migrated-consumer gains and report variability/regressions | Phase 4b starts when API/extension workloads are stable; it can overlap consumer adoption |
+| Validate releases | Complete client rendering/particles/lighting/interaction and integration checklist; old-world, multiplayer, movement and preview checks; packaged/obfuscated artifacts on supported runtimes; optional-mod absent/present loading; actual patched-world MCPC hook where supported | Automated Forge tests do not replace physical-client/full-pack evidence; repeat affected checks after consumer migration and Scala removal |
+| Prepare the repository for merge | Move Java sources where joint compilation permits; reassess forced Scala compilation/version freshness; refresh README; organize durable migration docs; expand modern Java syntax only across verified compilation boundaries | Preserve packaged Java 8 compatibility and document any deferred source/toolchain constraints |
+| Remove FMP's Scala requirement | Replace remaining trait/model shells, Scala storage and internal users; retire eligible legacy bridges/signature decoding; remove Scala compiler/runtime dependencies; scan shipped/generated classes and validate migrated consumers | Last milestone: consumer releases/adoption and removal policy first, then internal cleanup and final release validation |
+
+Extra Utilities remains an **active supported consumer**. UtilitiesInExcess is the intended replacement, but changing
+the support target awaits approval and actual pack adoption. Keep Extra Utilities compatibility until then; also
+verify that the replacement has migrated the relevant FMP contracts before removing them.
+
+GTNHLib/fastutil, UniMixins, a new generator design and further mechanical Scala-shell extraction are conditional
+work, not mandatory tasks to add without a concrete need. The existing generator is retained. See the detailed
+phases below, [consumer adoption ledger](JAVA_MIGRATION_CONSUMER_AUDIT.md#java-api-adoption-ledger),
+[manual checklist](JAVA_MIGRATION_MANUAL_CHECKS.md) and [performance protocol](JAVA_MIGRATION_PROFILE.md#broader-performance-pass-protocol-planned).
+
 ## Scope and compatibility target
 
 “Behave the same” means preserving the following unless a change is explicitly entered in a divergence log:
@@ -489,11 +514,11 @@ cache remain reference-identical; pass-through-interface coverage remains green.
 
 ### Phase 6 — Convert multipart core and microblocks
 
-Status: core code, factories, ordinary helpers and common/face/corner/edge/post microblock trait behavior are Java.
-Two files still contain generated trait implementations. Extract their behavior while retaining Scala declarations where
-multiple-trait inheritance still needs signature metadata; abstract Java mixins and side filtering alone do not
-replace that metadata. The following gates continue to apply to those remaining units; completed per-type evidence
-is in the history.
+Status: runtime behavior for core code, factories, ordinary helpers and common/face/corner/edge/post/hollow/occlusion
+microblock traits is Java. The remaining Scala trait declarations retain inheritance, state/accessor and super-call
+contracts. Their final replacement belongs behind the consumer-adoption gate; abstract Java mixins and side filtering
+alone do not replace multiple-trait inheritance metadata. The checklist below records per-conversion obligations,
+not an instruction to repeat completed ports; completed per-type evidence is in the history.
 
 - [ ] Add characterization coverage for each subsystem immediately before its conversion.
 - [ ] Convert the central tile, part, registry, placement, rendering, networking, scheduler, and microblock code in dependency order.
@@ -561,7 +586,8 @@ pass against that artifact. Any unfinished gate keeps the corresponding compatib
 
 ### Phase 9 — Deprecate the Scala-shaped API and mark the internal boundary
 
-Status: **planned.** This phase does not redesign the API. A surface audit against all 28 consumer checkouts found the
+Status: **in progress: all ten Phase 9.1 table entries and Phase 9.2 are complete; broader extension/API guidance remains.**
+This phase does not redesign the API. A surface audit against all 28 consumer checkouts found the
 published API is already largely Java-shaped: `TMultiPart` is an ordinary abstract Java class with conventional
 lifecycle, render, NBT, and packet methods, and `IPartFactory2`, `IPartConverter`, `IMicroMaterial`, `PartMap`,
 `RedstoneInteractions`, and the occlusion interfaces need no replacement. The remaining problems are a short list of
@@ -632,7 +658,7 @@ hooks as though they were API, and a consumer author cannot distinguish `addPart
 practical API defect than the Scala types above, and the fix is javadoc only: no rename, no descriptor change, no
 deprecation, and no new dependency for a marker annotation.
 
-Completed with a fresh 2026-09-05 search across 28 source checkouts plus the Extra Utilities decompiled reference:
+Completed with a fresh 2026-09-05 consumer audit covering 28 source checkouts and active Extra Utilities compatibility:
 **no external calls to these FMP members were found**. The installed `+719` binary scan retains the same baseline.
 Javadocs on the declarations below and the five matching material-registry companion bridges mark them internal;
 see the [API boundary guide](docs/API.md#supported-api-and-internal-hooks).
@@ -677,10 +703,11 @@ Java replacements exist. They need not wait for all internal source conversion; 
 block removal of the corresponding legacy surface in Phase 8.
 
 Several consumers reach FMP through private fields, Scala-mangled names, name-only reflection, or third-party Scala
-traits. Today each one forces FMP to preserve an internal shape it would otherwise be free to change. Because all 27
-consumers are GTNewHorizons forks, every one of these is patchable upstream. Extra Utilities is the only exception; it
-is decompiled-only and is being replaced by UtilitiesInExcess, so it constrains FMP until it is retired from the pack
-rather than being fixed.
+traits. Each dependency requires FMP to preserve the corresponding compatibility contract during migration.
+Editable GTNH consumer projects can adopt the supported Java API upstream. Extra Utilities remains an active,
+supported consumer; an upstream rewrite is not part of this work. UtilitiesInExcess is the intended replacement,
+but switching the support target still needs approval and actual pack adoption. Until then, preserve Extra Utilities
+compatibility. Approval alone does not authorize dropping contracts still used by the supported pack's jars.
 
 Apply the following sequence per capability:
 
@@ -747,7 +774,7 @@ UtilitiesInExcess's `extrautils:*` aliases; there is no legacy-conversion risk i
 - [x] Land the two Phase 7 Java-mixin prerequisites with generated Java-trait fixtures.
 - [ ] Land the ProjectRed `LightMicroblock` Java rewrite with a fixture proving equivalent generated microblocks on
   both sides.
-- [ ] Land the Galacticraft reflection signature check.
+- [ ] Migrate Galacticraft to direct registration in gated compatibility code; exact-signature reflection is an interim option.
 - [ ] Fix the UtilitiesInExcess `mat`/`material` key mismatch and its `getIdMap()` use before it enters the pack.
 - [ ] Add the supported public equivalents needed by Schematica, GuideNH, Et Futurum, and Iguana as additive API.
 - [x] Provide Schematica's registered-factory lookup without exposing the mutable map: `getPartFactory(String)`,
@@ -759,7 +786,8 @@ UtilitiesInExcess's `extrautils:*` aliases; there is no legacy-conversion risk i
 - [x] Document and validate the existing Java microblock creation entry for GuideNH, including exact companion/static
   reflection, material trait callbacks, fresh-part/shape ownership and a compiling example. Keep physical-client
   validation and public-setter versus private-field override behavior explicit; [guide](docs/api/MICROBLOCK_CREATION.md).
-  GuideNH's private material access and the representative external Java extension remain separate work.
+- [x] Document and validate GuideNH's direct typed material query through existing `block()` / `meta()` accessors;
+  [guide](docs/api/MATERIAL_ACCESS.md). Consumer adoption and the representative external Java extension remain open.
 - [ ] Patch those four consumers and record the released versions that no longer need the private shapes.
 - [ ] Track all legacy FMP dependencies in the adoption ledger, including trait helper/companion calls and reflection
   outside the cleanup table; verify the released jars actually selected for the target pack.

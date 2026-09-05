@@ -43,21 +43,21 @@ The supplied instance was rescanned with `tools/AbiScan.java` before reading sou
 - 20 class-name/reflection strings.
 
 Those structural totals are unchanged from the frozen `+678` inventory. The consumer versions changed, but no new
-binary API family appeared. The source audit then searched every clone and the Extra Utilities jar for direct
-imports, fully qualified names, reflection strings, factories, converters, part subclasses, tile access, registry
-access, NBT, packet, rendering, occlusion, redstone, and movement paths. Important call sites were traced through the
-owning code instead of counting imports.
+binary API family appeared. The compatibility audit covers active consumer binaries, including Extra Utilities,
+and the supplied source checkouts. It records required types/members, reflection contracts, factories, converters,
+part subclasses, tile access, registry access, NBT, packets, rendering, occlusion, redstone and movement behavior.
+Where source checkouts are available, important call sites were traced through the owning code instead of counting imports.
 
 This gives full coverage of the current pack's known source and binary consumers. It does not claim that an arbitrary
 future mod, a runtime-generated script, or an unpublished patched JAR cannot contain another reflective use. The ABI
 scanner should remain a release gate for exactly that reason.
 
-### Source provenance
+### Consumer references
 
-| Installed consumer | Source used | Match to installed code                                   |
+| Installed consumer | Reference used | Match to installed code                                   |
 | --- | --- |-----------------------------------------------------------|
 | ProjRed `4.12.43-GTNH` | `ProjectRed` at `4.12.43-GTNH` (`e173952e96a4`) | Exact                                                     |
-| Extra Utilities `1.2.12` | `extrautilities-1.2.12` | Exacted JAR; not original source                          |
+| Extra Utilities `1.2.12` | Active supported consumer | Compatibility required for the installed release |
 | OpenComputers `1.12.56-GTNH` | `OpenComputers`; installed tag plus HEAD `1.12.57-GTNH` | FMP files unchanged after installed tag                   |
 | ProjectBlue `1.2.10-GTNH` | `ProjectBlue` at `1.2.10-GTNH` (`c01a5e769643`) | Exact                                                     |
 | AE2 `rv3-beta-1041-GTNH` | `Applied-Energistics-2-Unofficial`; installed tag plus HEAD `1042` | FMP files unchanged after installed tag                   |
@@ -142,9 +142,13 @@ trait linearization, tile and microblock code generation, redstone tile traits, 
 and the micro-material system. A launch-only smoke test is inadequate; illuminated microblocks, gates, face/framed
 wires, and routed pipes need functional fixtures.
 
-### Extra Utilities 1.2.12 — broad Java consumer with Scala-shaped registry access
+### Extra Utilities 1.2.12 — active supported consumer
 
-The code shows several separate FMP subsystems, not one compatibility class:
+Extra Utilities remains in the supported compatibility target. UtilitiesInExcess is its intended replacement;
+approval to switch that target and adoption of the replacement in the pack are still pending. Preserve the current
+consumer's required APIs, saved-data behavior and integration coverage until both gates pass.
+
+Required compatibility spans several FMP subsystems:
 
 - It registers generated-tile pass-through interfaces for `IAntiMobTorch`, pipe/cosmetic/filter pipe interfaces,
   node, inventory, liquid, and energy node interfaces, plus CoFH `IEnergyHandler`. Composite tiles must expose these
@@ -511,7 +515,7 @@ tied to a released minimum dependency version. Unlisted contracts remain governe
 | `MultiPartRegistry$.registerParts(IPartFactory2, Seq)` and existing array calls | ProjectRed `e173952e96a4`: transmission, expansion and fabrication proxies | `MultiPartRegistry.registerPartFactory` with existing `IPartFactory2` methods and unchanged IDs | Source patch and release pending; Boolean-factory proxies separately need the two-method adapter described in the guide | No migrated pack version verified; retain all registration bridges and external trait support |
 | `MultiPartRegistry$.registerParts(Function2, Seq)` | ForgeRelocationFMP `49a810b8c63b`: proxy init registering `rfmp_frame` | `IPartFactory2` creating a fresh `FramePart` on both paths, registered through `registerPartFactory` | Source patch and release pending; preserve `rfmp_frame` and keep converter/pass-through registration | No migrated pack version verified; retain the function companion descriptor |
 | `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | UtilitiesInExcess `3e107a1fe9bc15fcb6a808242ffda1354dac7c3a`: `FMPRecipeLoader.run`, `UEMultipartItem.getSubItems` | `materialCount()` with `materialName(int)` and, when needed, `getMaterial(int)` | Source patch and first released version pending; checkout used as reference only | No migrated pack version verified; retain the bridge |
-| `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | Extra Utilities 1.2.12 decompiled reference: both NEI microblock handlers and `multipart.microblock.ItemMicroBlock` | Same ID-based Java enumeration | No editable upstream consumer in scope; retirement/replacement remains pending | Verify Extra Utilities is absent and its replacement uses the new API before retiring this dependency |
+| `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | Extra Utilities 1.2.12, active supported consumer: NEI and microblock material enumeration | Same ID-based Java enumeration | Keep current compatibility; switching support to UtilitiesInExcess awaits approval and pack adoption | Verify Extra Utilities is absent and its replacement uses the new API before retiring this dependency |
 | `TileMultipart.partList(): scala.collection.Seq` | ProjectRed `e173952e96a4`: illumination aggregation, packet indices and rendered-part lookup | `jPartList()` with unchanged indices, filters and aggregation | Source patch and release pending; Scala consumer code may remain Scala | No migrated pack version verified; retain the getter and external trait support |
 | `TileMultipart.partList(): scala.collection.Seq` | OpenComputers `2c00f79be24b`: cable/print/network searches and aggregation | `jPartList()` with the same search/aggregation semantics | Source patch and release pending | No migrated pack version verified; retain the getter |
 | `TileMultipart.partList(): scala.collection.Seq` | AE2 `87f2b3817c2a`: `FMPPlacementHelper.getPart` and `removePart` | Iterate `jPartList()`; retain last-match lookup and removal/break behavior | Source patch and release pending | No migrated pack version verified; retain the getter |
@@ -660,7 +664,7 @@ Evidence: `run/migration-material-access-reference/`; archived validation retain
 
 ## API boundary audit
 
-Rechecked 2026-09-05 against 28 source checkouts and the Extra Utilities decompiled reference. Searches cover method
+Rechecked 2026-09-05 across 28 source checkouts and active Extra Utilities compatibility. Searches cover method
 names, FMP-importing Java/Scala source, reflective names and the installed `+719` constant-pool inventory. No external
 calls were found to the 15 tile/material-registry hooks listed in [Phase 9.2](JAVA_MIGRATION.md#92--mark-the-internal-boundary).
 The registry's five companion forwarders carry matching Javadocs. Common-name matches included GuideNH comments

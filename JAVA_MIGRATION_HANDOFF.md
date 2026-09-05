@@ -32,8 +32,8 @@ use, but no override triggering these three regressions was found. All 443 class
 payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
 followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
-Latest API work completes the bounded Phase 9.2 internal-boundary documentation. A fresh search of 28 source
-checkouts plus the Extra Utilities decompiled reference confirms no external calls to the 15 listed hooks; the five
+Latest API work completes the bounded Phase 9.2 internal-boundary documentation. A fresh audit of 28 source
+checkouts and active Extra Utilities compatibility found no external calls to the 15 listed hooks; the five
 material-registry companion bridges carry the same internal marker. `bindPart` and `internalPartChange` remain
 supported for OpenComputers/ProjectRed. The material `IMicroMaterial.loadIcons` callback and existing legacy override
 contracts remain supported. One JVM and one Forge baseline were committed first as `8b12dfe`, pinning local callback
@@ -76,6 +76,10 @@ registry lookup, staged Java tile generation, microblock-creation guidance and t
 Remaining work includes converter/extension guidance and other audited reflection use cases. Then consumer patches,
 releases and pack adoption must precede final Scala removal and client/pack release validation; it is not a percentage
 of the whole migration.
+
+Extra Utilities remains an active supported consumer. UtilitiesInExcess is the intended replacement, but the support
+switch awaits approval and actual target-pack adoption. Retain existing contracts until those gates pass. The
+[overall remaining-work summary](JAVA_MIGRATION.md#remaining-work-overall) separates FMP work from downstream gates.
 
 A separate [Phase 4b performance pass](JAVA_MIGRATION.md#phase-4b--measured-performance-pass) is planned once the API
 and representative extension workloads are stable, alongside consumer migration. Use fresh realistic profiles and

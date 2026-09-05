@@ -345,8 +345,8 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   `Microblock` is abstract, and `@SideOnly` stripping exists only on the Scala signature path while
   `LightMicroblock.renderDynamic` is client-only and applied on both sides. Both gaps are recorded as Phase 7
   prerequisites.
-- Added Phase 10 for upstream consumer cleanup. All 27 consumers are GTNewHorizons forks and therefore patchable;
-  Extra Utilities is the sole exception and is constrained rather than fixed. The pattern is a three-step ratchet:
+- Added Phase 10 for upstream consumer cleanup. Editable consumer projects can migrate upstream; Extra Utilities
+  remains an active supported consumer whose compatibility must be retained. The pattern is a three-step ratchet:
   FMP adds a supported equivalent (additive, safe now), the consumer is patched and released, then FMP drops the
   private shape in a release allowed to break that ABI.
 
@@ -2003,7 +2003,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 
 ### 2026-09-05 — Document the internal API boundary
 
-- Rechecked Phase 9.2 against 28 source checkouts plus decompiled Extra Utilities. Found no external calls to the
+- Rechecked Phase 9.2 across 28 source checkouts and active Extra Utilities compatibility. Found no external calls to the
   15 listed implementation hooks. Reviewed name collisions: WR-CBE calls its own renderer's `loadIcons`; GuideNH
   explicitly avoids `from` / `copyFrom` in comments. OpenComputers still calls `bindPart` at `PrintPart.scala:171`,
   and ProjectRed calls `internalPartChange` at `gatepartrs.scala:74`. Recorded source revisions and searches locally.
@@ -2028,3 +2028,15 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Next: a compiling representative Java microblock extension based on ProjectRed's illuminated material/trait,
   with generated Forge coverage. Reference consumers remain unmodified; consumer releases/adoption, physical-client
   rendering and the focused measured performance pass remain separate gates.
+
+### 2026-09-05 — Clarify remaining work and active consumer support
+
+- Standardized Extra Utilities references as an active supported consumer. UtilitiesInExcess remains the intended
+  replacement; switching the compatibility target awaits approval and pack adoption, with the replacement's FMP
+  contracts verified before removal of retained support. No compatibility gate or consumer adoption was changed.
+- Added an overall remaining-work summary separating API/extension completion, downstream migration/adoption,
+  measured performance work, release validation, pre-merge cleanup and final Scala removal. Corrected stale Phase 6,
+  Phase 9 and GuideNH status text and aligned Galacticraft's checklist with the direct-call policy.
+- Documentation-only change: checked wording, local links and diff whitespace. No production sources or fixtures
+  changed; the existing 571 JVM / 273 Forge checkpoint remains the runtime evidence. The post-commit build verifies
+  clean artifact versions under the existing workflow.
