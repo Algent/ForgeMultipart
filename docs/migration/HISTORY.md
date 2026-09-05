@@ -1825,3 +1825,25 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   ForgeRelocationFMP's combined geometry check. The installed `+719` rescan retains all 386 ABI/reflection rows across
   27 consumers. Reference checkouts are unchanged; consumer release/adoption and manual client/pack checks remain
   pending. Next: multipart factory registration. Evidence: `run/migration-box-occlusion-reference/`.
+
+### 2026-09-05 — Java part factory registration
+
+- Committed four Forge baseline cases as `e4deac8`. Real mod initialization exercises all eight old registration
+  descriptors. Tests pin lazy construction, owner/array identity, partial duplicate failures, closed-state ordering,
+  Boolean side adapters and the NBT/packet factory handoff. Saved the pre-API jar, registry sources, 563 JVM fixtures,
+  the compiled Forge test mod, reports and 116 generated dumps before implementation.
+- Added `registerPartFactory(IPartFactory2, String...)` as one forwarder over existing Java registration. The old
+  same-name overload family required Scala `Seq`/`Function2` even with Java factory/string arguments. The distinct
+  name and a complete Java factory example compile with Scala excluded. Both `IPartFactory2` sequence entries are
+  now deprecated; older Boolean/function deprecations point to the supported replacement.
+- The new entry runs through the existing registration cases, and an additional Forge example case checks fresh,
+  unbound construction. Normal/clean build/style checks pass: 563 JVM and 248 Forge tests, all with zero failures,
+  errors or skips. All 563 frozen JVM fixtures and the byte-identical archived Forge test mod's 247 tests also pass
+  against the new implementation. The example ID sorts after built-ins so existing exact packet fixtures remain intact.
+- All 443 classes, 17 ScalaSignature payloads, 3,752 existing method bodies and 116 generated dumps remain. Exactly
+  one public method and two deprecations are added; only expected deprecation/build-version metadata differs.
+- Added the factory guide/index entry, documented payload ownership and migration directions for ProjectRed and
+  ForgeRelocationFMP, and retained all eight old registration descriptors. The `+719` scan retains all 386 member/type/
+  reflection rows across 27 consumers. Reference checkouts and adoption status are unchanged. Registry lookup,
+  external trait migration and physical-client/pack checks remain separate. Next API-table entry: render-ID accessors.
+  Evidence: `run/migration-registration-reference/`.

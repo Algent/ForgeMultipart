@@ -522,13 +522,13 @@ changes separate from mechanical compiler extraction, and do not add a deprecati
 
 #### 9.1 — Scala-typed signatures
 
-Each row keeps its existing descriptor for binary compatibility and gains a Java-shaped sibling. The registry
-`registerParts` sibling already exists and still needs the annotation and javadoc.
+Each row keeps its existing descriptor for binary compatibility and gains a Java-shaped sibling. The registry's
+existing Java `registerParts` overload still required Scala during javac resolution; `registerPartFactory` avoids it.
 
 | Deprecate | Java-shaped replacement | Notes |
 | --- | --- | --- |
 | `TileMultipart.partList(): scala.collection.Seq` | `jPartList(): java.util.List` | Getter deprecated; captured-sequence view documented in the [guide and compiling example](docs/api/PART_TRAVERSAL.md) |
-| `MultiPartRegistry.registerParts(IPartFactory2, scala.collection.Seq)` | `registerParts(IPartFactory2, String...)` | Sibling already exists |
+| `MultiPartRegistry.registerParts(IPartFactory2, scala.collection.Seq)` and companion entry | `registerPartFactory(IPartFactory2, String...)` | Implemented over existing Java registration; distinct name compiles without Scala. [Guide and example](docs/api/PART_REGISTRATION.md) also cover the retained Boolean/function adapters and their migration |
 | `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | `materialCount(): int` plus existing `materialName(int)` and `getMaterial(int)` | Implemented with static/companion deprecation; [guide and compiling example](docs/api/MATERIAL_ENUMERATION.md). Consumer release/adoption remains pending |
 | `TileMultipart.operate(scala.Function1<TMultiPart, BoxedUnit>)` | `forEachPart(java.util.function.Consumer<TMultiPart>)` | Implemented through the legacy virtual hook; preserves captured traversal, detached-part filtering and callback failures. Lifecycle still calls `operate` |
 | `TileMultipart.occlusionTest(scala.collection.Seq, TMultiPart)` | `testOcclusion(Collection<? extends TMultiPart>, TMultiPart)` | Implemented with an input snapshot and legacy virtual dispatch, including generated partial occlusion; [guide](docs/api/OCCLUSION.md). Distinct Java name avoids Scala overload resolution |
@@ -554,10 +554,13 @@ same-name overload there invites a silent wrong-overload bind.
   generated partial-occlusion coverage; [guide and compiling example](docs/api/OCCLUSION.md).
 - [x] Add direct `testBoxes(Iterable, Iterable)` with eager input snapshots, ordered intersection callbacks and retained
   static/companion bridges; [migration guide](docs/api/OCCLUSION.md#box-versus-box-queries).
+- [x] Add `registerPartFactory(IPartFactory2, String...)`, deprecate the remaining Scala sequence entries, and document
+  initialization/factory/payload contracts with a compiling example and real Forge initialization coverage.
 - [ ] For remaining siblings, compile external Java examples with Scala excluded from the compile classpath before
   finalizing names. The proposed `loadParts(Collection)` overload required `scala.collection.Iterable` during javac
   overload resolution; the implemented `loadPartList(Collection)` avoids that dependency. Apply this gate to the
-  remaining registration overloads as well as checking the emitted consumer bytecode.
+  remaining APIs as well as checking the emitted consumer bytecode. Registration hit the same constraint with
+  `scala.collection.Seq` and `scala.Function2`; `registerPartFactory` passes this gate.
 - [ ] Mark the remaining legacy entries above `@Deprecated` with javadoc naming a working replacement.
 - [ ] Confirm every original descriptor still exists in the ABI fixture after the change.
 - [ ] Document the supported API with compiling usage examples and an old-to-new migration guide. Validate Java

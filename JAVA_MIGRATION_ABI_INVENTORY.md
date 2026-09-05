@@ -136,6 +136,11 @@ contract. Both old `apply(Traversable, Traversable)` entries remain, with deprec
 The shipping ForgeRelocationFMP/OpenComputers companion calls still require their exact descriptor until adoption;
 see the [migration guide](docs/api/OCCLUSION.md#box-versus-box-queries) and consumer ledger.
 
+`MultiPartRegistry.registerPartFactory(IPartFactory2, String...)` now provides the Java registration entry without
+Scala overload resolution. Both `registerParts(IPartFactory2, Seq)` entries are deprecated; all eight existing
+registration descriptors remain. ProjectRed's sequence and ForgeRelocationFMP's function companion calls still need
+their bridges until release/adoption. See the [registration guide](docs/api/PART_REGISTRATION.md).
+
 `IDWriter`, ported on this branch, has **zero** downstream references. Its four deprecated Scala function accessors
 are not load-bearing and can be dropped.
 

@@ -491,12 +491,14 @@ behavior:
 ## Java API adoption ledger
 
 This ledger tracks migration of a specific legacy contract, not completion of an entire consumer's migration.
-Material enumeration, tile collection/traversal access, tile loading/storage assignment, tile occlusion and box queries are implemented on
+Factory registration, material enumeration, tile collection/traversal access, tile loading/storage assignment, tile occlusion and box queries are implemented on
 `algent/java`. The [API index](docs/API.md) links the guides and compiling Java examples. These additions are not yet
 tied to a released minimum dependency version. Unlisted contracts remain governed by the inventories above.
 
 | Legacy contract | Consumer and inspected source | Supported replacement | Consumer migration/release | Target-pack adoption and removal gate |
 | --- | --- | --- | --- | --- |
+| `MultiPartRegistry$.registerParts(IPartFactory2, Seq)` and existing array calls | ProjectRed `e173952e96a4`: transmission, expansion and fabrication proxies | `MultiPartRegistry.registerPartFactory` with existing `IPartFactory2` methods and unchanged IDs | Source patch and release pending; Boolean-factory proxies separately need the two-method adapter described in the guide | No migrated pack version verified; retain all registration bridges and external trait support |
+| `MultiPartRegistry$.registerParts(Function2, Seq)` | ForgeRelocationFMP `49a810b8c63b`: proxy init registering `rfmp_frame` | `IPartFactory2` creating a fresh `FramePart` on both paths, registered through `registerPartFactory` | Source patch and release pending; preserve `rfmp_frame` and keep converter/pass-through registration | No migrated pack version verified; retain the function companion descriptor |
 | `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | UtilitiesInExcess `3e107a1fe9bc15fcb6a808242ffda1354dac7c3a`: `FMPRecipeLoader.run`, `UEMultipartItem.getSubItems` | `materialCount()` with `materialName(int)` and, when needed, `getMaterial(int)` | Source patch and first released version pending; checkout used as reference only | No migrated pack version verified; retain the bridge |
 | `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | Extra Utilities 1.2.12 decompiled reference: both NEI microblock handlers and `multipart.microblock.ItemMicroBlock` | Same ID-based Java enumeration | No editable upstream consumer in scope; retirement/replacement remains pending | Verify Extra Utilities is absent and its replacement uses the new API before retiring this dependency |
 | `TileMultipart.partList(): scala.collection.Seq` | ProjectRed `e173952e96a4`: illumination aggregation, packet indices and rendered-part lookup | `jPartList()` with unchanged indices, filters and aggregation | Source patch and release pending; Scala consumer code may remain Scala | No migrated pack version verified; retain the getter and external trait support |
@@ -560,6 +562,19 @@ their descriptors or bodies. The Java example compiles with Scala excluded; the 
 its generic input to accept box subclasses. The source check found the three box-list calls listed above and no
 `testBoxes` collision. The installed `+719` rescan retains all 386 member/type/reflection rows from `+678` across 27
 consumers. Evidence: `run/migration-box-occlusion-reference/`; [guide](docs/api/OCCLUSION.md#box-versus-box-queries).
+
+Factory registration is implemented as `registerPartFactory(IPartFactory2, String...)`, with a
+[guide and compiling example](docs/api/PART_REGISTRATION.md). A probe against the old Java overload family required
+Scala `Seq`/`Function2` even for Java arrays and factories; the new name compiles without Scala. All eight legacy
+static/companion entries retain their bodies/descriptors. Both `IPartFactory2` sequence entries are deprecated, and
+the older Boolean/function adapter deprecations now identify the supported replacement.
+
+Four baseline Forge cases register through the legacy APIs during real initialization, then check ownership,
+lazy construction, duplicate-prefix retention, array ownership, failure order and both NBT/packet paths. The new
+entry runs through the same checks plus an example case. All 563 archived JVM tests and the byte-identical archived
+Forge test mod's 247 cases pass against the new implementation. The `+719` rescan retains all 386 ABI/reflection rows
+across 27 consumers. Schematica's private registry-map dependency is separate and remains pending; the supplied
+checkouts remain unchanged. Evidence: `run/migration-registration-reference/`.
 
 ## Practical priority for the current branch
 

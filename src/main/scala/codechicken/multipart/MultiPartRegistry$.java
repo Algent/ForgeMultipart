@@ -30,11 +30,13 @@ public final class MultiPartRegistry$ {
 
     private MultiPartRegistry$() {}
 
+    /** @deprecated Implement {@link IPartFactory2} and use {@link MultiPartRegistry#registerPartFactory}. */
     @Deprecated
     public void registerParts(IPartFactory partFactory, String... types) {
         MultiPartRegistry.registerParts(partFactory, types);
     }
 
+    /** @deprecated Implement {@link IPartFactory2} and use {@link MultiPartRegistry#registerPartFactory}. */
     @Deprecated
     public void registerParts(scala.Function2<String, Object, TMultiPart> partFactory,
             scala.collection.Seq<String> types) {
@@ -45,6 +47,11 @@ public final class MultiPartRegistry$ {
         MultiPartRegistry.registerParts(partFactory, types);
     }
 
+    /**
+     * @deprecated Use {@link MultiPartRegistry#registerPartFactory(IPartFactory2, String...)}. Retained with its exact
+     *             descriptor for compiled Scala consumers.
+     */
+    @Deprecated
     public void registerParts(IPartFactory2 partFactory, scala.collection.Seq<String> types) {
         MultiPartRegistry.registerParts(partFactory, types);
     }

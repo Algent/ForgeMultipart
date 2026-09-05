@@ -12,6 +12,7 @@ without converting the rest of its code to Java.
 
 | Task | API and guide |
 | --- | --- |
+| Register part factories during mod initialization | `registerPartFactory(IPartFactory2, String...)` — [factory timing, payload ownership and migration](api/PART_REGISTRATION.md) |
 | Enumerate microblock materials by numeric ID | `materialCount()`, `materialName(int)`, `getMaterial(int)` — [material enumeration](api/MATERIAL_ENUMERATION.md) |
 | Read/index/search a tile's parts | `jPartList()` — [part collection ownership and order](api/PART_TRAVERSAL.md#collection-ownership-and-ordering) |
 | Run callbacks while skipping detached parts | `forEachPart(Consumer)` — [callback and override behavior](api/PART_TRAVERSAL.md#callback-behavior) |
@@ -33,7 +34,7 @@ compile classpath for overload resolution, as the [loading guide](api/PART_LOADI
 | Area | Starting points |
 | --- | --- |
 | Define a custom part | Extend [TMultiPart](../src/main/scala/codechicken/multipart/TMultiPart.java); implement the required capability interfaces. The [built-in parts](../src/main/scala/codechicken/multipart/minecraft) show Java implementations |
-| Register part factories and block converters | [MultiPartRegistry](../src/main/scala/codechicken/multipart/MultiPartRegistry.java): `registerParts(IPartFactory, String...)`, `registerParts(IPartFactory2, String...)`, `registerConverter(IPartConverter)` |
+| Register block converters | [MultiPartRegistry](../src/main/scala/codechicken/multipart/MultiPartRegistry.java): `registerConverter(IPartConverter)`; part factories have a [separate Java guide](api/PART_REGISTRATION.md) |
 | Find, place and remove parts | [TileMultipart](../src/main/scala/codechicken/multipart/TileMultipart.java): `getTile`, `canPlacePart`, `addPart`, `remPart`. Retain the tile returned by changes because generated capabilities can replace the instance |
 | Construct a server composite tile from parts, or restore saved multipart NBT | [MultipartHelper](../src/main/scala/codechicken/multipart/MultipartHelper.java): `createTileFromParts(Iterable)`, `createTileFromNBT(World, NBTTagCompound)` |
 | Register microblock materials | [MicroMaterialRegistry](../src/main/scala/codechicken/microblock/MicroMaterialRegistry.java) and [BlockMicroMaterial](../src/main/scala/codechicken/microblock/BlockMicroMaterial.java) |
@@ -48,7 +49,7 @@ Deprecated Scala-facing entry points remain callable, with their descriptors and
 Follow the method-specific guide: a Java sibling is not automatically a replacement override hook, and reflection
 must select the intended parameter types when a method is overloaded.
 
-Remaining registry bridges/documentation, generator/reflection replacements
+Registry lookup/converter documentation, generator/reflection replacements
 and complete external microblock extension guidance are still pending. In particular, ProjectRed's Scala microblock traits
 remain a supported dependency; registration signatures alone do not prove a complete Java replacement.
 

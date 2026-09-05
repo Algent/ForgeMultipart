@@ -24,6 +24,7 @@ import codechicken.multipart.MultiPartRegistry$;
 import codechicken.multipart.MultiPartRegistry.IPartFactory;
 import codechicken.multipart.MultiPartRegistry.IPartFactory2;
 import codechicken.multipart.TMultiPart;
+import codechicken.multipart.examples.PartRegistrationExample;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.ModContainer;
 import scala.collection.JavaConversions;
@@ -36,7 +37,8 @@ class PartRegistrationFunctionalTest {
             (factory, types) -> MultiPartRegistry.registerParts(factory, types),
             (factory, types) -> MultiPartRegistry$.MODULE$.registerParts(factory, types),
             (factory, types) -> MultiPartRegistry.registerParts(factory, seq(types)),
-            (factory, types) -> MultiPartRegistry$.MODULE$.registerParts(factory, seq(types)));
+            (factory, types) -> MultiPartRegistry$.MODULE$.registerParts(factory, seq(types)),
+            MultiPartRegistry::registerPartFactory);
     private static final IPartFactory2 FACTORY = new IPartFactory2() {
 
         @Override
@@ -88,6 +90,23 @@ class PartRegistrationFunctionalTest {
                 NullPointerException.class,
                 () -> MultiPartRegistry.registerParts(FACTORY, (String[]) null));
         callsAfterRegistration = factoryCalls;
+        PartRegistrationExample.register();
+    }
+
+    @Test
+    void javaExampleRegistersDuringInitAndCreatesFreshUnboundPartsOnBothPaths() {
+        TMultiPart server = MultiPartRegistry.loadPart(PartRegistrationExample.PART_TYPE, new NBTTagCompound());
+        TMultiPart another = MultiPartRegistry.loadPart(PartRegistrationExample.PART_TYPE, new NBTTagCompound());
+        PacketCustom packet = packet(server);
+        TMultiPart client = MultiPartRegistry.readPart(packet);
+        assertEquals(PartRegistrationExample.PART_TYPE, server.getType());
+        assertEquals(server.getType(), client.getType());
+        assertNotSame(server, another);
+        assertNotSame(server, client);
+        assertNull(server.tile());
+        assertNull(client.tile());
+        assertSame(owner, MultiPartRegistry.getModContainer(server.getType()));
+        assertEquals(17, packet.readUByte(), "This example has no constructor discriminator");
     }
 
     @Test

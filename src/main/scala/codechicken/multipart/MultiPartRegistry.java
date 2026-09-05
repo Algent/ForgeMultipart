@@ -30,7 +30,8 @@ public final class MultiPartRegistry {
      * Interface to be registered for constructing parts. Every instance of every multipart is constructed from an
      * implementor of this.
      *
-     * @deprecated Use IPartFactory2
+     * @deprecated Implement {@link IPartFactory2} and use
+     *             {@link MultiPartRegistry#registerPartFactory(IPartFactory2, String...)}.
      */
     @Deprecated
     public interface IPartFactory {
@@ -43,22 +44,29 @@ public final class MultiPartRegistry {
         TMultiPart createPart(String name, boolean client);
     }
 
-    /** Will replace IPartFactory in 1.8. */
+    /**
+     * Factory with separate server/NBT and client/packet construction paths. Register during mod initialization with
+     * {@link MultiPartRegistry#registerPartFactory(IPartFactory2, String...)}. Registration does not call the factory.
+     * Return a fresh, unbound part with a stable registered {@link TMultiPart#getType()} for each supported name.
+     */
     public interface IPartFactory2 {
 
         /**
          * Create a new server instance of the part with the specified type name identifier.
          *
-         * @param nbt The tag compound that will be passed to part.load, can be used to change the class of part
-         *            returned
+         * @param nbt The same tag compound the reconstruction caller subsequently passes to part.load; may be inspected
+         *            to select the part class. The registry does not call load. Legacy createPart(name, false) passes
+         *            null, so factories used through that deprecated path must handle it.
          */
         TMultiPart createPart(String name, NBTTagCompound nbt);
 
         /**
          * Create a new client instance of the part with the specified type name identifier.
          *
-         * @param packet The packet that will be passed to part.readDesc, can be used to change the class of part
-         *               returned
+         * @param packet The same input the reconstruction caller subsequently passes to part.readDesc, positioned after
+         *               the registry ID. A factory may consume a constructor discriminator; readDesc continues at the
+         *               resulting cursor without a rewind. The registry does not call readDesc. Legacy createPart(name,
+         *               true) passes null.
          */
         TMultiPart createPart(String name, MCDataInput packet);
     }
@@ -94,7 +102,7 @@ public final class MultiPartRegistry {
     /**
      * Register a part factory with an array of types it is capable of instantiating. Must be called before postInit.
      *
-     * @deprecated Use IPartFactory2
+     * @deprecated Implement {@link IPartFactory2} and use {@link #registerPartFactory(IPartFactory2, String...)}.
      */
     @Deprecated
     public static void registerParts(IPartFactory partFactory, String... types) {
@@ -115,7 +123,7 @@ public final class MultiPartRegistry {
     /**
      * Scala function version of registerParts.
      *
-     * @deprecated Use IPartFactory2
+     * @deprecated Implement {@link IPartFactory2} and use {@link #registerPartFactory(IPartFactory2, String...)}.
      */
     @Deprecated
     public static void registerParts(scala.Function2<String, Object, TMultiPart> partFactory,
@@ -134,13 +142,21 @@ public final class MultiPartRegistry {
         }, types);
     }
 
-    /** Scala va-args version of registerParts. */
+    /**
+     * Scala va-args version of registerParts.
+     *
+     * @deprecated Use {@link #registerPartFactory(IPartFactory2, String...)} with Java strings/arrays. Retained for
+     *             existing Scala callers; sequence conversion still precedes registry-state checks.
+     */
+    @Deprecated
     public static void registerParts(IPartFactory2 partFactory, scala.collection.Seq<String> types) {
         registerParts(partFactory, JavaConversions.seqAsJavaList(types).toArray(new String[0]));
     }
 
     /**
      * Register a part factory with an array of types it is capable of instantiating. Must be called before postInit.
+     * Prefer {@link #registerPartFactory(IPartFactory2, String...)} in Java sources compiled without Scala: this legacy
+     * overload family contains Scala parameter types that javac may require during overload resolution.
      */
     public static void registerParts(IPartFactory2 partFactory, String... types) {
         if (loaded()) {
@@ -162,6 +178,24 @@ public final class MultiPartRegistry {
             typeMap.put(s, partFactory);
             containers.put(s, container);
         }
+    }
+
+    /**
+     * Registers a factory for stable part identifiers during a mod's preInit/init, before FMP's postInit closes the
+     * registry. Requires FML's active mod container, which becomes the owner of each ID. Register on both sides using
+     * the same IDs; construction later selects the NBT/server or packet/client factory method.
+     *
+     * <p>
+     * Processes IDs in array order without calling the factory or retaining the array. A duplicate throws immediately;
+     * earlier registrations from this call remain. Factory and ID validity are not eagerly checked, so callers must
+     * supply a non-null factory and valid non-null, stable names. A null array fails after the existing state/container
+     * checks. Empty arrays still perform those checks. This entry retains all legacy failure/state behavior.
+     *
+     * @param partFactory factory retained for later construction; it does not load, bind or place parts at registration
+     * @param types       unique persistent type names; preserve published names when migrating existing parts
+     */
+    public static void registerPartFactory(IPartFactory2 partFactory, String... types) {
+        registerParts(partFactory, types);
     }
 
     /** Register a part converter instance. */

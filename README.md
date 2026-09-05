@@ -16,4 +16,4 @@ If you only want to use the API and not modify it:
 Implementation of all parts of the API should be clean and easy in Java. The minecraft multipart mod is implemented in java as a test case.
 
 See the [Java API index](docs/API.md) for supported entry points, compiling examples, ownership/lifecycle contracts
-and migration status. It links to material enumeration, part traversal, tile loading and occlusion guides.
+and migration status. It links to factory registration, material enumeration, part traversal, tile loading and occlusion guides.
