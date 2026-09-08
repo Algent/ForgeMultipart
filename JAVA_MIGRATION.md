@@ -64,7 +64,7 @@ The phase checklists include recurring verification rules, historical work and c
 
 | Workstream | Remaining deliverables | Gate |
 | --- | --- | --- |
-| Complete the supported Java surface | Physical-client validation of the documented illuminated microblock example; custom tile-trait authoring and broader lifecycle guidance; supported orientation customization for Et Futurum and saw-strength customization for Iguana; finish the audited reflection/legacy-use map | Next FMP milestone; direct typed calls and documented override behavior, without requiring consumer reflection |
+| Complete the supported Java surface | Physical-client validation of the documented illuminated microblock example; supported orientation customization for Et Futurum and saw-strength customization for Iguana; finish the audited reflection/legacy-use map | Next FMP milestone; direct typed calls and documented override behavior, without requiring consumer reflection |
 | Migrate consumers and adopt releases | Patch GuideNH/Schematica to their documented APIs; migrate ProjectRed's external trait and other Scala/helper users, including OpenComputers, ProjectBlue and ForgeRelocationFMP; direct Galacticraft integration; Et Futurum/Iguana migrations; UtilitiesInExcess enumeration and `mat`/`material` fix; complete the full adoption ledger beyond these hotspots | Source patches, released versions and actual target-pack jars must all be recorded; reference checkouts are not migrated |
 | Measure and improve performance | Fresh realistic profiles, ranked candidates, bounded improvements and repeated paired measurements; distinguish FMP implementation gains from migrated-consumer gains and report variability/regressions | Phase 4b starts when API/extension workloads are stable; it can overlap consumer adoption |
 | Validate releases | Complete client rendering/particles/lighting/interaction and integration checklist; old-world, multiplayer, movement and preview checks; packaged/obfuscated artifacts on supported runtimes; optional-mod absent/present loading; actual patched-world MCPC hook where supported | Automated Forge tests do not replace physical-client/full-pack evidence; repeat affected checks after consumer migration and Scala removal |
@@ -654,6 +654,8 @@ same-name overload there invites a silent wrong-overload bind.
   example; [guide](docs/api/TILE_TRAIT_ACCESS.md).
 - [x] Add a supported `refreshPartSlots` operation for OpenComputers' live slot-array mutation, preserving equality,
   virtual bind dispatch, storage/ownership and caller-controlled notification behavior; [guide](docs/api/TILE_TRAIT_ACCESS.md#refreshing-a-changed-slot-mask).
+- [x] Document custom Java tile-trait authoring with a compiling marker/trait/capability example, registration and
+  state/lifecycle contracts, and generated server/client Forge coverage; [guide](docs/api/CUSTOM_TILE_TRAITS.md).
 - [ ] Document the supported API with compiling usage examples and an old-to-new migration guide. Validate Java
   subclasses and generated extensions on the actual Forge path, including both sides where relevant.
 
@@ -785,7 +787,8 @@ UtilitiesInExcess's `extrautils:*` aliases; there is no legacy-conversion risk i
   both sides.
 - [ ] Migrate Galacticraft to direct registration in gated compatibility code; exact-signature reflection is an interim option.
 - [ ] Fix the UtilitiesInExcess `mat`/`material` key mismatch and its `getIdMap()` use before it enters the pack.
-- [ ] Add the supported public equivalents needed by Schematica, GuideNH, Et Futurum, and Iguana as additive API.
+- [ ] Add the supported public equivalents needed by Et Futurum and Iguana as additive API. Schematica and GuideNH's
+  identified FMP-side replacements are complete; their consumer migrations remain pending.
 - [x] Provide Schematica's registered-factory lookup without exposing the mutable map: `getPartFactory(String)`,
   with identity/missing-name checks, exact public reflection, a compiling example and the retained private field.
   This does not complete Schematica's consumer migration.

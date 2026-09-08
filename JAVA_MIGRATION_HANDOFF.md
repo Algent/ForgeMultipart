@@ -17,7 +17,7 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**573 plain-JVM tests and 286 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
+**573 plain-JVM tests and 287 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 444 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
@@ -32,18 +32,15 @@ use, but no override triggering these three regressions was found. All 443 class
 payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
 followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
 
-Latest API work adds `TileMultipart.refreshPartSlots(TMultiPart)` to the
-[transformed-tile guide](docs/api/TILE_TRAIT_ACCESS.md). Baseline commit `a37e4ec` freezes OpenComputers' live-array
-sequence: clear every cached entry equal to the stored part, preserve unrelated slots, then invoke the virtual
-`bindPart` chain once without changing ownership or storage. Generated slotted tiles implement that sequence;
-ordinary tiles keep the base no-op. Validation, state mutation and notifications remain the consumer's responsibility.
-The example compiles as Java 8 without Scala or reflection and calls the stable base API directly.
-All 573 JVM / 286 Forge tests pass. All 573 archived JVM callers pass; the byte-identical archived Forge mod runs 283
-of 284 cases successfully, with only its pre-addition generated-method inventory assertion reporting the intentional
-addition. All 444 classes and 17 ScalaSignature payloads remain; 3,761 existing methods are unchanged and exactly two
-packaged methods are added. Of 130 generated dumps, 124 are byte-identical; six add only the expected transformed
-declaration, helper or slotted-composite forwarder. Evidence: `run/migration-slot-refresh-reference/`. OpenComputers'
-consumer patch/release, ProjectRed's cast migration, physical-client validation and adoption remain pending.
+Latest API work documents [custom Java tile-trait authoring](docs/api/CUSTOM_TILE_TRAITS.md) over the existing
+`MultipartGenerator.registerTrait` overloads. Baseline commit `d98e48f` adds a compiling four-type example and real
+Forge registration. It separates the requesting part marker, stable caller capability, transformed input and ordinary
+helper, then verifies generated server/client tiles, aggregation, binding, exact reuse and class caching. The example
+uses derived state, so it needs no new cache, NBT or packet contract. No production method body or descriptor changed.
+All 573 JVM / 287 Forge tests pass, including the frozen baseline callers. All 444 classes, 17 ScalaSignature payloads,
+3,763 packaged methods and 134 generated dumps retain their executable shape. Evidence:
+`run/migration-custom-tile-trait-reference/`. No supplied consumer directly registers a custom multipart tile trait;
+this is supported extension coverage, not consumer adoption.
 
 Direct typed calls are the intended end state for supported integrations. Optional dependencies should isolate typed
 compatibility code behind presence/version checks; reflection snippets in earlier guides are temporary legacy
@@ -67,16 +64,16 @@ adoption remain pending. Checkouts remain reference-only. The installed `+719` p
 Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
 subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
 are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
-The next bounded candidate is a compiling custom Java tile-trait authoring example with generated Forge coverage,
-including staged registration, override dispatch and stable consumer access. Other audited reflection use cases remain
-separate work.
+The next bounded candidate is a supported orientation customization API for Et Futurum, replacing its mutation of
+`ButtonPart.metaSideMap` and `sideMetaMap`, with exact mapping and placement coverage. Other audited reflection use
+cases remain separate work.
 Converter registration/lifecycle and stable tile capability access guidance are complete.
 The illuminated microblock example supplies the representative Java extension, but physical-client construction,
 connector-dependent halos, lighting and consumer adoption still need their recorded checks.
 
 Progress: all ten Phase 9.1 table rows and Phase 9.2's internal markers are complete, plus Schematica registry lookup,
-staged Java tile generation, microblock creation, typed material access, the Java illuminated extension example and
-slot refresh. Remaining work includes custom tile-trait authoring and other audited reflection use cases. Consumer patches,
+staged Java tile generation, microblock creation, typed material access, the Java illuminated extension example, slot
+refresh and custom Java tile-trait authoring. Remaining work includes other audited reflection use cases. Consumer patches,
 releases and pack adoption still precede final Scala removal and client/pack release validation.
 
 Extra Utilities remains an active supported consumer. UtilitiesInExcess is the intended replacement, but the support
@@ -352,8 +349,9 @@ composite has already invoked the real base constructor, then preserves the rema
   pick-block, activation or lighting behavior. The headless renderer tests cover compiled dispatch, not GPU output.
 - Existing binaries retain the runtime tile interfaces. Recompilation against raw Java mixin inputs can emit invalid
   class/field opcodes after Forge transforms them. [Stable capability guidance](docs/api/TILE_TRAIT_ACCESS.md) covers
-  redstone, ordinary base/interface calls and slot refresh; custom tile-trait authoring remains open. The server
-  pass-through fixture does not cover client exclusion.
+  redstone, ordinary base/interface calls and slot refresh; [custom authoring guidance](docs/api/CUSTOM_TILE_TRAITS.md)
+  covers marker registration, stable capabilities and transformer constraints. The server pass-through fixture does
+  not cover client exclusion.
 - Run representative full-pack CPU/allocation and packaged modern-Java validation before performance/release claims.
   Focused results and reruns are in the profile. The current deobfuscated dedicated-server harness uses Java 8.
 - Core NBT, descriptions and one-byte shape updates are frozen; characterize each remaining shape's state immediately

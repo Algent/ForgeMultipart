@@ -770,4 +770,17 @@ calculation. OpenComputers can replace its slot-array cast/loop plus `bindPart` 
 description and scheduling order. FMP clears value-equal entries from the live array, then dispatches the virtual bind
 chain once; no storage, ownership or notification work is added. Reference checkouts remain unchanged and no
 release/adoption is recorded. Evidence: `run/migration-tile-trait-access-reference/` and
-`run/migration-slot-refresh-reference/`; custom tile-trait authoring and physical-client checks remain.
+`run/migration-slot-refresh-reference/`; physical-client checks remain.
+
+## Custom Java tile-trait authoring
+
+The [authoring guide](docs/api/CUSTOM_TILE_TRAITS.md) now covers the existing name-based
+`MultipartGenerator.registerTrait` path with a top-level Java input, separate marker and stable capability interfaces,
+an ordinary helper and no reflection. The Forge example exercises both side selections, transformed dispatch, binding,
+exact tile reuse and generated-class caching. It owns no state and derives its aggregate from the live part list;
+stateful extensions retain the documented copy, persistence, synchronization and lifecycle responsibilities.
+
+The supplied consumer source audit found no direct custom multipart tile-trait registration. Consumers currently use
+built-in traits, generated pass-through interfaces, or ProjectRed's separate microblock-trait registration path.
+Accordingly this is supported extension coverage, not a consumer migration or a basis for retiring any current binary
+contract. Evidence: `run/migration-custom-tile-trait-reference/`.

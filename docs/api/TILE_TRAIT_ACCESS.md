@@ -101,16 +101,13 @@ capabilities do not append such caches; it is not a general refresh for inventor
 `loadPartList` reconstruction would run broader cache, binding and notification behavior and is not equivalent.
 
 For custom generated tiles, keep consumer-callable methods on an ordinary Java capability interface and use the
-stable base for existing tile hooks. Register raw trait inputs by name before class loading, during initialization.
-Pass-through registration is sufficient when a tile should forward one interface to one part; it rejects a second
-implementor through occlusion checks. Writing custom aggregation/lifecycle traits still needs the compiler's
-[Java trait restrictions](../../JAVA_MIGRATION_HANDOFF.md#retained-compiler-constraints), including helper placement
-and inherited access. The [microblock extension](MICROBLOCK_EXTENSIONS.md) demonstrates those helper constraints,
-but is not a complete custom tile-trait authoring example.
+stable base for existing tile hooks. The [custom tile-trait guide](CUSTOM_TILE_TRAITS.md) provides the complete
+registration, helper, state/lifecycle and access pattern. Pass-through registration remains the smaller choice when
+a tile should only forward one interface to one implementing part.
 
 No transformed compile-stub artifact is introduced here: redstone already has a stable interface and slot refresh is
 available on the stable base tile. Assess remaining trait-only requirements individually before adding build
-machinery. Custom tile-trait authoring and other audited private/reflection contracts remain open.
+machinery. Other audited private/reflection contracts remain open.
 
 ## Validation
 
@@ -122,5 +119,6 @@ entry with the frozen consumer sequence, including equality, current-mask rebind
 storage. Packaged-jar compilation and bytecode inspection verify that the example uses stable owners without Scala,
 reflection or raw trait-class references. Existing binary APIs remain callable; `refreshPartSlots` is additive.
 
-This is consumer source-access coverage. It does not validate physical-client trait selection/rendering, supply all
-custom extension examples, or establish that any consumer has released and adopted a migration.
+This is consumer source-access coverage. It does not validate physical-client rendering or establish that any consumer
+has released and adopted a migration. Generated custom tile traits have separate both-side coverage in the
+[authoring guide](CUSTOM_TILE_TRAITS.md#validation-and-adoption).

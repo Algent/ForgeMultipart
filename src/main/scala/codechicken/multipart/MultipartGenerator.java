@@ -57,12 +57,38 @@ public final class MultipartGenerator {
         MultipartGenerator$.MODULE$.silentAddTile(world, pos, tile);
     }
 
-    /** Registers the same tile trait for both sides. */
+    /**
+     * Registers a marker interface implemented by parts with the same generated tile trait on both sides. Names may use
+     * dots or slashes. Call during common mod initialization, before FMP first inspects an implementing part class.
+     *
+     * <p>
+     * For a Java source trait, pass its binary name as a string instead of loading its class. The trait is a top-level
+     * class extending {@link TileMultipart}, possibly abstract, with a no-argument constructor; FMP rewrites it into a
+     * runtime interface. Consumer-callable methods belong on a separate ordinary interface implemented by the trait. Do
+     * not instantiate or invoke the raw trait class from consumer code.
+     *
+     * <p>
+     * Registration only associates the marker with generated behavior. It does not construct a tile, load or bind
+     * parts, or register a part factory. Repeating a marker registration for a side logs an error and retains the first
+     * mapping. See {@code docs/api/CUSTOM_TILE_TRAITS.md} for the compiling pattern and transformer constraints.
+     *
+     * @param marker binary name of the ordinary interface implemented by requesting parts
+     * @param trait  binary name of the generated tile trait
+     */
     public static void registerTrait(String marker, String trait) {
         MultipartGenerator$.MODULE$.registerTrait(marker, trait);
     }
 
-    /** Registers side-specific tile traits; either trait may be null to exclude that side. */
+    /**
+     * Registers side-specific generated tile traits for a part marker. This has the same timing, class-loading and
+     * trait authoring contract as {@link #registerTrait(String, String)}. Either trait may be null to omit the
+     * capability from that side; the argument order is client, then server. Register parent Java traits before child
+     * traits.
+     *
+     * @param marker      binary name of the ordinary interface implemented by requesting parts
+     * @param clientTrait client trait binary name, or null for none
+     * @param serverTrait server trait binary name, or null for none
+     */
     public static void registerTrait(String marker, String clientTrait, String serverTrait) {
         MultipartGenerator$.MODULE$.registerTrait(marker, clientTrait, serverTrait);
     }

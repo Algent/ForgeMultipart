@@ -272,3 +272,12 @@ trait classes are not safe replacements for original compile-time interfaces: ex
 class-call and field-read linkage failures. Additive `TileMultipart.refreshPartSlots(TMultiPart): void`, with the
 generated `TSlottedTile` override of the same descriptor, replaces OpenComputers' live-array mutation for source
 rebuilds. Keep the old `TSlottedTile.v_partMap()` accessor until released consumer and target-pack adoption.
+
+### Custom Java tile-trait authoring
+
+`MultipartGenerator.registerTrait(String, String)` and its side-specific overload now document their existing Java
+trait path, registration timing and first-mapping behavior. The [four-type example](docs/api/CUSTOM_TILE_TRAITS.md)
+separates the part marker, stable consumer capability, transformed input and access helper, and runs through actual
+server/client composite generation. This adds no production class, method, descriptor or behavior. The example remains
+functional-test content. No supplied consumer directly registers a custom multipart tile trait; existing pass-through
+and external Scala-trait contracts remain supported and their release/adoption gates are unchanged.

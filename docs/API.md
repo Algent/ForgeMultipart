@@ -27,6 +27,7 @@ Existing reflective binaries remain supported until consumer release and pack ad
 | Read a microblock material's block and metadata | `BlockMicroMaterial.block()`, `meta()` — [typed GuideNH query, identity and overrides](api/MATERIAL_ACCESS.md) |
 | Create a microblock with the requested material and side | `MicroblockGenerator.create(MicroblockClass, int, boolean)` — [construction, material traits and GuideNH migration](api/MICROBLOCK_CREATION.md) |
 | Call generated tile capabilities from Java | `TileMultipart`, `IRedstoneTile` and ordinary interfaces — [safe compilation and raw-trait pitfalls](api/TILE_TRAIT_ACCESS.md) |
+| Add aggregate or lifecycle behavior to generated multipart tiles | `registerTrait(marker, trait)` — [custom Java tile traits, stable capabilities and transformer constraints](api/CUSTOM_TILE_TRAITS.md) |
 | Refresh slots after a stored part changes shape | `refreshPartSlots(TMultiPart)` — [ownership, equality and notification responsibilities](api/TILE_TRAIT_ACCESS.md#refreshing-a-changed-slot-mask) |
 | Add material-specific behavior to generated microblocks | `registerTrait(String)` and `IGeneratedMaterial` — [illuminated Java extension, compilation and side contracts](api/MICROBLOCK_EXTENSIONS.md) |
 | Read/index/search a tile's parts | `jPartList()` — [part collection ownership and order](api/PART_TRAVERSAL.md#collection-ownership-and-ordering) |
@@ -55,7 +56,7 @@ compile classpath for overload resolution, as the [loading guide](api/PART_LOADI
 | Find, place and remove parts | [TileMultipart](../src/main/scala/codechicken/multipart/TileMultipart.java): `getTile`, `canPlacePart`, `addPart`, `remPart`. Retain the tile returned by changes because generated capabilities can replace the instance |
 | Construct a server composite tile from parts, or restore saved multipart NBT | [MultipartHelper](../src/main/scala/codechicken/multipart/MultipartHelper.java): `createTileFromParts(Iterable)`, `createTileFromNBT(World, NBTTagCompound)` |
 | Register microblock materials | [MicroMaterialRegistry](../src/main/scala/codechicken/microblock/MicroMaterialRegistry.java) and [BlockMicroMaterial](../src/main/scala/codechicken/microblock/BlockMicroMaterial.java) |
-| Register generated tile traits or pass-through interfaces | [MultipartGenerator](../src/main/scala/codechicken/multipart/MultipartGenerator.java); see [safe capability access](api/TILE_TRAIT_ACCESS.md) and the [extension constraints](../JAVA_MIGRATION_HANDOFF.md#retained-compiler-constraints) before migrating custom traits |
+| Register generated tile traits or pass-through interfaces | [MultipartGenerator](../src/main/scala/codechicken/multipart/MultipartGenerator.java); see [custom tile-trait authoring](api/CUSTOM_TILE_TRAITS.md) and [safe capability access](api/TILE_TRAIT_ACCESS.md) |
 
 New API examples use Java 8 language/library features. The source path `src/main/scala` also contains Java classes
 because of the current joint-compilation layout; it does not imply that those APIs require Scala source in a consumer.
@@ -113,8 +114,9 @@ An [illuminated Java microblock extension](api/MICROBLOCK_EXTENSIONS.md) now cov
 light aggregation and halo geometry, with compiling examples and Forge coverage. Its physical-client rendering and
 ProjectRed adoption remain open. [Converter registration and lifecycle](api/BLOCK_CONVERTERS.md) are documented and
 tested. [Stable tile capability access](api/TILE_TRAIT_ACCESS.md) covers safe Java calls, ProjectRed redstone queries
-and OpenComputers slot refresh. Custom tile-trait authoring and the remaining audited reflection replacements are
-still pending. ProjectRed's existing Scala traits remain supported until adoption.
+and OpenComputers slot refresh. [Custom Java tile-trait authoring](api/CUSTOM_TILE_TRAITS.md) covers registration,
+stable capabilities, lifecycle/state rules and transformer constraints with generated Forge coverage. The remaining
+audited reflection replacements are still pending. ProjectRed's existing Scala traits remain supported until adoption.
 
 All ten entries in the plan's Phase 9.1 API table have Java replacements. That table is a bounded list of signatures;
 the broader API, extension and consumer adoption work above remains open.

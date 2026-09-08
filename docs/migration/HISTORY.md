@@ -2157,3 +2157,24 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   without Scala/reflection/raw-trait references. Evidence: `run/migration-slot-refresh-reference/`.
 - Consumer source/release/adoption remain pending. Next bounded task: a custom Java tile-trait authoring example with
   generated Forge coverage; remaining audited reflection replacements and physical-client checks stay separate.
+
+### 2026-09-08 — Custom Java tile-trait authoring
+
+- Committed baseline `d98e48f` before production documentation changes. Its Forge example registers a top-level Java
+  trait by name during initialization and verifies server/client selection, stable capability dispatch, mixed-part
+  aggregation, part binding, exact tile reuse and generated-class caching.
+- Added the [custom tile-trait guide](../api/CUSTOM_TILE_TRAITS.md) and expanded both `registerTrait` Javadocs. The
+  four-type pattern separates the requesting marker, consumer capability, transformed input and ordinary helper. It
+  records class-loading order, side-specific registration, first-mapping behavior, state/lifecycle ownership and the
+  current transformer constraints. The example uses a derived aggregate instead of adding a cache.
+- No supplied active consumer directly registers a custom multipart tile trait. Current consumers use built-in traits,
+  pass-through interfaces or ProjectRed's distinct microblock-trait path. Reference checkouts remain unchanged and no
+  migration/release/adoption is claimed.
+- Normal and clean formatting/checkstyle/build/Forge validation passes with **573 JVM / 287 Forge** cases, zero
+  failures/errors/skips. All **573 archived JVM / 287 archived Forge** callers pass. The example targets Java 8 against
+  the dev artifact without Scala or reflection and calls only the stable capability/base API.
+- All **444** production classes, **17** ScalaSignature payloads and **3,763** packaged methods remain. All **134**
+  generated dumps retain executable equivalence; only source-line metadata moves in the facade class. Evidence:
+  `run/migration-custom-tile-trait-reference/`.
+- Next bounded task: expose supported button-orientation customization for Et Futurum, then cover Iguana's saw-strength
+  customization. Consumer adoption, physical-client/full-pack checks and measured performance remain separate gates.
