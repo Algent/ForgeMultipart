@@ -8,7 +8,7 @@ import codechicken.lib.config.ConfigTag;
 
 public class ItemSaw extends Item implements Saw {
 
-    private final int harvestLevel;
+    private int harvestLevel;
 
     public ItemSaw(ConfigTag sawTag, int harvestLevel) {
         this.harvestLevel = harvestLevel;
@@ -21,8 +21,20 @@ public class ItemSaw extends Item implements Saw {
         setCreativeTab(CreativeTabs.tabTools);
     }
 
+    /** @return the current cutting strength */
     public int harvestLevel() {
         return harvestLevel;
+    }
+
+    /**
+     * Changes the cutting strength used by recipes and the saw renderer. This does not change the durability selected
+     * when the saw was constructed. Startup integrations that change saw tiers must finish before ForgeMicroblock
+     * post-initialization, when {@link MicroMaterialRegistry#getMaxCuttingStrength()} is calculated.
+     *
+     * @param harvestLevel the new cutting strength
+     */
+    public void setHarvestLevel(int harvestLevel) {
+        this.harvestLevel = harvestLevel;
     }
 
     @Override

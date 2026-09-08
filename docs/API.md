@@ -30,6 +30,7 @@ Existing reflective binaries remain supported until consumer release and pack ad
 | Add aggregate or lifecycle behavior to generated multipart tiles | `registerTrait(marker, trait)` — [custom Java tile traits, stable capabilities and transformer constraints](api/CUSTOM_TILE_TRAITS.md) |
 | Refresh slots after a stored part changes shape | `refreshPartSlots(TMultiPart)` — [ownership, equality and notification responsibilities](api/TILE_TRAIT_ACCESS.md#refreshing-a-changed-slot-mask) |
 | Add material-specific behavior to generated microblocks | `registerTrait(String)` and `IGeneratedMaterial` — [illuminated Java extension, compilation and side contracts](api/MICROBLOCK_EXTENSIONS.md) |
+| Change an existing FMP saw's cutting strength | `ItemSaw.setHarvestLevel(int)` — [state, lifecycle and Iguana migration](api/SAW_STRENGTH.md) |
 | Read/index/search a tile's parts | `jPartList()` — [part collection ownership and order](api/PART_TRAVERSAL.md#collection-ownership-and-ordering) |
 | Run callbacks while skipping detached parts | `forEachPart(Consumer)` — [callback and override behavior](api/PART_TRAVERSAL.md#callback-behavior) |
 | Rebuild parts on an already prepared composite tile | `loadPartList(Collection)` — [part loading](api/PART_LOADING.md) |
@@ -117,9 +118,9 @@ ProjectRed adoption remain open. [Converter registration and lifecycle](api/BLOC
 tested. [Stable tile capability access](api/TILE_TRAIT_ACCESS.md) covers safe Java calls, ProjectRed redstone queries
 and OpenComputers slot refresh. [Custom Java tile-trait authoring](api/CUSTOM_TILE_TRAITS.md) covers registration,
 stable capabilities, lifecycle/state rules and transformer constraints with generated Forge coverage. Supported
-[button orientation mapping](api/BUTTON_ORIENTATIONS.md) replaces Et Futurum's reflective array mutation. The Iguana
-saw-strength setter remains the audited FMP-side reflection gap. ProjectRed's existing Scala traits remain supported
-until adoption.
+[button orientation mapping](api/BUTTON_ORIENTATIONS.md) replaces Et Futurum's reflective array mutation. Supported
+[saw-strength mutation](api/SAW_STRENGTH.md) replaces Iguana's private-field access. ProjectRed's existing Scala
+traits remain supported until adoption.
 
 All ten entries in the plan's Phase 9.1 API table have Java replacements. That table is a bounded list of signatures;
 the broader API, extension and consumer adoption work above remains open.

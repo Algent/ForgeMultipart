@@ -2200,3 +2200,27 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   SHA-256. Evidence: `run/migration-button-orientation-reference/`.
 - Next bounded task: expose supported saw-strength customization for Iguana. Consumer adoption, physical-client/full-pack
   checks and measured performance remain separate gates.
+
+### 2026-09-09 — Supported saw-strength mutation
+
+- Inspected IguanaTweaksTConstruct `2.7.12` at `2bc09889d3e2`. Its post-init loop reads and writes the private
+  `ItemSaw.harvestLevel` field with boxed reflection, then uses the changed value for cutting and tooltips. The
+  supplied checkout remains reference-only.
+- Committed baseline `098e747` before the production change. Its JVM test reproduces that exact field access and
+  freezes updated getter, stack-specific cutting, maximum-strength and unchanged-durability behavior.
+- Added `ItemSaw.setHarvestLevel(int)` and a compiling Java example. The setter updates the existing private field;
+  its name, `int` type and visibility remain for old Iguana releases. The field loses `ACC_FINAL`, recorded as an
+  intentional classfile divergence, so the public and legacy paths share one mutable value.
+- FMP caches the process-wide maximum saw strength during ForgeMicroblock post-init. Iguana currently orders itself
+  after `ForgeMultipart` but not relative to `ForgeMicroblock`, while it both relevels and adds saws in post-init.
+  Its migration must also run before ForgeMicroblock's post-init, for example with optional `before:ForgeMicroblock`
+  ordering, so weaker remapped saws cannot inherit a stale strongest-saw exemption.
+- Normal formatting/checkstyle/build/Forge validation passes with **575 JVM / 289 Forge** tests, zero failures,
+  errors or skips. The example targets Java 8 against the dev artifact without Scala or reflection, and all 150 local
+  API documentation links resolve.
+- The packaged inventory remains **444 classes** and **17 ScalaSignature payloads**. All **3,764 existing method
+  bodies** are unchanged and exactly one public method is added; only the documented private-field modifier changes.
+  All **134 generated dumps** match the baseline by name and SHA-256. Evidence:
+  `run/migration-saw-strength-reference/`.
+- The identified FMP-side reflection gaps now have typed replacements. Next work moves to consumer source patches,
+  releases and target-pack adoption, alongside the outstanding physical-client and measured-performance gates.

@@ -35,6 +35,7 @@ import org.objectweb.asm.tree.MethodNode;
 import codechicken.lib.config.ConfigFile;
 import codechicken.lib.config.ConfigTag;
 import codechicken.lib.render.CCModel;
+import codechicken.microblock.examples.SawStrengthExample;
 
 class ItemSawCharacterizationTest {
 
@@ -43,7 +44,8 @@ class ItemSawCharacterizationTest {
             "getContainerItem(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/item/ItemStack;",
             "getCuttingStrength(Lnet/minecraft/item/ItemStack;)I",
             "harvestLevel()I",
-            "hasContainerItem()Z");
+            "hasContainerItem()Z",
+            "setHarvestLevel(I)V");
     private static final Set<String> RENDERER_METHODS = signatures(
             "blade()Lcodechicken/lib/render/CCModel;",
             "handle()Lcodechicken/lib/render/CCModel;",
@@ -68,7 +70,7 @@ class ItemSawCharacterizationTest {
         Field harvestLevel = ItemSaw.class.getDeclaredField("harvestLevel");
         assertSame(int.class, harvestLevel.getType());
         assertTrue(Modifier.isPrivate(harvestLevel.getModifiers()));
-        assertTrue(Modifier.isFinal(harvestLevel.getModifiers()));
+        assertFalse(Modifier.isFinal(harvestLevel.getModifiers()));
         assertEquals(1, ItemSaw.class.getDeclaredFields().length);
 
         assertTrue(Modifier.isPublic(ItemSawRenderer.class.getModifiers()));
@@ -127,6 +129,19 @@ class ItemSawCharacterizationTest {
         harvestLevel.set(saw, 5);
 
         assertEquals(2, oldStrength);
+        assertEquals(5, saw.harvestLevel());
+        assertEquals(5, saw.getCuttingStrength(new ItemStack(saw)));
+        assertEquals(5, saw.getMaxCuttingStrength());
+        assertEquals(maxDamage, saw.getMaxDamage());
+    }
+
+    @Test
+    void supportedSetterMatchesTheLegacyMutation(@TempDir Path directory) {
+        ItemSaw saw = saw(directory, "supported", 2, null);
+        int maxDamage = saw.getMaxDamage();
+
+        SawStrengthExample.updateStrength(saw, 5);
+
         assertEquals(5, saw.harvestLevel());
         assertEquals(5, saw.getCuttingStrength(new ItemStack(saw)));
         assertEquals(5, saw.getMaxCuttingStrength());

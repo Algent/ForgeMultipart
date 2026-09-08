@@ -406,7 +406,7 @@ added to compatibility CI before it enters the pack.
 | AE2 Fluid Craft | Reflects `TileMultipart` and registers Waila part providers | Tile class name and `jPartList`/provider behavior reached by AE2 |
 | GT5U | Detects `TileMultipart`, iterates `jPartList`, and finds a ProjectRed `GatePart` to expose its screwdriver slot | Tile identity, Java list view/order, part instance identity |
 | EnderCore | Tests items with `instanceof ItemSaw` for durability display | `ItemSaw` class identity and inheritance |
-| IguanaTweaksTConstruct | Creates saws through `MicroblockProxy`, reads saw methods, accesses proxy companions, and reflectively mutates private `ItemSaw.harvestLevel` | Proxy methods and `MODULE$`, `Saw`/`ItemSaw` identity, exact `harvestLevel: int` field name/type |
+| IguanaTweaksTConstruct | Creates saws through `MicroblockProxy`, reads saw methods, accesses proxy companions, and reflectively mutates private `ItemSaw.harvestLevel` | Proxy methods and `MODULE$`, `Saw`/`ItemSaw` identity, exact `harvestLevel: int` field name/type until adoption; `setHarvestLevel(int)` is the supported replacement |
 | Et Futurum Requiem | Reflectively gets and mutates static `int[] ButtonPart.metaSideMap` and `sideMetaMap` to add floor and ceiling orientation | Exact class and mutable static field names/types until migration; `ButtonPart.setOrientation` is the supported replacement |
 
 ## Source-only hazards that must be added to the compatibility checklist
@@ -419,7 +419,7 @@ requirements:
 | Schematica | `MultiPartRegistry$.MODULE$`; field `codechicken$multipart$MultiPartRegistry$$typeMap` of Scala mutable-map shape; exact generator/load methods | FMP schematic tile reconstruction disables itself or returns no preview |
 | GuideNH | Companion-only generator methods; `partList_$eq(Seq)`; `BlockMicroMaterial.block` and `.meta` mixin fields | Missing/incorrect guide preview, material export, or part statistics |
 | Et Futurum | Static mutable `ButtonPart.metaSideMap` and `sideMetaMap`, both `int[]`, until direct API adoption | FMP buttons attach with pre-fix orientation behavior |
-| Iguana | Private `ItemSaw.harvestLevel` field | Existing saw cutting strengths are not adjusted |
+| Iguana | Private `ItemSaw.harvestLevel` field until direct setter adoption | Existing saw cutting strengths are not adjusted |
 | Galacticraft | Reflection by method name only for `registerMaterial` | Galacticraft micro-material registration is skipped after a caught exception |
 | Waila | `BlockMultipart` string plus tile NBT `parts`/part `id` | No multipart HUD data |
 
@@ -427,8 +427,9 @@ These need targeted runtime tests or explicit downstream patches. They cannot be
 
 **Current branch:** `ConsumerReflectionCompatibilityTest` freezes the GuideNH, Et Futurum, Iguana, and Galacticraft
 member shapes above. `ButtonOrientationFunctionalTest` also freezes Et Futurum's exact array mutation and all-face
-placement, then verifies the supported typed replacement. Schematica's registry lookup has its own live-view regression
-test. The manual client checks remain necessary for end-to-end integration behavior.
+placement, then verifies the supported typed replacement. `ItemSawCharacterizationTest` runs Iguana's exact boxed
+field mutation and the direct setter against shared storage. Schematica's registry lookup has its own live-view
+regression test. The manual client checks remain necessary for end-to-end integration behavior.
 
 ## Data and ordering contracts
 
@@ -531,6 +532,7 @@ tied to a released minimum dependency version. Unlisted contracts remain governe
 | `MicroblockGenerator$.create(MicroblockClass, int, boolean)` exact reflection and private shape copy | GuideNH `7d8fb44e77b9`: `getMicroblockGeneratorCreate`, `promoteMicroblockToClient` | Existing static `MicroblockGenerator.create` with the same parameter types/order; recreate family/material and restore encoded shape through public API | Source patch/release pending; guide/example tested on server, physical client and custom shape-setter overrides require adoption checks | No migrated pack version verified; retain companion singleton and exact descriptor |
 | Private `BlockMicroMaterial.block` / `meta` accessor mixin and reflective material query | GuideNH `7d8fb44e77b9`: `AccessorBlockMicroMaterial`, `resolvePrimaryMicroblockId` | Direct `jPartList()`, `Microblock.material()`, `getMaterial(int)`, `BlockMicroMaterial.block()` / `meta()`; [typed example](docs/api/MATERIAL_ACCESS.md) | Source patch/release pending; remove mixin, retain export filtering/failure policy, validate getter overrides and optional loading | No migrated pack version verified; retain private fields |
 | Reflective mutation of `ButtonPart.metaSideMap` / `sideMetaMap` | Et Futurum Requiem `78a5744dfd33`: `compat.CompatMisc.runModHooksInit` | Two direct `ButtonPart.setOrientation(int, ForgeDirection)` calls; [mapping and lifecycle guide](docs/api/BUTTON_ORIENTATIONS.md) | FMP API/example complete; consumer source patch and first released version pending | Retain both public mutable arrays until the migrated release is in the target pack and a fresh scan confirms no legacy access |
+| Reflective mutation of private `ItemSaw.harvestLevel` | IguanaTweaksTConstruct `2bc09889d3e2`: `modcompat.fmp.IguanaFMPCompat.postInit` | Read `harvestLevel()` and call `setHarvestLevel(int)`; [state and lifecycle guide](docs/api/SAW_STRENGTH.md) | FMP API/example complete; consumer source/lifecycle patch and first released version pending | Retain the private field until the migrated release is in the target pack; ensure Iguana runs before ForgeMicroblock post-init and rescan for legacy access |
 | `NormalOcclusionTest$.apply(Traversable, Traversable)` | OpenComputers `2c00f79be24b`: `common.block.Cable.canConnectFromSideFMP`, `server.network.Network.canConnectFromSideFMP` | `NormalOcclusionTest.testBoxes(ownBounds.asJava, otherBounds)`; `otherBounds` already comes from Java `getOcclusionBoxes()` | Source patch and release pending; retain side/color/face filtering | No migrated pack version verified; retain the companion and descriptor |
 | `NormalOcclusionTest$.apply(Traversable, Traversable)` | ForgeRelocationFMP `49a810b8c63b`: `FramePart.occlusionTest` | `NormalOcclusionTest.testBoxes(boxes.asJava, getOcclusionBoxes)`; retain combined normal/partial/collision boxes and caller order | Source patch and release pending; preserve temporary face bounds and replacement protocol | No migrated pack version verified; retain the companion and descriptor |
 
@@ -538,6 +540,12 @@ Button orientation evidence is under ignored `run/migration-button-orientation-r
 freezes Et Futurum's exact four array writes and all-face placement before the API addition. The supported setter keeps
 the two maps one-to-one and validates inputs, while the Java example compiles against the dev artifact without Scala or
 reflection. The reference checkout remains unchanged; no consumer migration, release or target-pack adoption is claimed.
+
+Saw-strength evidence is under ignored `run/migration-saw-strength-reference/`. Baseline commit `098e747` reproduces
+Iguana's boxed reflective field mutation before the API addition. The supported setter updates the same value used by
+the getter, recipes and renderer without changing durability; the private field remains for old releases. Iguana's
+source patch must also order its post-init before ForgeMicroblock's cached maximum calculation. The reference checkout
+remains unchanged; no consumer migration, release or target-pack adoption is claimed.
 
 Evidence for the FMP addition is under ignored `run/migration-material-enumeration-reference/`. The original
 reference-compiled Scala consumer still exercises the companion and tuple-array descriptor. The new compiling Java

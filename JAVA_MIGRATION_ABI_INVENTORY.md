@@ -171,6 +171,11 @@ keeps the two direction maps consistent; [guide](docs/api/BUTTON_ORIENTATIONS.md
 `metaSideMap` and `sideMetaMap` fields retain their exact names, types and modifiers for old releases. Removing or
 narrowing them still waits for a migrated Et Futurum release, target-pack adoption and a fresh reflective-source scan.
 
+`ItemSaw.setHarvestLevel(int): void` now replaces Iguana's private-field write; [guide](docs/api/SAW_STRENGTH.md).
+The existing private `harvestLevel: int` field remains for old releases and shares storage with the setter. It loses
+only `ACC_FINAL`, which makes the supported mutation explicit and keeps reflective writes working. Removal still
+waits for an Iguana release, target-pack adoption and a fresh scan.
+
 ## Consequences for the migration plan
 
 1. Phase 8 (Scala runtime removal) should be reclassified as deferred, not scheduled. Decision 4 is answered.

@@ -191,6 +191,8 @@ These are accepted once for the migration, not repeated for every otherwise equi
   than synthetic Scala methods; signatures and dispatch remain available.
 - The private scratch `ThreadLocal` fields on `MicroblockGenerator$` and `MultipartGenerator$` lose `ACC_FINAL` so
   their public Scala-trait setters can still replace storage.
+- The private `ItemSaw.harvestLevel` field loses `ACC_FINAL` so `setHarvestLevel(int)` can update the same storage as
+  the retained getter and old Iguana reflection. Its name, type and visibility remain unchanged.
 - TickScheduler's private Scala scheduler types become package-private static nested Java classes, retaining their
   binary names.
 

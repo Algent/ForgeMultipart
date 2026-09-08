@@ -63,21 +63,20 @@ have Java loading replacements, but consumer source changes, other reflection/ex
 adoption remain pending. Checkouts remain reference-only. The installed `+719` pack scan retains the `+678` floor:
 27 consumers, 35 inherited types, 255 members, 76 other types and 20 strings.
 
-**Next priority: close the Java API gaps in Phases 2 and 9 and map consumer migrations in Phase 10.** Reuse the existing
-Java surface; supply missing capabilities, precise contracts, migration guidance and compiling examples. Cover
-subclass/override behavior and generated extensions as well as ordinary calls. ProjectRed's illuminated microblocks
-are the representative external extension case. Consumer mods may remain Scala internally while adopting this API.
-The next bounded candidate is a supported saw-strength setter for Iguana, replacing its reflection into private
-`ItemSaw.harvestLevel`. Other audited reflection use cases remain separate work.
+**Next priority: move the completed FMP-side Java replacements into Phase 10 consumer patches and releases.** Reuse
+the documented Java surface and preserve each consumer's lifecycle, state and failure policy. ProjectRed's illuminated
+microblocks remain the representative external extension case. Consumer mods may remain Scala internally while
+adopting this API. The next bounded source migration can replace Iguana's `ItemSaw.harvestLevel` reflection with the
+supported setter and order that work before ForgeMicroblock post-init; its supplied checkout remains reference-only.
 Converter registration/lifecycle and stable tile capability access guidance are complete.
 The illuminated microblock example supplies the representative Java extension, but physical-client construction,
 connector-dependent halos, lighting and consumer adoption still need their recorded checks.
 
 Progress: all ten Phase 9.1 table rows and Phase 9.2's internal markers are complete, plus Schematica registry lookup,
 staged Java tile generation, microblock creation, typed material access, the Java illuminated extension example, slot
-refresh, custom Java tile-trait authoring and button orientation mapping. Iguana's saw-strength access is the remaining
-bounded FMP-side reflection replacement. Consumer patches, releases and pack adoption still precede final Scala
-removal and client/pack release validation.
+refresh, custom Java tile-trait authoring, button orientation mapping and saw-strength mutation. The identified
+FMP-side reflection gaps now have typed replacements; consumer patches, releases and pack adoption still precede
+final Scala removal and client/pack release validation.
 
 Extra Utilities remains an active supported consumer. UtilitiesInExcess is the intended replacement, but the support
 switch awaits approval and actual target-pack adoption. Retain existing contracts until those gates pass. The
