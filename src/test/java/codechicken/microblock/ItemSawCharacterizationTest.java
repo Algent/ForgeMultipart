@@ -116,6 +116,24 @@ class ItemSawCharacterizationTest {
     }
 
     @Test
+    void iguanaReflectionUpdatesCuttingStrengthWithoutReconfiguringDurability(@TempDir Path directory)
+            throws Exception {
+        ItemSaw saw = saw(directory, "iguana", 2, null);
+        int maxDamage = saw.getMaxDamage();
+
+        Field harvestLevel = ItemSaw.class.getDeclaredField("harvestLevel");
+        harvestLevel.setAccessible(true);
+        Integer oldStrength = (Integer) harvestLevel.get(saw);
+        harvestLevel.set(saw, 5);
+
+        assertEquals(2, oldStrength);
+        assertEquals(5, saw.harvestLevel());
+        assertEquals(5, saw.getCuttingStrength(new ItemStack(saw)));
+        assertEquals(5, saw.getMaxCuttingStrength());
+        assertEquals(maxDamage, saw.getMaxDamage());
+    }
+
+    @Test
     void damagesContainerOnlyWhenTheSawIsDamageable(@TempDir Path directory) {
         ItemSaw damageableSaw = saw(directory, "damageable", 2, 20);
         ItemStack input = new ItemStack(damageableSaw, 4, 7);
