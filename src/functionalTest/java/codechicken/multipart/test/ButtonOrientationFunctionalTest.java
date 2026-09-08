@@ -4,15 +4,18 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import net.minecraft.init.Blocks;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.ForgeDirection;
 
 import org.junit.jupiter.api.Test;
 
 import codechicken.lib.vec.BlockCoord;
+import codechicken.multipart.examples.ButtonOrientationExample;
 import codechicken.multipart.minecraft.ButtonPart;
 
 class ButtonOrientationFunctionalTest {
@@ -57,6 +60,38 @@ class ButtonOrientationFunctionalTest {
             }
         } finally {
             clear(world);
+            System.arraycopy(originalMetaSideValues, 0, originalMetaSideMap, 0, originalMetaSideMap.length);
+            System.arraycopy(originalSideMetaValues, 0, originalSideMetaMap, 0, originalSideMetaMap.length);
+            ButtonPart.metaSideMap = originalMetaSideMap;
+            ButtonPart.sideMetaMap = originalSideMetaMap;
+        }
+    }
+
+    @Test
+    void typedApiMatchesEtFuturumAndKeepsMappingsOneToOne() {
+        int[] originalMetaSideMap = ButtonPart.metaSideMap;
+        int[] originalSideMetaMap = ButtonPart.sideMetaMap;
+        int[] originalMetaSideValues = originalMetaSideMap.clone();
+        int[] originalSideMetaValues = originalSideMetaMap.clone();
+
+        try {
+            ButtonOrientationExample.registerVerticalOrientations();
+            assertArrayEquals(new int[] { 1, 4, 5, 2, 3, 0, -1, -1 }, ButtonPart.metaSideMap);
+            assertArrayEquals(new int[] { 5, 0, 3, 4, 1, 2 }, ButtonPart.sideMetaMap);
+
+            ButtonPart.setOrientation(1, ForgeDirection.DOWN);
+            assertArrayEquals(new int[] { 1, 0, 5, 2, 3, -1, -1, -1 }, ButtonPart.metaSideMap);
+            assertArrayEquals(new int[] { 1, 0, 3, 4, -1, 2 }, ButtonPart.sideMetaMap);
+
+            int[] metaSideValues = ButtonPart.metaSideMap.clone();
+            int[] sideMetaValues = ButtonPart.sideMetaMap.clone();
+            assertThrows(IllegalArgumentException.class, () -> ButtonPart.setOrientation(-1, ForgeDirection.UP));
+            assertThrows(IllegalArgumentException.class, () -> ButtonPart.setOrientation(8, ForgeDirection.UP));
+            assertThrows(IllegalArgumentException.class, () -> ButtonPart.setOrientation(0, null));
+            assertThrows(IllegalArgumentException.class, () -> ButtonPart.setOrientation(0, ForgeDirection.UNKNOWN));
+            assertArrayEquals(metaSideValues, ButtonPart.metaSideMap);
+            assertArrayEquals(sideMetaValues, ButtonPart.sideMetaMap);
+        } finally {
             System.arraycopy(originalMetaSideValues, 0, originalMetaSideMap, 0, originalMetaSideMap.length);
             System.arraycopy(originalSideMetaValues, 0, originalSideMetaMap, 0, originalSideMetaMap.length);
             ButtonPart.metaSideMap = originalMetaSideMap;

@@ -1,6 +1,6 @@
 # Source-level downstream consumer audit
 
-Status: 2026-08-27. This is the source-level companion to
+Status: 2026-09-09. This is the source-level companion to
 [`JAVA_MIGRATION_ABI_INVENTORY.md`](JAVA_MIGRATION_ABI_INVENTORY.md).
 
 The ABI inventory answers "what must still link?" This audit answers the harder question: "what behavior do real
@@ -407,7 +407,7 @@ added to compatibility CI before it enters the pack.
 | GT5U | Detects `TileMultipart`, iterates `jPartList`, and finds a ProjectRed `GatePart` to expose its screwdriver slot | Tile identity, Java list view/order, part instance identity |
 | EnderCore | Tests items with `instanceof ItemSaw` for durability display | `ItemSaw` class identity and inheritance |
 | IguanaTweaksTConstruct | Creates saws through `MicroblockProxy`, reads saw methods, accesses proxy companions, and reflectively mutates private `ItemSaw.harvestLevel` | Proxy methods and `MODULE$`, `Saw`/`ItemSaw` identity, exact `harvestLevel: int` field name/type |
-| Et Futurum Requiem | Reflectively gets and mutates static `int[] ButtonPart.metaSideMap` and `sideMetaMap` to repair button orientation | Exact class and mutable static field names/types; array index meanings |
+| Et Futurum Requiem | Reflectively gets and mutates static `int[] ButtonPart.metaSideMap` and `sideMetaMap` to add floor and ceiling orientation | Exact class and mutable static field names/types until migration; `ButtonPart.setOrientation` is the supported replacement |
 
 ## Source-only hazards that must be added to the compatibility checklist
 
@@ -418,16 +418,17 @@ requirements:
 | --- | --- | --- |
 | Schematica | `MultiPartRegistry$.MODULE$`; field `codechicken$multipart$MultiPartRegistry$$typeMap` of Scala mutable-map shape; exact generator/load methods | FMP schematic tile reconstruction disables itself or returns no preview |
 | GuideNH | Companion-only generator methods; `partList_$eq(Seq)`; `BlockMicroMaterial.block` and `.meta` mixin fields | Missing/incorrect guide preview, material export, or part statistics |
-| Et Futurum | Static mutable `ButtonPart.metaSideMap` and `sideMetaMap`, both `int[]` | FMP buttons attach with pre-fix orientation behavior |
+| Et Futurum | Static mutable `ButtonPart.metaSideMap` and `sideMetaMap`, both `int[]`, until direct API adoption | FMP buttons attach with pre-fix orientation behavior |
 | Iguana | Private `ItemSaw.harvestLevel` field | Existing saw cutting strengths are not adjusted |
 | Galacticraft | Reflection by method name only for `registerMaterial` | Galacticraft micro-material registration is skipped after a caught exception |
 | Waila | `BlockMultipart` string plus tile NBT `parts`/part `id` | No multipart HUD data |
 
 These need targeted runtime tests or explicit downstream patches. They cannot be proven safe by `javap` ABI diffing.
 
-**Current branch:** `ConsumerReflectionCompatibilityTest` now freezes the GuideNH, Et Futurum, Iguana, and
-Galacticraft member shapes above. Schematica's registry lookup has its own live-view regression test. The manual client
-checks remain necessary for end-to-end integration behavior.
+**Current branch:** `ConsumerReflectionCompatibilityTest` freezes the GuideNH, Et Futurum, Iguana, and Galacticraft
+member shapes above. `ButtonOrientationFunctionalTest` also freezes Et Futurum's exact array mutation and all-face
+placement, then verifies the supported typed replacement. Schematica's registry lookup has its own live-view regression
+test. The manual client checks remain necessary for end-to-end integration behavior.
 
 ## Data and ordering contracts
 
@@ -529,8 +530,14 @@ tied to a released minimum dependency version. Unlisted contracts remain governe
 | `MultipartGenerator$.generateCompositeTile(TileEntity, scala.collection.Iterable, boolean)` | Schematica `3b03ee937953` exact reflection; GuideNH `7d8fb44e77b9` static-first assignability matcher | Static `MultipartGenerator.generateCompositeTile(TileEntity, java.lang.Iterable, boolean)` with Java parts; retain subsequent state setup/loading | Source patches/releases pending; preserve client part construction, candidate-reuse branch and notification order | No migrated pack version verified; retain the companion and Scala descriptor |
 | `MicroblockGenerator$.create(MicroblockClass, int, boolean)` exact reflection and private shape copy | GuideNH `7d8fb44e77b9`: `getMicroblockGeneratorCreate`, `promoteMicroblockToClient` | Existing static `MicroblockGenerator.create` with the same parameter types/order; recreate family/material and restore encoded shape through public API | Source patch/release pending; guide/example tested on server, physical client and custom shape-setter overrides require adoption checks | No migrated pack version verified; retain companion singleton and exact descriptor |
 | Private `BlockMicroMaterial.block` / `meta` accessor mixin and reflective material query | GuideNH `7d8fb44e77b9`: `AccessorBlockMicroMaterial`, `resolvePrimaryMicroblockId` | Direct `jPartList()`, `Microblock.material()`, `getMaterial(int)`, `BlockMicroMaterial.block()` / `meta()`; [typed example](docs/api/MATERIAL_ACCESS.md) | Source patch/release pending; remove mixin, retain export filtering/failure policy, validate getter overrides and optional loading | No migrated pack version verified; retain private fields |
+| Reflective mutation of `ButtonPart.metaSideMap` / `sideMetaMap` | Et Futurum Requiem `78a5744dfd33`: `compat.CompatMisc.runModHooksInit` | Two direct `ButtonPart.setOrientation(int, ForgeDirection)` calls; [mapping and lifecycle guide](docs/api/BUTTON_ORIENTATIONS.md) | FMP API/example complete; consumer source patch and first released version pending | Retain both public mutable arrays until the migrated release is in the target pack and a fresh scan confirms no legacy access |
 | `NormalOcclusionTest$.apply(Traversable, Traversable)` | OpenComputers `2c00f79be24b`: `common.block.Cable.canConnectFromSideFMP`, `server.network.Network.canConnectFromSideFMP` | `NormalOcclusionTest.testBoxes(ownBounds.asJava, otherBounds)`; `otherBounds` already comes from Java `getOcclusionBoxes()` | Source patch and release pending; retain side/color/face filtering | No migrated pack version verified; retain the companion and descriptor |
 | `NormalOcclusionTest$.apply(Traversable, Traversable)` | ForgeRelocationFMP `49a810b8c63b`: `FramePart.occlusionTest` | `NormalOcclusionTest.testBoxes(boxes.asJava, getOcclusionBoxes)`; retain combined normal/partial/collision boxes and caller order | Source patch and release pending; preserve temporary face bounds and replacement protocol | No migrated pack version verified; retain the companion and descriptor |
+
+Button orientation evidence is under ignored `run/migration-button-orientation-reference/`. Baseline commit `cd13ad6`
+freezes Et Futurum's exact four array writes and all-face placement before the API addition. The supported setter keeps
+the two maps one-to-one and validates inputs, while the Java example compiles against the dev artifact without Scala or
+reflection. The reference checkout remains unchanged; no consumer migration, release or target-pack adoption is claimed.
 
 Evidence for the FMP addition is under ignored `run/migration-material-enumeration-reference/`. The original
 reference-compiled Scala consumer still exercises the companion and tuple-array descriptor. The new compiling Java

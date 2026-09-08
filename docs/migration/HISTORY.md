@@ -2178,3 +2178,25 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   `run/migration-custom-tile-trait-reference/`.
 - Next bounded task: expose supported button-orientation customization for Et Futurum, then cover Iguana's saw-strength
   customization. Consumer adoption, physical-client/full-pack checks and measured performance remain separate gates.
+
+### 2026-09-09 — Supported multipart button orientations
+
+- Inspected Et Futurum Requiem at `78a5744dfd33`. Its initialization hook reflectively obtains the two public static
+  `ButtonPart` direction arrays, writes metadata `0` to `UP` and metadata `5` to `DOWN` in both directions, then catches
+  every exception. No other supplied consumer mutates these maps.
+- Committed baseline `cd13ad6` before the production change. Its Forge test freezes the default arrays, the consumer's
+  exact four writes, unavailable vertical placement before them and all six metadata-to-face placement results after.
+- Added `ButtonPart.setOrientation(int, ForgeDirection)`. It validates orientation metadata and cardinal faces before
+  mutation, updates both existing arrays in place and clears displaced inverse entries so remapping stays one-to-one.
+  The arrays keep their exact public mutable static field shape for old consumer binaries and reflection.
+- Added the [button orientation guide](../api/BUTTON_ORIENTATIONS.md) and compiling example. Et Futurum can replace its
+  reflection with two direct common-initialization calls. Bounds still come from the transformed vanilla button block;
+  consumer patch/release/pack adoption and physical-client all-face validation remain open.
+- Normal and clean formatting/checkstyle/build/Forge validation passes with **573 JVM / 289 Forge** tests, zero
+  failures/errors/skips. All **573 archived JVM / 287 archived Forge** callers pass. The example compiles on Java 8
+  against the dev artifact with no Scala classpath or bytecode reference, and all 146 local documentation links resolve.
+- The packaged inventory remains **444 classes** and **17 ScalaSignature payloads**. All **3,763 existing methods** are
+  unchanged and exactly one public static method is added. All **134 generated dumps** match the baseline by name and
+  SHA-256. Evidence: `run/migration-button-orientation-reference/`.
+- Next bounded task: expose supported saw-strength customization for Iguana. Consumer adoption, physical-client/full-pack
+  checks and measured performance remain separate gates.

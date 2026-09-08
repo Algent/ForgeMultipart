@@ -64,7 +64,7 @@ The phase checklists include recurring verification rules, historical work and c
 
 | Workstream | Remaining deliverables | Gate |
 | --- | --- | --- |
-| Complete the supported Java surface | Physical-client validation of the documented illuminated microblock example; supported orientation customization for Et Futurum and saw-strength customization for Iguana; finish the audited reflection/legacy-use map | Next FMP milestone; direct typed calls and documented override behavior, without requiring consumer reflection |
+| Complete the supported Java surface | Physical-client validation of the documented illuminated microblock example; supported saw-strength customization for Iguana; finish the audited reflection/legacy-use map | Next FMP milestone; direct typed calls and documented override behavior, without requiring consumer reflection |
 | Migrate consumers and adopt releases | Patch GuideNH/Schematica to their documented APIs; migrate ProjectRed's external trait and other Scala/helper users, including OpenComputers, ProjectBlue and ForgeRelocationFMP; direct Galacticraft integration; Et Futurum/Iguana migrations; UtilitiesInExcess enumeration and `mat`/`material` fix; complete the full adoption ledger beyond these hotspots | Source patches, released versions and actual target-pack jars must all be recorded; reference checkouts are not migrated |
 | Measure and improve performance | Fresh realistic profiles, ranked candidates, bounded improvements and repeated paired measurements; distinguish FMP implementation gains from migrated-consumer gains and report variability/regressions | Phase 4b starts when API/extension workloads are stable; it can overlap consumer adoption |
 | Validate releases | Complete client rendering/particles/lighting/interaction and integration checklist; old-world, multiplayer, movement and preview checks; packaged/obfuscated artifacts on supported runtimes; optional-mod absent/present loading; actual patched-world MCPC hook where supported | Automated Forge tests do not replace physical-client/full-pack evidence; repeat affected checks after consumer migration and Scala removal |
@@ -737,7 +737,7 @@ does not close a row, and scans must distinguish a consumer's own Scala code fro
 | ProjectRed | Runtime Scala-signature decoding and external trait registration, reached through `MicroblockGenerator.registerTrait(classOf[LightMicroblock])` | Rewrite the ~60-line `LightMicroblock` trait as a Java mixin registered through the `registerJavaTrait` path | FMP compiler prerequisites complete; consumer rewrite and release remain |
 | Schematica | Private Scala-mangled field `codechicken$multipart$MultiPartRegistry$$typeMap`, cast to `scala.collection.mutable.Map` | `MultiPartRegistry.getPartFactory(String)` is implemented; [guide and example](docs/api/FACTORY_LOOKUP.md). Schematica replaces map/Option lookup with the public method and retains its microblock creation/rejection policy | FMP lookup ready; consumer patch/release/adoption pending |
 | GuideNH | Companion `MultipartGenerator$.MODULE$.generateCompositeTile` and `MicroblockGenerator$.create`; `partList_$eq(scala.collection.Seq)`; mixin into private `BlockMicroMaterial.block` and `.meta` | Direct Java tile generation/loading, microblock creation and existing `block()` / `meta()` access are documented/tested; [typed material query](docs/api/MATERIAL_ACCESS.md). Remove reflection/accessor mixins when migrating | These FMP paths ready; broader consumer migration/release/adoption pending |
-| Et Futurum Requiem | Mutable static `int[] ButtonPart.metaSideMap` and `sideMetaMap` must stay public and mutable | FMP exposes a supported orientation-override API; Et Futurum uses it | After step 1 |
+| Et Futurum Requiem | Mutable static `int[] ButtonPart.metaSideMap` and `sideMetaMap` must stay public and mutable | `ButtonPart.setOrientation(int, ForgeDirection)` is implemented and documented; Et Futurum adopts it | FMP API ready; consumer patch/release/adoption pending |
 | IguanaTweaksTConstruct | Private `ItemSaw.harvestLevel` field name and type | FMP exposes a supported harvest-level setter; Iguana uses it | After step 1 |
 | Galacticraft | Selects the first public method named `registerMaterial` without checking its signature, so FMP cannot add any overload of that name | Call `registerMaterial` directly from gated compatibility code; exact-signature reflection is an interim hardening option | Existing public API; consumer migration can start |
 | UtilitiesInExcess | `MicroMaterialRegistry.getIdMap(): scala.Tuple2[]` | Both call sites read only the name, so `materialCount()` from Phase 9.1 plus the existing `materialName(int)` covers them; no material object is needed | After Phase 9.1, before it enters the pack |
@@ -787,8 +787,10 @@ UtilitiesInExcess's `extrautils:*` aliases; there is no legacy-conversion risk i
   both sides.
 - [ ] Migrate Galacticraft to direct registration in gated compatibility code; exact-signature reflection is an interim option.
 - [ ] Fix the UtilitiesInExcess `mat`/`material` key mismatch and its `getIdMap()` use before it enters the pack.
-- [ ] Add the supported public equivalents needed by Et Futurum and Iguana as additive API. Schematica and GuideNH's
-  identified FMP-side replacements are complete; their consumer migrations remain pending.
+- [x] Add supported button-orientation mapping for Et Futurum as additive API, preserving the legacy arrays;
+  [guide and example](docs/api/BUTTON_ORIENTATIONS.md). Consumer migration/release/adoption remain pending.
+- [ ] Add the supported harvest-level setter needed by Iguana as additive API. Schematica and GuideNH's identified
+  FMP-side replacements are complete; their consumer migrations remain pending.
 - [x] Provide Schematica's registered-factory lookup without exposing the mutable map: `getPartFactory(String)`,
   with identity/missing-name checks, exact public reflection, a compiling example and the retained private field.
   This does not complete Schematica's consumer migration.

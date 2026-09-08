@@ -39,6 +39,7 @@ Existing reflective binaries remain supported until consumer release and pack ad
 | Test two groups of bounding boxes directly | `NormalOcclusionTest.testBoxes(Iterable, Iterable)` — [box-versus-box queries](api/OCCLUSION.md#box-versus-box-queries) |
 | Read FMP's global render registration ID | `TileMultipart.getRenderID()` — [render-ID meaning, lifecycle and setter](api/RENDER_ID.md) |
 | Inspect an existing tile or converted placeholder with a named result | `getOrConvertTileResult(World, BlockCoord)` — [conversion outcomes and placement lifecycle](api/TILE_CONVERSION.md) |
+| Add or remap multipart button attachment orientations | `ButtonPart.setOrientation(int, ForgeDirection)` — [metadata, face mapping and Et Futurum migration](api/BUTTON_ORIENTATIONS.md) |
 
 Each guide explains ownership, lifecycle, legacy replacements and limitations, and links to a compiling Java example
 exercised by the test suite. The loading/setter APIs are advanced reconstruction operations; ordinary placement and
@@ -115,8 +116,10 @@ light aggregation and halo geometry, with compiling examples and Forge coverage.
 ProjectRed adoption remain open. [Converter registration and lifecycle](api/BLOCK_CONVERTERS.md) are documented and
 tested. [Stable tile capability access](api/TILE_TRAIT_ACCESS.md) covers safe Java calls, ProjectRed redstone queries
 and OpenComputers slot refresh. [Custom Java tile-trait authoring](api/CUSTOM_TILE_TRAITS.md) covers registration,
-stable capabilities, lifecycle/state rules and transformer constraints with generated Forge coverage. The remaining
-audited reflection replacements are still pending. ProjectRed's existing Scala traits remain supported until adoption.
+stable capabilities, lifecycle/state rules and transformer constraints with generated Forge coverage. Supported
+[button orientation mapping](api/BUTTON_ORIENTATIONS.md) replaces Et Futurum's reflective array mutation. The Iguana
+saw-strength setter remains the audited FMP-side reflection gap. ProjectRed's existing Scala traits remain supported
+until adoption.
 
 All ten entries in the plan's Phase 9.1 API table have Java replacements. That table is a bounded list of signatures;
 the broader API, extension and consumer adoption work above remains open.

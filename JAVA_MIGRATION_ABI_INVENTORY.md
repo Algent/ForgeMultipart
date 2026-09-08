@@ -166,6 +166,11 @@ registry-map reflection, with a [migration guide](docs/api/FACTORY_LOOKUP.md). I
 exact private Scala mutable-map shape and live backing; the public addition does not authorize removing that field
 before consumer release/adoption. Generator reflection and preview lifecycle remain separate contracts.
 
+`ButtonPart.setOrientation(int, ForgeDirection): void` now replaces Et Futurum's four reflective array writes and
+keeps the two direction maps consistent; [guide](docs/api/BUTTON_ORIENTATIONS.md). The existing public mutable static
+`metaSideMap` and `sideMetaMap` fields retain their exact names, types and modifiers for old releases. Removing or
+narrowing them still waits for a migrated Et Futurum release, target-pack adoption and a fresh reflective-source scan.
+
 ## Consequences for the migration plan
 
 1. Phase 8 (Scala runtime removal) should be reclassified as deferred, not scheduled. Decision 4 is answered.
