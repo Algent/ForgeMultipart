@@ -24,6 +24,7 @@ import org.junit.platform.reporting.legacy.xml.LegacyXmlReportGeneratingListener
 import codechicken.microblock.MicroblockGenerator;
 import codechicken.multipart.MultipartGenerator;
 import codechicken.multipart.examples.BlockConversionExample;
+import codechicken.multipart.examples.CustomTileTraitExample;
 import codechicken.multipart.examples.IlluminatedMicroblockExample;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -60,6 +61,7 @@ public final class ForgeMultipartFunctionalTestMod {
     public void init(FMLInitializationEvent event) {
         PartRegistrationFunctionalTest.registerDuringInit();
         MultipartGenerator.registerPassThroughInterface(GeneratorPassThroughFixture.class.getName(), false, true);
+        CustomTileTraitExample.register();
         externalScalaMicroblockTraitId = MicroblockGenerator
                 .registerTrait("codechicken.multipart.test.ExternalScalaMicroblockFixture");
         IlluminatedMicroblockExample.registerMaterials(illuminatedLamp);
