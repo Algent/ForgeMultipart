@@ -229,6 +229,7 @@ class ForgeEnvironmentSmokeTest {
                                 "copyFrom(Lcodechicken/multipart/TileMultipart;)V",
                                 "partMap(I)Lcodechicken/multipart/TMultiPart;",
                                 "partRemoved(Lcodechicken/multipart/TMultiPart;I)V",
+                                "refreshPartSlots(Lcodechicken/multipart/TMultiPart;)V",
                                 "v_partMap()[Lcodechicken/multipart/TMultiPart;",
                                 "v_partMap_$eq([Lcodechicken/multipart/TMultiPart;)V")),
                 signatures);

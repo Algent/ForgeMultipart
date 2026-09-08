@@ -65,13 +65,40 @@ tile.asInstanceOf[IRedstoneTile].openConnections(absDir)
 That emits an interface call with the stable owner. ProjectRed can remain Scala internally. Keep its legacy
 `TRedstoneTile.openConnections` binary contract until release and pack adoption.
 
-## Slot mutation and custom extensions still need separate work
+## Refreshing a changed slot mask
 
-`TileMultipart.partMap(slot)` is sufficient for reads. OpenComputers' `PrintPart.toggleState` also clears slots equal
-to itself from the live `v_partMap` array, then calls `tile.bindPart(this)`. The read API does not replace that mutation,
-and `bindPart` alone does not clear old slots. A whole `loadPartList` reconstruction would run additional lifecycle and
-cache work. A focused supported slot-refresh operation, preserving equality and override behavior, is the next API
-candidate; do not replace the old integration with reflection or claim that it is already migrated.
+Use `TileMultipart.refreshPartSlots(part)` after an already stored part validates and applies a new
+`TSlottedPart.getSlotMask()`. It provides the Java replacement for OpenComputers' direct `TSlottedTile.v_partMap`
+mutation:
+
+```java
+tile.refreshPartSlots(this);
+tile.notifyPartChange(this);
+sendDescUpdate();
+```
+
+The [compiling example](../../src/functionalTest/java/codechicken/multipart/examples/TileTraitAccessExample.java) keeps
+the cache operation itself separate because validation, state changes and notification policy belong to the part:
+
+```java
+TileTraitAccessExample.refreshSlots(tile, part);
+```
+
+On a generated slotted tile, FMP scans the live slot array in index order, clears every entry for which
+`Objects.equals(stored, part)` is true, then dispatches the existing virtual `bindPart(part)` once. This preserves
+Scala `==` behavior, including distinct equal objects. It reads the array directly, matching the old consumer rather
+than a possible `partMap` override. Unrelated slots, part-list storage and tile ownership stay unchanged. The current
+mask may overwrite a slot if the caller skipped its normal replacement/occlusion check.
+
+A tile without the slotted capability does nothing. The method does not check that the part is stored, bound to this
+tile or slotted, and it does not validate placement, send notifications, mark dirty/render state or schedule updates.
+Call it on the owning world thread only after the new shape passes the consumer's existing `canReplacePart` logic.
+Keep the tile/part's existing notification, sound, packet and scheduling sequence afterward.
+
+`bindPart` dispatches through every generated cache trait, so those hooks still run once. As before, some non-slot
+caches append on bind and are not generally idempotent. This API matches OpenComputers' print part, whose additional
+capabilities do not append such caches; it is not a general refresh for inventory/fluid capability changes. A whole
+`loadPartList` reconstruction would run broader cache, binding and notification behavior and is not equivalent.
 
 For custom generated tiles, keep consumer-callable methods on an ordinary Java capability interface and use the
 stable base for existing tile hooks. Register raw trait inputs by name before class loading, during initialization.
@@ -81,19 +108,19 @@ implementor through occlusion checks. Writing custom aggregation/lifecycle trait
 and inherited access. The [microblock extension](MICROBLOCK_EXTENSIONS.md) demonstrates those helper constraints,
 but is not a complete custom tile-trait authoring example.
 
-No transformed compile-stub artifact is introduced here: the redstone query already has a stable public interface.
-Assess remaining trait-only requirements individually before adding build machinery. Custom tile-trait authoring,
-OpenComputers slot mutation and other audited private/reflection contracts remain open.
+No transformed compile-stub artifact is introduced here: redstone already has a stable interface and slot refresh is
+available on the stable base tile. Assess remaining trait-only requirements individually before adding build
+machinery. Custom tile-trait authoring and other audited private/reflection contracts remain open.
 
 ## Validation
 
 [Forge fixtures](../../src/functionalTest/java/codechicken/multipart/test/TileTraitAccessFunctionalTest.java) execute
 [actual javac-compiled unsafe callers](../../src/functionalTest/java/codechicken/multipart/test/RawTileTraitCalls.java)
 against transformed traits and assert both linkage failures. Stable interface/base calls succeed on the same tiles,
-and the example checks every five-bit mask plus absent capabilities. Packaged-jar compilation and bytecode inspection
-separately verify that the example uses `invokeinterface` with `IRedstoneTile`, without Scala, reflection or raw
-trait-class references. Existing binary APIs and generated executable bodies remain unchanged; two helper dumps
-only shift source line numbers after Javadoc additions.
+and the example checks every five-bit mask, absent capabilities and slot refresh. The slot fixtures compare the new
+entry with the frozen consumer sequence, including equality, current-mask rebinding, unrelated slots, ownership and
+storage. Packaged-jar compilation and bytecode inspection verify that the example uses stable owners without Scala,
+reflection or raw trait-class references. Existing binary APIs remain callable; `refreshPartSlots` is additive.
 
 This is consumer source-access coverage. It does not validate physical-client trait selection/rendering, supply all
 custom extension examples, or establish that any consumer has released and adopted a migration.

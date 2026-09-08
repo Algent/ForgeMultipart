@@ -16,6 +16,7 @@ import codechicken.multipart.TMultiPart;
 import codechicken.multipart.TSlottedPart;
 import codechicken.multipart.TileMultipart;
 import codechicken.multipart.asm.MultipartMixinFactory;
+import codechicken.multipart.examples.TileTraitAccessExample;
 import codechicken.multipart.scalatraits.TSlottedTile;
 import scala.collection.immutable.Nil$;
 
@@ -113,6 +114,43 @@ class TSlottedTileFunctionalTest {
         assertEquals(Arrays.asList(changed, retained), tile.jPartList());
         assertSame(tile, changed.tile());
         assertSame(tile, retained.tile());
+    }
+
+    @Test
+    void javaSlotRefreshMatchesTheConsumerSequence() throws Exception {
+        TileMultipart tile = newSlottedTile();
+        EqualSlotPart changed = new EqualSlotPart(1, 1 << 1);
+        EqualSlotPart retained = new EqualSlotPart(2, 1 << 4);
+        tile.addPart_do(changed);
+        tile.addPart_do(retained);
+        partMap(tile)[3] = new EqualSlotPart(1, 1 << 3);
+        changed.slotMask = 1 << 5;
+        changed.slotMaskCalls = 0;
+
+        TileTraitAccessExample.refreshSlots(tile, changed);
+
+        assertNull(tile.partMap(1));
+        assertNull(tile.partMap(3));
+        assertSame(retained, tile.partMap(4));
+        assertSame(changed, tile.partMap(5));
+        assertEquals(Arrays.asList(changed, retained), tile.jPartList());
+        assertSame(tile, changed.tile());
+        assertSame(tile, retained.tile());
+        assertEquals(1, changed.slotMaskCalls, "The virtual bind chain runs once");
+    }
+
+    @Test
+    void javaSlotRefreshIsANoOpWithoutTheGeneratedSlottedCapability() {
+        TileMultipart tile = new TileMultipart();
+        EqualSlotPart part = new EqualSlotPart(1, 1);
+        TileMultipart owner = new TileMultipart();
+        part.bind(owner);
+
+        tile.refreshPartSlots(part);
+
+        assertTrue(tile.jPartList().isEmpty());
+        assertNull(tile.partMap(0));
+        assertSame(owner, part.tile());
     }
 
     @Test
@@ -222,6 +260,7 @@ class TSlottedTileFunctionalTest {
 
         private final int key;
         private int slotMask;
+        private int slotMaskCalls;
 
         private EqualSlotPart(int key, int slotMask) {
             this.key = key;
@@ -230,6 +269,7 @@ class TSlottedTileFunctionalTest {
 
         @Override
         public int getSlotMask() {
+            slotMaskCalls++;
             return slotMask;
         }
 

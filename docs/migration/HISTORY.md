@@ -2134,3 +2134,26 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Updated API index, plan, audits, handoff and physical-client adoption checks. Reference consumers were not edited,
   released or counted as adopted. Custom tile-trait authoring examples, slot mutation, remaining reflection APIs and
   physical-client/full-pack validation remain open. Evidence: `run/migration-tile-trait-access-reference/`.
+
+### 2026-09-08 — Stable slot refresh for stored parts
+
+- Traced OpenComputers PrintPart's state toggle at the recorded consumer revision. It changes its slot mask, clears
+  every live slot entry equal to itself, calls the virtual `bindPart` chain once, then performs its own sound, part
+  notification, description update and scheduling. Whole-tile reconstruction and `bindPart` alone are not equivalent.
+- Committed baseline `a37e4ec` first. Its Forge characterization pins value equality, stale-slot clearing, unrelated
+  slot retention, current-mask rebinding, ownership and stored-list identity on the untouched implementation.
+- Added `TileMultipart.refreshPartSlots(TMultiPart)`. The base method is a no-op; the generated slotted capability
+  clears equal entries in its live array and calls `bindPart` once. It does not validate, mutate the part, change
+  storage/ownership or send notifications. This adds no interface, reflection path or general cache abstraction.
+- Added a compiling Java example and two Forge regressions for generated dispatch and the non-slotted no-op. Updated
+  the API index, transformed-tile guide, plan, ABI/adoption ledgers and manual OpenComputers check.
+- Normal formatting/checkstyle/build/Forge validation passes with **573 JVM / 286 Forge** tests and zero failures,
+  errors or skips. All **573 archived JVM** callers pass. The byte-identical archived Forge mod finds **284** cases:
+  283 pass, and its exact generated-method inventory assertion reports only the intentional added method; the current
+  inventory assertion includes that method and passes.
+- The packaged inventory remains **444 classes** and **17 ScalaSignature payloads**. All **3,761 existing methods**
+  are unchanged and exactly two methods are added. Of **130** generated dumps, 124 are byte-identical; the other six
+  add only the transformed declaration/helper and four slotted-composite forwarders. The Java example targets Java 8
+  without Scala/reflection/raw-trait references. Evidence: `run/migration-slot-refresh-reference/`.
+- Consumer source/release/adoption remain pending. Next bounded task: a custom Java tile-trait authoring example with
+  generated Forge coverage; remaining audited reflection replacements and physical-client checks stay separate.

@@ -513,7 +513,7 @@ tied to a released minimum dependency version. Unlisted contracts remain governe
 | Legacy contract | Consumer and inspected source | Supported replacement | Consumer migration/release | Target-pack adoption and removal gate |
 | --- | --- | --- | --- | --- |
 | `TRedstoneTile.openConnections(int)` | ProjectRed `e173952e96a4`: `transmission/redwires.scala` | Existing stable `IRedstoneTile.openConnections(int)` with the same mask/rotation logic; [guide](docs/api/TILE_TRAIT_ACCESS.md) | FMP source-access example and Forge coverage complete; consumer source patch/release pending | Retain the old runtime interface descriptor until adoption |
-| `TSlottedTile.v_partMap()` array mutation | OpenComputers `2c00f79be24b`: `PrintPart.toggleState` | Pending focused slot-refresh API; preserve clearing slots equal to the part, then virtual `bindPart` dispatch | Next bounded FMP API candidate; `partMap` reads and `bindPart` alone are insufficient | Keep the live array/accessor ABI; do not replace it with reflection or a whole-tile reload |
+| `TSlottedTile.v_partMap()` array mutation | OpenComputers `2c00f79be24b`: `PrintPart.toggleState` | `TileMultipart.refreshPartSlots(part)`; [equality, cache and notification contract](docs/api/TILE_TRAIT_ACCESS.md#refreshing-a-changed-slot-mask) | FMP API/example complete; consumer source patch/release pending, preserving validation and following sound/notify/packet/schedule order | Keep the live array/accessor ABI until released pack adoption; do not replace it with reflection or a whole-tile reload |
 | External Scala `LightMicroblock` registered through `MicroblockGenerator.registerTrait` | ProjectRed `e173952e96a4`: `illumination/lightmicroblocks.scala` | Java source trait registered by name, `IGeneratedMaterial`, typed sibling traversal and halo helper; [example](docs/api/MICROBLOCK_EXTENSIONS.md) | FMP example tested; consumer rewrite/release, existing config/halo wiring and physical-client checks pending | Retain external Scala trait ingestion until released-consumer adoption and internal Scala-trait removal |
 | `MultiPartRegistry$.registerParts(IPartFactory2, Seq)` and existing array calls | ProjectRed `e173952e96a4`: transmission, expansion and fabrication proxies | `MultiPartRegistry.registerPartFactory` with existing `IPartFactory2` methods and unchanged IDs | Source patch and release pending; Boolean-factory proxies separately need the two-method adapter described in the guide | No migrated pack version verified; retain all registration bridges and external trait support |
 | `MultiPartRegistry$.registerParts(Function2, Seq)` | ForgeRelocationFMP `49a810b8c63b`: proxy init registering `rfmp_frame` | `IPartFactory2` creating a fresh `FramePart` on both paths, registered through `registerPartFactory` | Source patch and release pending; preserve `rfmp_frame` and keep converter/pass-through registration | No migrated pack version verified; retain the function companion descriptor |
@@ -765,7 +765,9 @@ for `TSlottedTile.v_partMap`; the same generated tiles work through `IRedstoneTi
 its binary shape or behavior. The Java example compiles without Scala and calls the stable interface.
 
 ProjectRed needs only a cast-owner change for its open-connection query; preserve the surrounding rotation/mask
-calculation. OpenComputers' slot-array writes still need a focused capability: they clear entries equal to the toggled
-print before virtual `bindPart`, followed by consumer-owned sound/notifications/description/scheduling. No replacement
-is claimed for that mutation in this slice. Reference checkouts remain unchanged and no release/adoption is recorded.
-Evidence: `run/migration-tile-trait-access-reference/`; custom tile-trait authoring and physical-client checks remain.
+calculation. OpenComputers can replace its slot-array cast/loop plus `bindPart` call with
+`tile.refreshPartSlots(this)`, preserving its preceding validation/state change and following sound, notification,
+description and scheduling order. FMP clears value-equal entries from the live array, then dispatches the virtual bind
+chain once; no storage, ownership or notification work is added. Reference checkouts remain unchanged and no
+release/adoption is recorded. Evidence: `run/migration-tile-trait-access-reference/` and
+`run/migration-slot-refresh-reference/`; custom tile-trait authoring and physical-client checks remain.

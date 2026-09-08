@@ -128,5 +128,8 @@ committed callback order and example state round trips. Before adopting consumer
   face/framed wires with face covers and edge blockers on a physical client/server, including part changes and moves.
 - [ ] Verify consumer bytecode uses the stable interface/base owner rather than raw transformed trait class calls or
   fields. The [Forge fixture](docs/api/TILE_TRAIT_ACCESS.md) proves server linkage, not all client-side capabilities.
-- [ ] Treat OpenComputers print slot-array mutation as still pending a supported API; retain its old binary accessor
-  until an equivalent source migration, release and pack adoption are validated.
+- [ ] Rebuild OpenComputers `PrintPart.toggleState` using `tile.refreshPartSlots(this)`, then exercise inactive/active
+  and button modes on client/server. Confirm old slots clear, new slots occupy, rejected changes leave caches intact,
+  and sound, part notification, description update and scheduled reset still occur once in the original order.
+- [ ] Verify the migrated OpenComputers bytecode no longer names `TSlottedTile`/`v_partMap`; retain the old accessor
+  until its released version is present in the target pack.

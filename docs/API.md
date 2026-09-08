@@ -27,6 +27,7 @@ Existing reflective binaries remain supported until consumer release and pack ad
 | Read a microblock material's block and metadata | `BlockMicroMaterial.block()`, `meta()` — [typed GuideNH query, identity and overrides](api/MATERIAL_ACCESS.md) |
 | Create a microblock with the requested material and side | `MicroblockGenerator.create(MicroblockClass, int, boolean)` — [construction, material traits and GuideNH migration](api/MICROBLOCK_CREATION.md) |
 | Call generated tile capabilities from Java | `TileMultipart`, `IRedstoneTile` and ordinary interfaces — [safe compilation and raw-trait pitfalls](api/TILE_TRAIT_ACCESS.md) |
+| Refresh slots after a stored part changes shape | `refreshPartSlots(TMultiPart)` — [ownership, equality and notification responsibilities](api/TILE_TRAIT_ACCESS.md#refreshing-a-changed-slot-mask) |
 | Add material-specific behavior to generated microblocks | `registerTrait(String)` and `IGeneratedMaterial` — [illuminated Java extension, compilation and side contracts](api/MICROBLOCK_EXTENSIONS.md) |
 | Read/index/search a tile's parts | `jPartList()` — [part collection ownership and order](api/PART_TRAVERSAL.md#collection-ownership-and-ordering) |
 | Run callbacks while skipping detached parts | `forEachPart(Consumer)` — [callback and override behavior](api/PART_TRAVERSAL.md#callback-behavior) |
@@ -80,12 +81,16 @@ The registry's matching companion methods carry the same internal marker. This i
 not a claim that every other public member is a supported API. See [TileMultipart's Javadocs](../src/main/scala/codechicken/multipart/TileMultipart.java)
 and [registry Javadocs](../src/main/scala/codechicken/microblock/MicroMaterialRegistry.java) for method-specific details.
 
-Two advanced methods remain supported because consumers use them directly:
+Three advanced methods remain supported because consumers use them directly:
 
 - **`bindPart(part)`** updates capability caches through generated overrides. It does not insert the part, change
-  its tile binding or perform placement/notifications. OpenComputers clears a print part's old slot entries before
-  calling it to populate a changed slot mask. A repeated call does not clear obsolete slots and may append entries
-  in other trait caches. Use it only with known cache semantics; full reconstruction uses `loadPartList`.
+  its tile binding or perform placement/notifications. The legacy OpenComputers integration clears a print part's old
+  slot entries before calling it to populate a changed slot mask. A repeated call does not clear obsolete slots and
+  may append entries in other trait caches. Use `refreshPartSlots` for that migration; full reconstruction uses
+  `loadPartList`.
+- **`refreshPartSlots(part)`** replaces OpenComputers' direct generated-array mutation. Generated slotted tiles clear
+  equal cached entries and invoke the virtual bind chain once; base tiles do nothing. It leaves ownership, storage,
+  validation and notifications to the caller. See the [slot-refresh contract](api/TILE_TRAIT_ACCESS.md#refreshing-a-changed-slot-mask).
 - **`internalPartChange(part)`** sends local `onPartChanged` callbacks through the retained `operate` hook. The base
   traversal captures list order, skips parts whose binding is null at callback time, and excludes parts equal to the
   changed part using `part.equals(p)`. Null broadcasts to all eligible parts. A non-null binding to another tile
@@ -93,7 +98,7 @@ Two advanced methods remain supported because consumers use them directly:
   packets and external neighbors separately; this method does none of those. `notifyPartChange` also performs world
   update/neighbor/lighting notifications when needed.
 
-No reflection is needed to call either method. `operate` and `getOrConvertTile2` retain their documented legacy
+No reflection is needed to call any of these methods. `operate` and `getOrConvertTile2` retain their documented legacy
 contracts and Java replacements; neither receives an internal-only marker. Removing those bridges still requires
 consumer and internal migration gates. The [consumer audit](../JAVA_MIGRATION_CONSUMER_AUDIT.md#api-boundary-audit)
 records the checked source calls and validation.
@@ -107,9 +112,9 @@ must select the intended parameter types when a method is overloaded.
 An [illuminated Java microblock extension](api/MICROBLOCK_EXTENSIONS.md) now covers registration, material traits,
 light aggregation and halo geometry, with compiling examples and Forge coverage. Its physical-client rendering and
 ProjectRed adoption remain open. [Converter registration and lifecycle](api/BLOCK_CONVERTERS.md) are documented and
-tested. [Stable tile capability access](api/TILE_TRAIT_ACCESS.md) covers safe Java calls and ProjectRed redstone
-queries; OpenComputers slot mutation, custom tile-trait authoring and the remaining audited reflection replacements
-are still pending. ProjectRed's existing Scala traits remain supported until adoption.
+tested. [Stable tile capability access](api/TILE_TRAIT_ACCESS.md) covers safe Java calls, ProjectRed redstone queries
+and OpenComputers slot refresh. Custom tile-trait authoring and the remaining audited reflection replacements are
+still pending. ProjectRed's existing Scala traits remain supported until adoption.
 
 All ten entries in the plan's Phase 9.1 API table have Java replacements. That table is a bounded list of signatures;
 the broader API, extension and consumer adoption work above remains open.

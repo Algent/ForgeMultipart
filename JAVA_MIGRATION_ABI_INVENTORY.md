@@ -267,7 +267,8 @@ content only. Existing converter consumers need no API rename; their factory mig
 ### Stable Java tile capability access
 
 The [guide](docs/api/TILE_TRAIT_ACCESS.md) provides ProjectRed's `TRedstoneTile.openConnections` source migration to
-existing `IRedstoneTile.openConnections`. All descriptors and production method bodies remain unchanged; legacy
-interface calls still link. The dev jar's raw trait classes are not safe replacements for original compile-time
-interfaces: executable javac fixtures demonstrate class-call and field-read linkage failures. OpenComputers' live
-`TSlottedTile.v_partMap()` array mutation remains a separate API gap and its runtime accessor must remain supported.
+existing `IRedstoneTile.openConnections`. Legacy descriptors remain and interface calls still link. The dev jar's raw
+trait classes are not safe replacements for original compile-time interfaces: executable javac fixtures demonstrate
+class-call and field-read linkage failures. Additive `TileMultipart.refreshPartSlots(TMultiPart): void`, with the
+generated `TSlottedTile` override of the same descriptor, replaces OpenComputers' live-array mutation for source
+rebuilds. Keep the old `TSlottedTile.v_partMap()` accessor until released consumer and target-pack adoption.

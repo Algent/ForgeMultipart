@@ -546,6 +546,20 @@ public class TileMultipart extends TileEntity implements IChunkLoadTile {
      */
     public void bindPart(TMultiPart part) {}
 
+    /**
+     * Refreshes the generated slot cache after an already stored part changes its {@link TSlottedPart#getSlotMask()}.
+     * Generated slotted tiles remove every cached entry equal to {@code part}, then dispatch
+     * {@link #bindPart(TMultiPart)} once to add its current slots. A tile without the slotted capability does nothing.
+     *
+     * <p>
+     * This does not validate placement, insert or bind the part, change the stored list, send notifications, mark the
+     * tile dirty/renderable or schedule updates. Call only after the part has validated its new shape and updated its
+     * mask, on the owning world thread. The part normally remains stored and bound to this tile; no eager validation is
+     * added. Other generated bind hooks also run, so callers must retain their existing cache-specific assumptions and
+     * perform their own notifications afterward.
+     */
+    public void refreshPartSlots(TMultiPart part) {}
+
     /** Internal FMP placement callback for trait overrides; do not call directly from consumers. */
     public void partAdded(TMultiPart part) {}
 
