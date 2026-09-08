@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
@@ -84,6 +86,33 @@ class TSlottedTileFunctionalTest {
         assertSame(part, slots[1]);
         assertSame(part, slots[5]);
         assertSame(part, slots[26]);
+    }
+
+    @Test
+    void consumerSlotRefreshClearsEqualEntriesThenRebindsWithoutChangingOwnershipOrStorage() throws Exception {
+        TileMultipart tile = newSlottedTile();
+        EqualSlotPart changed = new EqualSlotPart(1, 1 << 1);
+        EqualSlotPart retained = new EqualSlotPart(2, 1 << 4);
+        tile.addPart_do(changed);
+        tile.addPart_do(retained);
+        TMultiPart[] slots = partMap(tile);
+        slots[3] = new EqualSlotPart(1, 1 << 3);
+        changed.slotMask = 1 << 5;
+
+        for (int index = 0; index < slots.length; index++) {
+            if (Objects.equals(slots[index], changed)) {
+                slots[index] = null;
+            }
+        }
+        tile.bindPart(changed);
+
+        assertNull(tile.partMap(1));
+        assertNull(tile.partMap(3), "Scala == clears a distinct equal entry too");
+        assertSame(retained, tile.partMap(4));
+        assertSame(changed, tile.partMap(5));
+        assertEquals(Arrays.asList(changed, retained), tile.jPartList());
+        assertSame(tile, changed.tile());
+        assertSame(tile, retained.tile());
     }
 
     @Test
@@ -186,6 +215,32 @@ class TSlottedTileFunctionalTest {
         @Override
         public int hashCode() {
             return slotMask;
+        }
+    }
+
+    private static final class EqualSlotPart extends PlainPart implements TSlottedPart {
+
+        private final int key;
+        private int slotMask;
+
+        private EqualSlotPart(int key, int slotMask) {
+            this.key = key;
+            this.slotMask = slotMask;
+        }
+
+        @Override
+        public int getSlotMask() {
+            return slotMask;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof EqualSlotPart && key == ((EqualSlotPart) other).key;
+        }
+
+        @Override
+        public int hashCode() {
+            return key;
         }
     }
 }
