@@ -1,22 +1,18 @@
 package codechicken.multipart;
 
 import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderBlocks;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.MinecraftForgeClient;
 
-import codechicken.lib.raytracer.ExtendedMOP;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.vec.Vector3;
 import cpw.mods.fml.client.registry.ISimpleBlockRenderingHandler;
 import cpw.mods.fml.client.registry.RenderingRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-import scala.Tuple2;
 
 /**
  * Internal class for rendering callbacks. Should be moved to the handler package.
@@ -72,7 +68,7 @@ public final class MultipartRenderer$ extends TileEntitySpecialRenderer implemen
         }
 
         if (renderer.hasOverrideBlockTexture()) {
-            drawBreakingPart(tile, x, y, z, renderer);
+            drawBreakingPart(world, x, y, z, renderer);
             return false;
         }
 
@@ -84,29 +80,12 @@ public final class MultipartRenderer$ extends TileEntitySpecialRenderer implemen
         return b;
     }
 
-    /**
-     * The hit data is a Scala Tuple2 whose first member is the struck part's index. It arrives erased, so both the
-     * tuple and the index are checked before use, exactly as the reference's pattern match did.
-     */
-    private static void drawBreakingPart(TileMultipart tile, int x, int y, int z, RenderBlocks renderer) {
-        MovingObjectPosition hit = Minecraft.getMinecraft().objectMouseOver;
-        if (hit == null || hit.blockX != x || hit.blockY != y || hit.blockZ != z) {
-            return;
-        }
-
-        Object data = ExtendedMOP.getData(hit);
-        if (!(data instanceof Tuple2)) {
-            return;
-        }
-
-        Object index = ((Tuple2<?, ?>) data)._1();
-        if (!(index instanceof Integer)) {
-            return;
-        }
-
-        int i = (Integer) index;
-        if (i >= 0 && i < tile.partList().size()) {
-            tile.partList().apply(i).drawBreaking(renderer);
+    private static void drawBreakingPart(IBlockAccess world, int x, int y, int z, RenderBlocks renderer) {
+        TMultiPart part = RenderPartResolver.resolve(world, x, y, z);
+        if (part instanceof ISBRHPart) {
+            ((ISBRHPart) part).renderWorldBlock(world, x, y, z, renderer);
+        } else if (part != null) {
+            part.drawBreaking(renderer);
         }
     }
 

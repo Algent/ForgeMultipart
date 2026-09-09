@@ -1,6 +1,7 @@
 package codechicken.multipart;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -113,6 +114,23 @@ class MultipartRendererCharacterizationTest {
             assertNotNull(sideOnly, name + " must stay @SideOnly");
             assertEquals(Side.CLIENT, sideOnly.value(), name);
         }
+    }
+
+    @Test
+    void customAndJsonModelRenderContractsRemainAvailable() throws Exception {
+        assertSame(
+                boolean.class,
+                ISBRHPart.class.getMethod(
+                        "renderWorldBlock",
+                        IBlockAccess.class,
+                        int.class,
+                        int.class,
+                        int.class,
+                        RenderBlocks.class).getReturnType());
+        assertSame(Block.class, JsonModeledPart.class.getMethod("getBlock").getReturnType());
+        assertSame(IBlockAccess.class, JsonModeledPart.class.getMethod("getRenderWorld").getReturnType());
+        assertFalse(ISBRHPart.class.isAnnotationPresent(Deprecated.class));
+        assertFalse(JsonModeledPart.class.isAnnotationPresent(Deprecated.class));
     }
 
     private static void assertStatic(Method method, Class<?> returnType) {

@@ -9,6 +9,8 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.ForgeHooksClient;
 
+import com.gtnewhorizon.gtnhlib.client.model.ModelISBRH;
+
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Vector3;
 import scala.collection.Iterator;
@@ -174,6 +176,17 @@ final class TileMultipartClientAccess {
     static boolean renderPart(TMultiPart part, IBlockAccess world, Vector3 vector, RenderBlocks renderer) {
         if (part == null) {
             return false;
+        }
+        if (part instanceof JsonModeledPart) {
+            JsonModeledPart modeledPart = (JsonModeledPart) part;
+            return ModelISBRH.INSTANCE.get().renderWorldBlock(
+                    modeledPart.getRenderWorld(),
+                    (int) vector.x,
+                    (int) vector.y,
+                    (int) vector.z,
+                    modeledPart.getBlock(),
+                    ModelISBRH.JSON_ISBRH_ID,
+                    renderer);
         }
         if (part instanceof ISBRHPart) {
             return ((ISBRHPart) part).renderWorldBlock(world, (int) vector.x, (int) vector.y, (int) vector.z, renderer);
