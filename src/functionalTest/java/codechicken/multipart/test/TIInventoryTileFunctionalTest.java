@@ -131,6 +131,28 @@ class TIInventoryTileFunctionalTest {
     }
 
     @Test
+    void rebuildingQueriesEachInventorySizeOncePerPassAndPreservesSlotOrder() {
+        TIInventoryTile api = inventory(newInventoryTile());
+        InventoryPart empty = new InventoryPart("empty", 0);
+        InventoryPart single = new InventoryPart("single", 1);
+        InventoryPart large = new InventoryPart("large", 54);
+        api.invList().addAll(Arrays.asList(empty, single, large));
+
+        api.rebuildSlotMap();
+
+        assertEquals(2, empty.sizeCalls);
+        assertEquals(2, single.sizeCalls);
+        assertEquals(2, large.sizeCalls);
+        assertEquals(55, api.getSizeInventory());
+        assertSame(single, api.slotMap()[0]._1());
+        assertEquals(0, api.slotMap()[0]._2());
+        for (int slot = 0; slot < 54; slot++) {
+            assertSame(large, api.slotMap()[slot + 1]._1());
+            assertEquals(slot, api.slotMap()[slot + 1]._2());
+        }
+    }
+
+    @Test
     void tileInventoryMetadataAndLifecycleRemainFixed() {
         TileMultipart tile = newInventoryTile();
         InventoryPart part = new InventoryPart("metadata", 1);
@@ -219,6 +241,7 @@ class TIInventoryTileFunctionalTest {
         private ItemStack lastValidityStack;
         private int openCalls;
         private int closeCalls;
+        private int sizeCalls;
 
         private InventoryPart(String name, int size) {
             this.name = name;
@@ -232,6 +255,7 @@ class TIInventoryTileFunctionalTest {
 
         @Override
         public int getSizeInventory() {
+            sizeCalls++;
             return stacks.length;
         }
 

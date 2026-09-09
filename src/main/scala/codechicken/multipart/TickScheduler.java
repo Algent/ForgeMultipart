@@ -5,10 +5,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
@@ -24,6 +22,9 @@ import codechicken.lib.vec.BlockCoord;
 import codechicken.lib.world.ChunkExtension;
 import codechicken.lib.world.WorldExtension;
 import codechicken.multipart.handler.MultipartProxy;
+import scala.collection.mutable.HashSet;
+import scala.collection.mutable.Set;
+import scala.runtime.AbstractFunction1;
 
 /**
  * Used for scheduling delayed callbacks to parts. Do not use this for redstone applications that require precise
@@ -109,13 +110,15 @@ public final class TickScheduler {
         @Override
         public void postTick() {
             if (!tickChunks.isEmpty()) {
-                Set<ChunkTickScheduler> remaining = new HashSet<>();
-                for (ChunkTickScheduler chunk : tickChunks) {
-                    if (chunk.processTicks()) {
-                        remaining.add(chunk);
-                    }
-                }
-                tickChunks = remaining;
+                // Callbacks may unload chunks. Keep the reference's mutation-tolerant Scala traversal.
+                tickChunks = (Set<ChunkTickScheduler>) tickChunks
+                        .filter(new AbstractFunction1<ChunkTickScheduler, Object>() {
+
+                            @Override
+                            public Object apply(ChunkTickScheduler chunk) {
+                                return chunk.processTicks();
+                            }
+                        });
             }
 
             processing = false;

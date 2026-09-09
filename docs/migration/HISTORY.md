@@ -13,6 +13,19 @@ comparisons, formatting/checkstyle results and stale "X is next" pointers. Findi
 ABI observations were kept. A passing build was the baseline expectation for every entry, so its absence here does not
 mean a check was skipped. The last two sections hold records moved from the retired profile and downgrader documents.
 
+### 2026-09-09 — Scheduler unload and inventory size regressions
+
+- Restored the original Scala mutable-set filtering in `TickScheduler.WorldTickScheduler.postTick`, matching the
+  retained-collection approach in `PacketScheduler`. Java's fail-fast set iterator threw when a scheduled callback
+  unloaded a chunk. The regression test covers multiple unloading callbacks and an unrelated delayed tick, including
+  exactly-once delivery on later ticks. This restores the reference traversal rather than defining new unload ordering.
+- Captured each inventory's size once in the slot-building pass of `JInventoryTile.rebuildSlotMap`, preserving the
+  original two-pass evaluation. A 54-slot inventory now receives two size queries instead of 56. The generated-trait
+  regression covers empty, single-slot and 54-slot inventories and checks every flattened slot's owner and local index.
+- Both new tests failed before their respective fixes. Formatting, checkstyle, the build, all 577 JVM tests and all
+  290 Java 8 Forge tests pass with zero failures/errors/skips. The added scheduler callback brings the packaged class
+  count to 451; all remain Java 8 bytecode (version 52). No public API changes or TPS improvement are claimed.
+
 ### 2026-08-14
 
 - Confirmed that the codebase is feasible to migrate incrementally to Java.

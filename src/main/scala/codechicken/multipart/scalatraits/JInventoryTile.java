@@ -107,7 +107,8 @@ public class JInventoryTile extends TileMultipart implements TIInventoryTile {
         Tuple2<IInventory, Object>[] rebuilt = (Tuple2<IInventory, Object>[]) new Tuple2[totalSlots];
         int index = 0;
         for (IInventory inventory : invList) {
-            for (int slot = 0; slot < inventory.getSizeInventory(); slot++) {
+            int size = inventory.getSizeInventory();
+            for (int slot = 0; slot < size; slot++) {
                 rebuilt[index++] = new Tuple2<IInventory, Object>(inventory, Integer.valueOf(slot));
             }
         }
