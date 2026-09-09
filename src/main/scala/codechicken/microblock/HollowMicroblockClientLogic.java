@@ -75,8 +75,7 @@ final class HollowMicroblockClientLogic {
         int slot = part.getSlot();
         int internalMask = 0;
         switch (slot) {
-            case 0:
-            case 1:
+            case 0, 1 -> {
                 if (face) internalMask = 0x3c;
                 f.apply(pos, material, pass, new Cuboid6(d1, y1, d2, d2, y2, z2), 0x3b | internalMask);
                 f.apply(pos, material, pass, new Cuboid6(d1, y1, z1, d2, y2, d1), 0x37 | internalMask);
@@ -84,9 +83,8 @@ final class HollowMicroblockClientLogic {
                 f.apply(pos, material, pass, new Cuboid6(x1, y1, d1, d1, y2, d2), sideMask & 0x13 | 0xc | internalMask);
                 f.apply(pos, material, pass, new Cuboid6(x1, y1, d2, x2, y2, z2), sideMask & 0x3b | 4 | internalMask);
                 f.apply(pos, material, pass, new Cuboid6(x1, y1, z1, x2, y2, d1), sideMask & 0x37 | 8 | internalMask);
-                break;
-            case 2:
-            case 3:
+            }
+            case 2, 3 -> {
                 if (face) internalMask = 0x33;
                 f.apply(pos, material, pass, new Cuboid6(d2, d1, z1, x2, d2, z2), 0x2f | internalMask);
                 f.apply(pos, material, pass, new Cuboid6(x1, d1, z1, d1, d2, z2), 0x1f | internalMask);
@@ -104,9 +102,8 @@ final class HollowMicroblockClientLogic {
                         pass,
                         new Cuboid6(x1, y1, z1, d1, y2, z2),
                         sideMask & 0x1f | 0x20 | internalMask);
-                break;
-            case 4:
-            case 5:
+            }
+            case 4, 5 -> {
                 if (face) internalMask = 0xf;
                 f.apply(pos, material, pass, new Cuboid6(x1, d2, d1, x2, y2, d2), 0x3e | internalMask);
                 f.apply(pos, material, pass, new Cuboid6(x1, y1, d1, x2, d1, d2), 0x3d | internalMask);
@@ -114,9 +111,8 @@ final class HollowMicroblockClientLogic {
                 f.apply(pos, material, pass, new Cuboid6(x1, d1, z1, x2, d2, d1), sideMask & 0x34 | 3 | internalMask);
                 f.apply(pos, material, pass, new Cuboid6(x1, d2, z1, x2, y2, z2), sideMask & 0x3e | 1 | internalMask);
                 f.apply(pos, material, pass, new Cuboid6(x1, y1, z1, x2, d1, z2), sideMask & 0x3d | 2 | internalMask);
-                break;
-            default:
-                throw new MatchError(slot);
+            }
+            default -> throw new MatchError(slot);
         }
     }
 
