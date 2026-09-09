@@ -3,7 +3,7 @@
 ## Current state
 
 The scoped integration is implemented on `algent/java`, building on baseline `65d0cd0`. The three regression fixes
-are preserved. `build.gradle` adds two tasks; `StackAnalyserLogic.visitInsn` uses the validated Java 21 pattern switch,
+are preserved. `build.gradle` adds two tasks; `StackAnalyserLogic` uses pattern and arrow-rule switches,
 `JavaTraitRegistration` and `ClassInfoLookup` use Java 21 pattern variables, and `ScalaSignatureParser` uses switch
 expressions. The nine Scala sources, Scala 2.11.5 dependency, source layout, and normal Gradle entry points remain in
 place. Production tasks do not read a frozen jar or any files under `run/jvmdg-trial/`.
@@ -75,9 +75,9 @@ Recommended order:
 1. Start with package-private helpers called directly by retained Scala. `JavaTraitRegistration.java` and
    `ClassInfoLookup.java` are completed follow-ups; pattern variables remove their checked casts without changing the
    Scala-facing declarations. `StackAnalyserLogic.java` remains the original proven example.
-2. Continue only where modern syntax produces a concrete control-flow gain. `ScalaSignatureParser.java` is complete:
-   its two result-producing switches are now switch expressions. Prefer simplifying the remaining opcode switches in
-   the already-modern `StackAnalyserLogic.java` before adding another build exclusion. `ScalaTraitRegistration.java`
+2. Continue only where modern syntax produces a concrete control-flow gain. `ScalaSignatureParser.java` and the
+   remaining opcode switches in the already-modern `StackAnalyserLogic.java` are complete. The next cohesive internal
+   group is the three hollow/post microblock logic helpers called only by retained Scala. `ScalaTraitRegistration.java`
    should not move merely to restyle its erased `Some` checks.
 3. Consider public core implementations such as `RedstoneInteractions$.java`, `TileMultipart.java` and the registries
    only after the internal batches. Modern method bodies are technically possible, but their published ABI and frozen
@@ -111,6 +111,10 @@ The completed `ScalaSignatureParser` batch also passes the clean compiler bounda
 Forge tests and the 134-dump comparison; all 450 packaged classes remain version 52. Its non-private ABI is unchanged
 and it has no executable JVM Downgrader API reference. Modern string concatenation in the same internal class lowers
 to six private helper methods; these are compiler implementation details, not consumer entry points.
+
+The follow-up `StackAnalyserLogic` batch converts constant classification to a pattern switch expression and removes
+fall-through syntax from its opcode switches. It adds no build exclusion and preserves the same 576 JVM tests, 289
+Java 8 Forge tests and all 134 generated ASM hashes.
 
 ### fastutil audit
 
