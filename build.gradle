@@ -8,12 +8,13 @@ tasks.test {
     useJUnitPlatform()
 }
 
-// Scope modern syntax to this helper; retained Scala and joint Java stay on Java 8.
+// Scope modern syntax to these helpers; retained Scala and joint Java stay on Java 8.
 apply plugin: xyz.wagyourtail.jvmdg.gradle.JVMDowngraderPlugin
 
 def modernJavaSources = sourceSets.main.scala.matching {
     include 'codechicken/multipart/asm/StackAnalyserLogic.java'
     include 'codechicken/multipart/asm/JavaTraitRegistration.java'
+    include 'codechicken/multipart/asm/ClassInfoLookup.java'
 }
 def legacyScala = tasks.named('compileScala') {
     // Zinc does not invalidate joint-compiled Java annotations when Tags.VERSION changes.
@@ -21,6 +22,7 @@ def legacyScala = tasks.named('compileScala') {
     // Scalac reads the Java declaration without asking Java 8 javac to compile its body.
     exclude 'codechicken/multipart/asm/StackAnalyserLogic.java'
     exclude 'codechicken/multipart/asm/JavaTraitRegistration.java'
+    exclude 'codechicken/multipart/asm/ClassInfoLookup.java'
     scalaCompileOptions.additionalParameters = ['-sourcepath', file('src/main/scala').absolutePath]
     inputs.files(modernJavaSources).withPropertyName('modernJavaDeclarations').withPathSensitivity(PathSensitivity.RELATIVE)
 }

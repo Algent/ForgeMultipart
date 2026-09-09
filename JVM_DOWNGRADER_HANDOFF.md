@@ -4,9 +4,9 @@
 
 The scoped integration is implemented on `algent/java`, building on baseline `65d0cd0`. The three regression fixes
 are preserved. `build.gradle` adds two tasks; `StackAnalyserLogic.visitInsn` uses the validated Java 21 pattern switch,
-and `JavaTraitRegistration` uses Java 21 pattern variables. The nine Scala sources, Scala 2.11.5 dependency, source
-layout, and normal Gradle entry points remain in place. Production tasks do not read a frozen jar or any files under
-`run/jvmdg-trial/`.
+while `JavaTraitRegistration` and `ClassInfoLookup` use Java 21 pattern variables. The nine Scala sources, Scala 2.11.5
+dependency, source layout, and normal Gradle entry points remain in place. Production tasks do not read a frozen jar
+or any files under `run/jvmdg-trial/`.
 
 The subsequent `StackAnalyser` initializer extraction is recorded in `JAVA_MIGRATION_HANDOFF.md`. The exact-byte
 comparisons and frozen-version reproduction below describe checkpoint `5f0e329`; later helper edits need their own
@@ -23,6 +23,11 @@ reference comparisons. The current extraction's evidence is in `run/migration-st
 
 The source-path declaration is an explicit Scala-task input. The existing `scalaCompileOptions.force = true` guard
 remains to prevent stale joint-compiled Java annotations after generated `Tags.VERSION` changes.
+
+The per-file include/exclude pairs are temporary compiler routing. These Java files still live in the Scala source set,
+whose joint compiler would otherwise send them to Java 8 javac. Once the retained Scala/Java dependency cycle is gone,
+move the modern cohort behind one source-set or directory boundary; once Scala is gone, compile all Java with the
+modern toolchain and remove the exclusions, `-sourcepath` bridge and force guard together.
 
 The bundled `DowngradeFiles` task initially declares outputs only for inputs that already exist during configuration.
 `outputs.dirs(outputMap.values())` explicitly declares the directory for clean builds. Raw and downgraded output use
@@ -67,11 +72,12 @@ individual review. The normal production configuration remains unchanged.
 
 Recommended order:
 
-1. Start with package-private helpers called directly by retained Scala. `JavaTraitRegistration.java` is the first
-   completed follow-up: only `ASMMixinCompiler.scala` calls it, while pattern variables remove repeated checked casts.
-   `StackAnalyserLogic.java` remains the original proven example.
-2. Continue with internal ASM helpers that have real cast/control-flow gains, especially `ClassInfoLookup.java` and
-   `ScalaTraitRegistration.java`, one behavior-preserving batch at a time with generated-output comparison.
+1. Start with package-private helpers called directly by retained Scala. `JavaTraitRegistration.java` and
+   `ClassInfoLookup.java` are completed follow-ups; pattern variables remove their checked casts without changing the
+   Scala-facing declarations. `StackAnalyserLogic.java` remains the original proven example.
+2. Continue only where modern syntax produces a concrete control-flow gain. `ScalaSignatureParser.java` is the next
+   useful candidate because its two result-producing switches can become exhaustive switch expressions.
+   `ScalaTraitRegistration.java` should not move merely to restyle its erased `Some` checks.
 3. Consider public core implementations such as `RedstoneInteractions$.java`, `TileMultipart.java` and the registries
    only after the internal batches. Modern method bodies are technically possible, but their published ABI and frozen
    behavior make the review cost higher.
@@ -94,6 +100,11 @@ all 289 functional tests. All 450 dev-jar classes remain version 52, the jar has
 references, and all 134 generated ASM dump names and hashes match the pre-change manifest. The helper is absent from
 joint output and present only in the raw/downgraded modern directories. Its own class bytes changed as expected under
 modern javac/JVM Downgrader, but no source signature or consumer-facing class is changed.
+
+The completed `ClassInfoLookup` batch has the same clean-build, 576-test, Java 8 Forge, 450-class/version-52 and
+134-dump results. Its source signatures and package-private visibility are unchanged. JVM Downgrader records nest
+metadata as annotations for this helper's anonymous callbacks, but the packaged classes contain no executable JVM
+Downgrader API reference and the Java 8 runtime needs no added dependency.
 
 ### fastutil audit
 
@@ -154,8 +165,8 @@ scoped path selectively; if parsing, compilation order, ABI or downgrade support
 working syntax and record the blocker and revisit condition. Do not add fragile workarounds solely for syntax.
 
 The production source tree now contains 231 Java files and nine Scala files / 782 nonblank Scala lines. Of the 224 Java
-sources in the Scala source tree, only `StackAnalyserLogic` and `JavaTraitRegistration` bypass joint compilation.
-Retained models, trait
+sources in the Scala source tree, only `StackAnalyserLogic`, `JavaTraitRegistration` and `ClassInfoLookup` bypass joint
+compilation. Retained models, trait
 metadata, synthetic super accessors, and downstream Scala consumers prevent treating the last nine files as a
 mechanical deletion queue. Modern GTNH runtime support does not remove the retained Scala compiler's Java 8
 requirement. The main migration plan and working handoff carry the current API/adoption priorities and source counts.
