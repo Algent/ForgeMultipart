@@ -34,7 +34,7 @@ public final class RenderPartResolver {
             return null;
         }
 
-        TileMultipart tile = BlockMultipart.getClientTile(world, x, y, z);
+        TileMultipart tile = TileMultipart.class.cast(BlockMultipart.getClientTile(world, x, y, z));
         if (tile == null) {
             return null;
         }
