@@ -13,12 +13,14 @@ apply plugin: xyz.wagyourtail.jvmdg.gradle.JVMDowngraderPlugin
 
 def modernJavaSources = sourceSets.main.scala.matching {
     include 'codechicken/multipart/asm/StackAnalyserLogic.java'
+    include 'codechicken/multipart/asm/JavaTraitRegistration.java'
 }
 def legacyScala = tasks.named('compileScala') {
     // Zinc does not invalidate joint-compiled Java annotations when Tags.VERSION changes.
     scalaCompileOptions.force = true
     // Scalac reads the Java declaration without asking Java 8 javac to compile its body.
     exclude 'codechicken/multipart/asm/StackAnalyserLogic.java'
+    exclude 'codechicken/multipart/asm/JavaTraitRegistration.java'
     scalaCompileOptions.additionalParameters = ['-sourcepath', file('src/main/scala').absolutePath]
     inputs.files(modernJavaSources).withPropertyName('modernJavaDeclarations').withPathSensitivity(PathSensitivity.RELATIVE)
 }

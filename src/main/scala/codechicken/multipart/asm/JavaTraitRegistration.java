@@ -189,8 +189,7 @@ final class JavaTraitRegistration {
             InsnList instructions = method.instructions;
             AbstractInsnNode instruction = instructions.getFirst();
             while (instruction != null) {
-                if (instruction instanceof FieldInsnNode) {
-                    FieldInsnNode field = (FieldInsnNode) instruction;
+                if (instruction instanceof FieldInsnNode field) {
                     if (instruction.getOpcode() == GETFIELD) instruction = replace(
                             instructions,
                             instruction,
@@ -209,8 +208,7 @@ final class JavaTraitRegistration {
                                     fieldName(field.name) + "_$eq",
                                     "(" + field.desc + ")V",
                                     true));
-                } else if (instruction instanceof MethodInsnNode) {
-                    MethodInsnNode call = (MethodInsnNode) instruction;
+                } else if (instruction instanceof MethodInsnNode call) {
                     if (instruction.getOpcode() == INVOKESPECIAL) {
                         if (ASMMixinCompiler$.MODULE$.getSuper(call, stack).isDefined())
                             instruction = replace(instructions, instruction, superInstruction(call));
@@ -286,14 +284,12 @@ final class JavaTraitRegistration {
             StackAnalyser stack = new StackAnalyser(Type.getObjectType(input.name), source);
             AbstractInsnNode instruction = constructor.instructions.getFirst();
             while (instruction != null) {
-                if (instruction.getOpcode() == INVOKESPECIAL && instruction instanceof MethodInsnNode) {
-                    MethodInsnNode call = (MethodInsnNode) instruction;
+                if (instruction.getOpcode() == INVOKESPECIAL && instruction instanceof MethodInsnNode call) {
                     if (Objects.equals(call.owner, input.superName) && Objects.equals(call.name, "<init>")) {
                         int argumentWidth = 0;
                         for (Type argument : Type.getArgumentTypes(call.desc)) argumentWidth += argument.getSize();
                         StackAnalyser.StackEntry receiver = stack.peek(argumentWidth);
-                        if (receiver instanceof StackAnalyser.Load
-                                && ((StackAnalyser.Load) receiver).e() instanceof StackAnalyser.This) {
+                        if (receiver instanceof StackAnalyser.Load load && load.e() instanceof StackAnalyser.This) {
                             removeRange(constructor.instructions, receiver.insn(), instruction);
                             return;
                         }

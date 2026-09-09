@@ -3,9 +3,10 @@
 ## Current state
 
 The scoped integration is implemented on `algent/java`, building on baseline `65d0cd0`. The three regression fixes
-are preserved. `build.gradle` adds two tasks; `StackAnalyserLogic.visitInsn` uses the validated Java 21 pattern switch.
-The nine Scala sources, Scala 2.11.5 dependency, source layout, and normal Gradle entry points remain in place.
-Production tasks do not read a frozen jar or any files under `run/jvmdg-trial/`.
+are preserved. `build.gradle` adds two tasks; `StackAnalyserLogic.visitInsn` uses the validated Java 21 pattern switch,
+and `JavaTraitRegistration` uses Java 21 pattern variables. The nine Scala sources, Scala 2.11.5 dependency, source
+layout, and normal Gradle entry points remain in place. Production tasks do not read a frozen jar or any files under
+`run/jvmdg-trial/`.
 
 The subsequent `StackAnalyser` initializer extraction is recorded in `JAVA_MIGRATION_HANDOFF.md`. The exact-byte
 comparisons and frozen-version reproduction below describe checkpoint `5f0e329`; later helper edits need their own
@@ -13,11 +14,11 @@ reference comparisons. The current extraction's evidence is in `run/migration-st
 
 ## Build arrangement
 
-1. Normal Java and joint Scala/Java compilation remain on Java 8. `compileScala` excludes the helper from javac's
-   inputs, while scalac resolves its declaration through `-sourcepath`. This handles the circular Scala references
-   without asking Java 8 javac to compile the modern method body.
+1. Normal Java and joint Scala/Java compilation remain on Java 8. `compileScala` excludes the modern helpers from
+   javac's inputs, while scalac resolves their declarations through `-sourcepath`. This handles the circular Scala
+   references without asking Java 8 javac to compile the modern method bodies.
 2. `compileModernJava` uses JDK 25 with `--release 21`, against the fresh Java and Scala output directories.
-3. `downgradeModernJava` converts the helper to Java 8. Only the downgraded directory joins the main class outputs,
+3. `downgradeModernJava` converts the helpers to Java 8. Only the downgraded directory joins the main class outputs,
    so tests, Forge, dev/reobfuscated jars, and downstream compilation receive Java 8 bytecode.
 
 The source-path declaration is an explicit Scala-task input. The existing `scalaCompileOptions.force = true` guard
@@ -66,12 +67,11 @@ individual review. The normal production configuration remains unchanged.
 
 Recommended order:
 
-1. Start with new package-private implementation helpers. `RenderPartResolver.java` is the best immediate candidate:
-   pattern variables remove its checked casts, it is new rather than frozen consumer ABI, and its null/fallback
-   behavior already has a narrow surface to characterize. `StackAnalyserLogic.java` remains the proven example.
-2. Continue with internal ASM helpers that have real cast/control-flow gains, especially
-   `JavaTraitRegistration.java`, `ClassInfoLookup.java` and `ScalaTraitRegistration.java`, one behavior-preserving batch
-   at a time with generated-output comparison.
+1. Start with package-private helpers called directly by retained Scala. `JavaTraitRegistration.java` is the first
+   completed follow-up: only `ASMMixinCompiler.scala` calls it, while pattern variables remove repeated checked casts.
+   `StackAnalyserLogic.java` remains the original proven example.
+2. Continue with internal ASM helpers that have real cast/control-flow gains, especially `ClassInfoLookup.java` and
+   `ScalaTraitRegistration.java`, one behavior-preserving batch at a time with generated-output comparison.
 3. Consider public core implementations such as `RedstoneInteractions$.java`, `TileMultipart.java` and the registries
    only after the internal batches. Modern method bodies are technically possible, but their published ABI and frozen
    behavior make the review cost higher.
@@ -83,6 +83,17 @@ Recommended order:
    needs an explicit downgraded-output arrangement before using post-Java-8 syntax.
 6. Keep Scala companions, `$class` compatibility helpers and other descriptor-preservation facades conservative unless
    a specific method body warrants the compiler move. Their binary shape is more valuable than stylistic uniformity.
+
+`RenderPartResolver.java` was initially shortlisted because it is new and package-private in practice, but an isolated
+clean trial proved it cannot move alone: joint-compiled `MultipartRenderer$.java` calls it before the modern task runs.
+Moving that caller pulls in the public renderer and client-proxy chain. Defer this group until source-layout cleanup can
+move the dependency closure without turning one syntax improvement into a broad compiler migration.
+
+The completed `JavaTraitRegistration` batch passes a clean build with all 576 JVM tests and the Java 8 Forge run with
+all 289 functional tests. All 450 dev-jar classes remain version 52, the jar has no JVM Downgrader runtime API
+references, and all 134 generated ASM dump names and hashes match the pre-change manifest. The helper is absent from
+joint output and present only in the raw/downgraded modern directories. Its own class bytes changed as expected under
+modern javac/JVM Downgrader, but no source signature or consumer-facing class is changed.
 
 ### fastutil audit
 
@@ -143,7 +154,8 @@ scoped path selectively; if parsing, compilation order, ABI or downgrade support
 working syntax and record the blocker and revisit condition. Do not add fragile workarounds solely for syntax.
 
 The production source tree now contains 231 Java files and nine Scala files / 782 nonblank Scala lines. Of the 224 Java
-sources in the Scala source tree, only this helper bypasses joint compilation. Retained models, trait
+sources in the Scala source tree, only `StackAnalyserLogic` and `JavaTraitRegistration` bypass joint compilation.
+Retained models, trait
 metadata, synthetic super accessors, and downstream Scala consumers prevent treating the last nine files as a
 mechanical deletion queue. Modern GTNH runtime support does not remove the retained Scala compiler's Java 8
 requirement. The main migration plan and working handoff carry the current API/adoption priorities and source counts.
