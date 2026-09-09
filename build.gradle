@@ -15,6 +15,7 @@ def modernJavaSources = sourceSets.main.scala.matching {
     include 'codechicken/multipart/asm/StackAnalyserLogic.java'
     include 'codechicken/multipart/asm/JavaTraitRegistration.java'
     include 'codechicken/multipart/asm/ClassInfoLookup.java'
+    include 'codechicken/multipart/asm/ScalaSignatureParser.java'
 }
 def legacyScala = tasks.named('compileScala') {
     // Zinc does not invalidate joint-compiled Java annotations when Tags.VERSION changes.
@@ -23,6 +24,7 @@ def legacyScala = tasks.named('compileScala') {
     exclude 'codechicken/multipart/asm/StackAnalyserLogic.java'
     exclude 'codechicken/multipart/asm/JavaTraitRegistration.java'
     exclude 'codechicken/multipart/asm/ClassInfoLookup.java'
+    exclude 'codechicken/multipart/asm/ScalaSignatureParser.java'
     scalaCompileOptions.additionalParameters = ['-sourcepath', file('src/main/scala').absolutePath]
     inputs.files(modernJavaSources).withPropertyName('modernJavaDeclarations').withPathSensitivity(PathSensitivity.RELATIVE)
 }

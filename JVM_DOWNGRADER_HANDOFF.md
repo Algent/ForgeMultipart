@@ -4,9 +4,9 @@
 
 The scoped integration is implemented on `algent/java`, building on baseline `65d0cd0`. The three regression fixes
 are preserved. `build.gradle` adds two tasks; `StackAnalyserLogic.visitInsn` uses the validated Java 21 pattern switch,
-while `JavaTraitRegistration` and `ClassInfoLookup` use Java 21 pattern variables. The nine Scala sources, Scala 2.11.5
-dependency, source layout, and normal Gradle entry points remain in place. Production tasks do not read a frozen jar
-or any files under `run/jvmdg-trial/`.
+`JavaTraitRegistration` and `ClassInfoLookup` use Java 21 pattern variables, and `ScalaSignatureParser` uses switch
+expressions. The nine Scala sources, Scala 2.11.5 dependency, source layout, and normal Gradle entry points remain in
+place. Production tasks do not read a frozen jar or any files under `run/jvmdg-trial/`.
 
 The subsequent `StackAnalyser` initializer extraction is recorded in `JAVA_MIGRATION_HANDOFF.md`. The exact-byte
 comparisons and frozen-version reproduction below describe checkpoint `5f0e329`; later helper edits need their own
@@ -75,9 +75,10 @@ Recommended order:
 1. Start with package-private helpers called directly by retained Scala. `JavaTraitRegistration.java` and
    `ClassInfoLookup.java` are completed follow-ups; pattern variables remove their checked casts without changing the
    Scala-facing declarations. `StackAnalyserLogic.java` remains the original proven example.
-2. Continue only where modern syntax produces a concrete control-flow gain. `ScalaSignatureParser.java` is the next
-   useful candidate because its two result-producing switches can become exhaustive switch expressions.
-   `ScalaTraitRegistration.java` should not move merely to restyle its erased `Some` checks.
+2. Continue only where modern syntax produces a concrete control-flow gain. `ScalaSignatureParser.java` is complete:
+   its two result-producing switches are now switch expressions. Prefer simplifying the remaining opcode switches in
+   the already-modern `StackAnalyserLogic.java` before adding another build exclusion. `ScalaTraitRegistration.java`
+   should not move merely to restyle its erased `Some` checks.
 3. Consider public core implementations such as `RedstoneInteractions$.java`, `TileMultipart.java` and the registries
    only after the internal batches. Modern method bodies are technically possible, but their published ABI and frozen
    behavior make the review cost higher.
@@ -105,6 +106,11 @@ The completed `ClassInfoLookup` batch has the same clean-build, 576-test, Java 8
 134-dump results. Its source signatures and package-private visibility are unchanged. JVM Downgrader records nest
 metadata as annotations for this helper's anonymous callbacks, but the packaged classes contain no executable JVM
 Downgrader API reference and the Java 8 runtime needs no added dependency.
+
+The completed `ScalaSignatureParser` batch also passes the clean compiler boundary, all 576 JVM tests, all 289 Java 8
+Forge tests and the 134-dump comparison; all 450 packaged classes remain version 52. Its non-private ABI is unchanged
+and it has no executable JVM Downgrader API reference. Modern string concatenation in the same internal class lowers
+to six private helper methods; these are compiler implementation details, not consumer entry points.
 
 ### fastutil audit
 
@@ -165,8 +171,8 @@ scoped path selectively; if parsing, compilation order, ABI or downgrade support
 working syntax and record the blocker and revisit condition. Do not add fragile workarounds solely for syntax.
 
 The production source tree now contains 231 Java files and nine Scala files / 782 nonblank Scala lines. Of the 224 Java
-sources in the Scala source tree, only `StackAnalyserLogic`, `JavaTraitRegistration` and `ClassInfoLookup` bypass joint
-compilation. Retained models, trait
+sources in the Scala source tree, only `StackAnalyserLogic`, `JavaTraitRegistration`, `ClassInfoLookup` and
+`ScalaSignatureParser` bypass joint compilation. Retained models, trait
 metadata, synthetic super accessors, and downstream Scala consumers prevent treating the last nine files as a
 mechanical deletion queue. Modern GTNH runtime support does not remove the retained Scala compiler's Java 8
 requirement. The main migration plan and working handoff carry the current API/adoption priorities and source counts.
