@@ -11,28 +11,25 @@ tasks.test {
 // Scope modern syntax to these helpers; retained Scala and joint Java stay on Java 8.
 apply plugin: xyz.wagyourtail.jvmdg.gradle.JVMDowngraderPlugin
 
-def modernJavaSources = sourceSets.main.scala.matching {
-    include 'codechicken/multipart/asm/StackAnalyserLogic.java'
-    include 'codechicken/multipart/asm/JavaTraitRegistration.java'
-    include 'codechicken/multipart/asm/ClassInfoLookup.java'
-    include 'codechicken/multipart/asm/ScalaSignatureParser.java'
-    include 'codechicken/microblock/HollowMicroblockTraitLogic.java'
-    include 'codechicken/microblock/PostMicroblockClientLogic.java'
-    include 'codechicken/microblock/HollowMicroblockClientLogic.java'
-    include 'codechicken/microblock/TMicroOcclusionLogic.java'
-}
+// Single source of truth for the modern-syntax helpers. These are compiled by compileModernJava
+// and must be excluded from compileScala; keep one list, because a file excluded from the joint
+// Scala compile but absent from this list is never compiled at all, and nothing reports it.
+def modernJavaPaths = [
+    'codechicken/multipart/asm/StackAnalyserLogic.java',
+    'codechicken/multipart/asm/JavaTraitRegistration.java',
+    'codechicken/multipart/asm/ClassInfoLookup.java',
+    'codechicken/multipart/asm/ScalaSignatureParser.java',
+    'codechicken/microblock/HollowMicroblockTraitLogic.java',
+    'codechicken/microblock/PostMicroblockClientLogic.java',
+    'codechicken/microblock/HollowMicroblockClientLogic.java',
+    'codechicken/microblock/TMicroOcclusionLogic.java',
+]
+def modernJavaSources = sourceSets.main.scala.matching { include modernJavaPaths }
 def legacyScala = tasks.named('compileScala') {
     // Zinc does not invalidate joint-compiled Java annotations when Tags.VERSION changes.
     scalaCompileOptions.force = true
     // Scalac reads the Java declaration without asking Java 8 javac to compile its body.
-    exclude 'codechicken/multipart/asm/StackAnalyserLogic.java'
-    exclude 'codechicken/multipart/asm/JavaTraitRegistration.java'
-    exclude 'codechicken/multipart/asm/ClassInfoLookup.java'
-    exclude 'codechicken/multipart/asm/ScalaSignatureParser.java'
-    exclude 'codechicken/microblock/HollowMicroblockTraitLogic.java'
-    exclude 'codechicken/microblock/PostMicroblockClientLogic.java'
-    exclude 'codechicken/microblock/HollowMicroblockClientLogic.java'
-    exclude 'codechicken/microblock/TMicroOcclusionLogic.java'
+    exclude modernJavaPaths
     scalaCompileOptions.additionalParameters = ['-sourcepath', file('src/main/scala').absolutePath]
     inputs.files(modernJavaSources).withPropertyName('modernJavaDeclarations').withPathSensitivity(PathSensitivity.RELATIVE)
 }
