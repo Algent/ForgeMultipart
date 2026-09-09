@@ -5,8 +5,9 @@
 The scoped integration is implemented on `algent/java`, building on baseline `65d0cd0`. The three regression fixes
 are preserved. `build.gradle` adds two tasks; `StackAnalyserLogic` uses pattern and arrow-rule switches,
 `JavaTraitRegistration` and `ClassInfoLookup` use Java 21 pattern variables, and `ScalaSignatureParser` uses switch
-expressions. The nine Scala sources, Scala 2.11.5 dependency, source layout, and normal Gradle entry points remain in
-place. Production tasks do not read a frozen jar or any files under `run/jvmdg-trial/`.
+expressions. `HollowMicroblockTraitLogic` and `PostMicroblockClientLogic` use the same scoped path for internal
+microblock control flow. The nine Scala sources, Scala 2.11.5 dependency, source layout, and normal Gradle entry points
+remain in place. Production tasks do not read a frozen jar or any files under `run/jvmdg-trial/`.
 
 The subsequent `StackAnalyser` initializer extraction is recorded in `JAVA_MIGRATION_HANDOFF.md`. The exact-byte
 comparisons and frozen-version reproduction below describe checkpoint `5f0e329`; later helper edits need their own
@@ -75,10 +76,10 @@ Recommended order:
 1. Start with package-private helpers called directly by retained Scala. `JavaTraitRegistration.java` and
    `ClassInfoLookup.java` are completed follow-ups; pattern variables remove their checked casts without changing the
    Scala-facing declarations. `StackAnalyserLogic.java` remains the original proven example.
-2. Continue only where modern syntax produces a concrete control-flow gain. `ScalaSignatureParser.java` and the
-   remaining opcode switches in the already-modern `StackAnalyserLogic.java` are complete. The next cohesive internal
-   group is the three hollow/post microblock logic helpers called only by retained Scala. `ScalaTraitRegistration.java`
-   should not move merely to restyle its erased `Some` checks.
+2. Continue only where modern syntax produces a concrete control-flow gain. `ScalaSignatureParser.java`, the remaining
+   opcode switches in `StackAnalyserLogic.java`, and the hollow/post-client microblock helper group are complete.
+   `HollowMicroblockClientLogic.java` is the next useful internal candidate because its slot dispatcher can use arrow
+   rules. `ScalaTraitRegistration.java` should not move merely to restyle its erased `Some` checks.
 3. Consider public core implementations such as `RedstoneInteractions$.java`, `TileMultipart.java` and the registries
    only after the internal batches. Modern method bodies are technically possible, but their published ABI and frozen
    behavior make the review cost higher.
@@ -115,6 +116,12 @@ to six private helper methods; these are compiler implementation details, not co
 The follow-up `StackAnalyserLogic` batch converts constant classification to a pattern switch expression and removes
 fall-through syntax from its opcode switches. It adds no build exclusion and preserves the same 576 JVM tests, 289
 Java 8 Forge tests and all 134 generated ASM hashes.
+
+The `HollowMicroblockTraitLogic` and `PostMicroblockClientLogic` batch passes a clean build, all 576 JVM tests, all 289
+Java 8 Forge tests and the 134-dump comparison. Their non-private ABI is unchanged, all 450 packaged classes remain
+version 52, and neither helper has an executable JVM Downgrader API reference. `PostMicroblockTraitLogic` was rejected
+from the batch: the retained Scala declaration does not expose `getShape()` through `PostMicroblock`, so its explicit
+`Microblock` cast is required and modern pattern syntax provides no useful replacement.
 
 ### fastutil audit
 
@@ -175,8 +182,9 @@ scoped path selectively; if parsing, compilation order, ABI or downgrade support
 working syntax and record the blocker and revisit condition. Do not add fragile workarounds solely for syntax.
 
 The production source tree now contains 231 Java files and nine Scala files / 782 nonblank Scala lines. Of the 224 Java
-sources in the Scala source tree, only `StackAnalyserLogic`, `JavaTraitRegistration`, `ClassInfoLookup` and
-`ScalaSignatureParser` bypass joint compilation. Retained models, trait
+sources in the Scala source tree, only `StackAnalyserLogic`, `JavaTraitRegistration`, `ClassInfoLookup`,
+`ScalaSignatureParser`, `HollowMicroblockTraitLogic` and `PostMicroblockClientLogic` bypass joint compilation. Retained
+models, trait
 metadata, synthetic super accessors, and downstream Scala consumers prevent treating the last nine files as a
 mechanical deletion queue. Modern GTNH runtime support does not remove the retained Scala compiler's Java 8
 requirement. The main migration plan and working handoff carry the current API/adoption priorities and source counts.
