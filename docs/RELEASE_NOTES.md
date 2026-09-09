@@ -108,3 +108,30 @@ entry points compile with no Scala on the classpath. Start at the [Java API inde
 Direct typed calls are the intended end state. Reflection snippets in older guides are legacy interoperability
 options, not the migration target. For optional integration, isolate FMP-typed code in a compatibility class loaded
 only after mod-presence and version checks, and test both the absent and present cases.
+
+## Will I have to migrate again?
+
+No, if you migrate to the documented Java surface. That is the point of shipping it alongside the old one.
+
+FMP still retains Scala storage, runtime and compatibility bridges. A later release removes them, and that release
+removes the **Scala-shaped** entry points: `partList(): scala.collection.Seq`, `operate(Function1)`,
+`registerParts(Seq)`, the `$class` trait helpers and the `MODULE$` companions. The Java siblings that replace them
+stay. So:
+
+| What you depend on | What the Scala-removal release does to it |
+| --- | --- |
+| The documented Java surface: `jPartList`, `forEachPart`, `registerPartFactory`, `refreshPartSlots`, `IRedstoneTile` | Unaffected. One migration, done. |
+| The Scala-shaped entry points | Removed. This is the migration being asked for now. |
+| A raw dev-jar class such as `scalatraits.TRedstoneTile` | Wrong target. See below. |
+
+**The one way to migrate twice is to aim at the wrong type.** If a rebuild fails on `TRedstoneTile` and the fix looks
+like "cast to the class the dev jar actually shows", that produces the `IncompatibleClassChangeError` in section 1 and
+still has to be redone against `IRedstoneTile` afterwards. Always target the stable capability interface, never the
+raw class the dev jar exposes for a transformed trait.
+
+Two honest limits on that guarantee. It covers the surface that is documented here and in the
+[compatibility audit](../JAVA_MIGRATION_COMPATIBILITY.md); a dependency in neither can still be caught out, which is
+why removal waits on evidence of adoption in released consumer jars rather than on source patches alone. And FMP's own
+source layout will change when Scala goes, since the Java sources currently live under `src/main/scala` for joint
+compilation. That moves no class, package, descriptor or reflective name, so it is invisible to consumers; only
+source-attachment paths in an IDE change.
