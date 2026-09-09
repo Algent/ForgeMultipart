@@ -91,7 +91,7 @@ its callback-side input tests nor its retained client-body probe validates actua
 
 ## Not yet covered anywhere
 
-- [ ] A focused pre-optimization CPU/allocation baseline now exists in `JAVA_MIGRATION_PROFILE.md`. A representative
+- [ ] A focused pre-optimization CPU/allocation baseline now exists in `JAVA_MIGRATION.md#phase-4b--measured-performance-pass`. A representative
   full-pack capture and the matching post-optimization comparison still need to be performed.
 - [ ] Shape-specific microblock NBT and packet payloads. Core `Microblock` shape/material NBT, description bytes and
   one-byte shape updates are complete, along with compact core tile/part NBT and logical chunk-description fixtures.

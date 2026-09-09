@@ -107,7 +107,7 @@ Three advanced methods remain supported because consumers use them directly:
 
 No reflection is needed to call any of these methods. `operate` and `getOrConvertTile2` retain their documented legacy
 contracts and Java replacements; neither receives an internal-only marker. Removing those bridges still requires
-consumer and internal migration gates. The [consumer audit](../JAVA_MIGRATION_CONSUMER_AUDIT.md#api-boundary-audit)
+consumer and internal migration gates. The [consumer audit](../JAVA_MIGRATION_COMPATIBILITY.md#api-boundary-audit)
 records the checked source calls and validation.
 
 ## Compatibility and remaining work
@@ -135,7 +135,7 @@ Scala dependency requires those gates and removal of FMP's remaining internal Sc
 | Need | Document |
 | --- | --- |
 | What is complete and what comes next? | [Working handoff](../JAVA_MIGRATION_HANDOFF.md), [migration plan](../JAVA_MIGRATION.md) |
-| Which consumers need changes, releases and pack adoption? | [Consumer adoption ledger](../JAVA_MIGRATION_CONSUMER_AUDIT.md#java-api-adoption-ledger) |
-| Which binary names, reflective lookups and runtime contracts must survive? | [ABI inventory](../JAVA_MIGRATION_ABI_INVENTORY.md), [source consumer audit](../JAVA_MIGRATION_CONSUMER_AUDIT.md) |
+| Which consumers need changes, releases and pack adoption? | [Consumer adoption ledger](../JAVA_MIGRATION_COMPATIBILITY.md#java-api-adoption-ledger) |
+| Which binary names, reflective lookups and runtime contracts must survive? | [ABI inventory and consumer audit](../JAVA_MIGRATION_COMPATIBILITY.md) |
 | What has been tested and what still needs a client/pack run? | [Migration history](migration/HISTORY.md), [manual release checks](../JAVA_MIGRATION_MANUAL_CHECKS.md) |
-| Why is some Scala or older Java syntax retained? | [Modern Java policy](../JAVA_MIGRATION.md#modern-java-readability-policy), [compiler/toolchain handoff](../JVM_DOWNGRADER_HANDOFF.md) |
+| Why is some Scala or older Java syntax retained? | [Modern Java policy](../JAVA_MIGRATION.md#modern-java-readability-policy), [compiler/toolchain handoff](../JAVA_MIGRATION.md#modern-java-readability-policy) |

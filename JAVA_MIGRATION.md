@@ -41,8 +41,8 @@ side-only filtering are complete; multiple Scala-trait inheritance still needs i
 state/accessor/super bridges and the compiler/signature/analyser model shells.
 
 Start with [JAVA_MIGRATION_HANDOFF.md](JAVA_MIGRATION_HANDOFF.md) for the exact source/test baseline, workflow and
-Java-source limitations. Read both the [ABI inventory](JAVA_MIGRATION_ABI_INVENTORY.md) and
-[consumer audit](JAVA_MIGRATION_CONSUMER_AUDIT.md) before changing compatibility surfaces. Completed-target evidence
+Java-source limitations. Read both the [ABI inventory](JAVA_MIGRATION_COMPATIBILITY.md) and
+[consumer audit](JAVA_MIGRATION_COMPATIBILITY.md) before changing compatibility surfaces. Completed-target evidence
 is in [the history](docs/migration/HISTORY.md); the [divergence ledger](JAVA_MIGRATION_DIVERGENCES.md) records only
 effective compatibility differences.
 
@@ -51,7 +51,7 @@ are in place. Schematica's private registry-map view is restored. The tile equal
 generated client-render dispatch crash are fixed; the user confirmed placement no longer crashes. Broader
 [manual client checks](JAVA_MIGRATION_MANUAL_CHECKS.md) and full-pack profiling remain release gates.
 
-Focused traversal/redstone allocation improvements are recorded in [the profile](JAVA_MIGRATION_PROFILE.md).
+Focused traversal/redstone allocation improvements are recorded in [the profile](JAVA_MIGRATION.md#phase-4b--measured-performance-pass).
 GTNHLib/UniMixins remain conditional on concrete need. Removing Scala from FMP remains the final target, gated by
 released consumer migrations and retirement of FMP's own Scala-dependent implementation.
 
@@ -77,8 +77,8 @@ verify that the replacement has migrated the relevant FMP contracts before remov
 
 GTNHLib/fastutil, UniMixins, a new generator design and further mechanical Scala-shell extraction are conditional
 work, not mandatory tasks to add without a concrete need. The existing generator is retained. See the detailed
-phases below, [consumer adoption ledger](JAVA_MIGRATION_CONSUMER_AUDIT.md#java-api-adoption-ledger),
-[manual checklist](JAVA_MIGRATION_MANUAL_CHECKS.md) and [performance protocol](JAVA_MIGRATION_PROFILE.md#broader-performance-pass-protocol-planned).
+phases below, [consumer adoption ledger](JAVA_MIGRATION_COMPATIBILITY.md#java-api-adoption-ledger),
+[manual checklist](JAVA_MIGRATION_MANUAL_CHECKS.md) and [performance protocol](JAVA_MIGRATION.md#phase-4b--measured-performance-pass).
 
 ## Scope and compatibility target
 
@@ -121,7 +121,8 @@ experiment. It replaced the instruction-type dispatch in `StackAnalyserLogic.vis
 switch. A JDK 25 task compiles the helper with `--release 21`; JVM Downgrader supplies Java 8 bytecode to tests,
 Forge and both packaged jars. Scala 2.11.5 and joint Scala/Java compilation stay on Java 8. The checkpoint passed
 normal/clean builds, frozen consumers and Forge tests with unchanged retained Scala classes and generated tile
-dumps. See [JVM_DOWNGRADER_HANDOFF.md](JVM_DOWNGRADER_HANDOFF.md) for the arrangement, evidence and limits.
+dumps. The arrangement, eligibility rules and limits are below; per-batch verification records are in
+[the history](docs/migration/HISTORY.md).
 
 - Prefer clearer pattern matching, switch expressions and local type inference where supported and appropriate;
   retain explicit types or ordinary control flow when they communicate the intent better.
@@ -140,6 +141,69 @@ dumps. See [JVM_DOWNGRADER_HANDOFF.md](JVM_DOWNGRADER_HANDOFF.md) for the arrang
 For a new modern source unit or syntax feature, use the existing characterization/compatibility checks and verify
 the clean compilation path, packaged Java 8 output and relevant Forge behavior. This is a readability preference
 with a compatibility gate, not an obligation to modernize every file immediately.
+
+#### Build arrangement
+
+1. Normal Java and joint Scala/Java compilation remain on Java 8. `compileScala` excludes the modern helpers from
+   javac's inputs, while scalac resolves their declarations through `-sourcepath`. This handles the circular Scala
+   references without asking Java 8 javac to compile the modern method bodies.
+2. `compileModernJava` uses JDK 25 with `--release 21`, against the fresh Java and Scala output directories.
+3. `downgradeModernJava` converts the helpers to Java 8. Only the downgraded directory joins the main class outputs,
+   so tests, Forge, dev/reobfuscated jars and downstream compilation receive Java 8 bytecode.
+
+`build.gradle` keeps a single `modernJavaPaths` list that both selects the modern sources and excludes them from
+`compileScala`; do not reintroduce a second copy. An include without a matching exclude fails loudly at the Java 8
+joint compile, but an exclude without a matching include means the file is never compiled at all and nothing reports
+it. The `-sourcepath` declaration is an explicit Scala-task input, `scalaCompileOptions.force = true` prevents stale
+joint-compiled Java annotations after generated `Tags.VERSION` changes, and `outputs.dirs(outputMap.values())`
+declares the downgrade output for clean builds.
+
+This per-file routing is temporary. These Java files still live in the Scala source set, whose joint compiler would
+otherwise send them to Java 8 javac. Once the retained Scala/Java dependency cycle is gone, move the modern cohort
+behind one source-set or directory boundary; once Scala is gone, compile all Java with the modern toolchain and drop
+the exclusions, `-sourcepath` bridge and force guard together.
+
+Use Java 21 as the source ceiling. The downgrader can accept Java 22 bytecode, but the validated task uses
+`--release 21` and Java 22 does not add enough here to justify moving the boundary.
+
+#### Eligibility: what may move and what may not
+
+A disposable experiment compiled all 224 Java files under `src/main/scala` through the Java 21 task. Everything
+compiled, downgraded and packaged, but one characterization test failed: a missing standalone `T` string constant
+after the newer javac changed its string-concatenation shape. That is why sources move in small reviewable batches
+rather than all at once. Even source-identical classes can acquire observable bytecode differences.
+
+- Prefer package-private helpers called directly by retained Scala. The eight current members of the cohort are the
+  proven shape: pattern variables and switch expressions that remove casts without touching Scala-facing declarations.
+- Rejected, and should stay rejected without a new reason: `RedstoneInteractions$` pulls its facade and then the
+  transformer-sensitive registered `TRedstoneTile`; `BlockMultipart` immediately pulls its companion, cache, event
+  handler, server proxy and renderer resolver; `RenderPartResolver` cannot move alone because joint-compiled
+  `MultipartRenderer$` calls it before the modern task runs. Small cast cleanups do not justify widening the boundary.
+- Deferred: registered Java trait inputs under `scalatraits/`, whose transformer forbids or rewrites inner classes,
+  lambdas, string switches and primitive-array allocation, so syntax changes need transformer-specific fixtures; the
+  `src/main/java` bootstrap sources and `src/mixin/java`, which are not outputs of `downgradeModernJava`; and
+  `PostMicroblockTraitLogic`, whose explicit `Microblock` cast is required because the retained Scala declaration does
+  not expose `getShape()` through `PostMicroblock`.
+- Keep Scala companions, `$class` helpers and descriptor-preservation facades conservative. Their binary shape is
+  worth more than stylistic uniformity. `ScalaTraitRegistration` should not move merely to restyle erased `Some` checks.
+
+Each batch must compare ABI, class inventory, generated ASM output and relevant behavior. Before declaring the branch
+ready for consumer migration, verify every packaged class is version 52, that no unexpected downgrader API reference
+exists, and run the JVM and Forge suites on Java 8 plus packaged smoke tests on the preferred modern runtime.
+
+#### fastutil
+
+GTNHLib contributes `it.unimi.dsi:fastutil` to `compileClasspath` only, because GTNHLib is `compileOnly`. Using
+fastutil from ordinary FMP code would turn an optional relationship into an undeclared runtime requirement. Do not do
+that implicitly; require GTNHLib/fastutil explicitly first if a measured core use justifies it.
+
+No current candidate justifies it. `JInventoryTile`'s slot lists are small and it is a transformer-sensitive
+registered trait; both registries' `nameMap`s are small lifecycle-built maps whose missing-key behavior is
+deliberately characterized; `ControlKeyModifer.map` is published as a live `Map`; and `TileCache` could only become
+primitive-keyed by replacing `BlockCoord`, which is an API redesign rather than a substitution. `PacketScheduler` is
+the one plausible future candidate because its private collection boxes `long` masks, so a later change can preserve
+the consumer ABI. Revisit it only as separately profiled work with a dedicated semantic test and an explicit runtime
+dependency decision. Fastutil adoption is out of scope for the Java conversion.
 
 ## Audit findings
 
@@ -194,7 +258,7 @@ The source and bytecode audit identified these allocation patterns; the named po
 The focused Forge/JFR baseline confirmed both risks. With eight parts, `updateEntity` and `operate` allocated about 184
 bytes per call, while a three-query redstone iteration allocated 80.5 bytes. The completed ports reduce the normal
 paths to effectively zero measured allocation; these remain focused measurements, not whole-pack TPS. See
-`JAVA_MIGRATION_PROFILE.md`.
+`JAVA_MIGRATION.md#phase-4b--measured-performance-pass`.
 
 ### Runtime code generation is architectural, not incidental
 
@@ -354,7 +418,7 @@ If a characterization test captures a confirmed bug that the port intentionally 
 - [x] Produce and retain a reference dev jar from `f10595d` or the selected migration base.
 - [x] Dump the public/protected JVM API and important generated tile class shapes.
 - [x] Inventory downstream mods that compile against or reflect into ForgeMultipart. See
-  `JAVA_MIGRATION_ABI_INVENTORY.md` and `JAVA_MIGRATION_CONSUMER_AUDIT.md`.
+  `JAVA_MIGRATION_COMPATIBILITY.md`.
 - [x] Record source-level consumers of part IDs, NBT, packets, registration order, reflection, and lifecycle behavior.
 - [ ] Freeze representative part IDs, NBT trees, packet bytes, registration order, and lifecycle behavior as tests.
 - [x] Add a Java-8-compatible JUnit/Jupiter setup to the existing Gradle `test` task.
@@ -362,7 +426,7 @@ If a characterization test captures a confirmed bug that the port intentionally 
 - [x] Write the first characterization suite against the untouched Scala implementation.
 - [x] Create a remaining manual compatibility checklist for rendering, input, and other behavior that cannot be asserted reliably by the automated harness. See `JAVA_MIGRATION_MANUAL_CHECKS.md`.
 - [x] Capture representative CPU and allocation profiles before optimization work. See
-  `JAVA_MIGRATION_PROFILE.md`.
+  `JAVA_MIGRATION.md#phase-4b--measured-performance-pass`.
 - [x] Start a divergence log.
 
 Exit condition: there is a reproducible behavior and ABI baseline, the test layers run in CI or an equivalent repeatable command, and the initial suite passes against the Scala implementation.
@@ -394,49 +458,30 @@ Exit condition: new code can use a clean Java API while existing supported binar
 
 ### Phase 3 — Convert low-coupling code
 
-- [x] Characterize each related leaf group before converting it.
-- [x] Convert the identified constants, value holders, simple utilities, registries, packet data helpers, and leaf
-  classes.
-- [x] Replace `JavaConversions` in converted files with explicit Java collections or controlled adapters.
-- [x] Preserve iteration order and null behavior.
-- [x] Keep mixed Scala/Java compilation working throughout the phase.
-
 Status: **complete.** The low-risk queue is empty. All eight load-bearing `$class` helpers are Java with their bridges
-retained, as are both registries, the central part/tile types, scheduler/helper utilities, `BlockMultipart`, and
-`MultipartRenderer`. Per-type evidence is retained in `docs/migration/HISTORY.md`; the handoff lists the remaining source units.
-
-Exit condition: leaf code is Java and no longer generates avoidable Scala closures or collection adapters.
+retained, as are both registries, the central part/tile types, scheduler/helper utilities, `BlockMultipart` and
+`MultipartRenderer`. Each leaf group was characterized before conversion, `JavaConversions` was replaced with explicit
+Java collections or controlled adapters, and iteration order and null behavior were preserved throughout. Per-type
+evidence is in [the history](docs/migration/HISTORY.md).
 
 ### Immediate compatibility gate — complete
 
-Do this before another source conversion:
-
-- [x] Restore Schematica's reflective `MultiPartRegistry$` type-map view with its exact field name and Scala mutable-map
-  shape, backed by the canonical Java registry state; add a regression test that performs Schematica's actual lookup.
-- [x] Add exact member-level guards for GuideNH's `BlockMicroMaterial.block/meta` mixin fields, Et Futurum's mutable
-  `ButtonPart.metaSideMap/sideMetaMap`, Iguana's `ItemSaw.harvestLevel`, and Galacticraft's name-only
-  `registerMaterial` lookup.
-- [x] Freeze `TileMultipart` order and lifecycle observations: `parts`/`id` NBT, `partList`/`jPartList`, `partMap`, slot
-  rebinding, add/remove/replace callback order, moving the live tile, and `onMoved`.
-- [x] Add compact mixed-part NBT and description-packet fixtures. The existing torch/button parts provide the needed
-  distinct IDs, order, slots and payload without adding downstream mods or a test-only part registry.
-- [x] Freeze one generated Scala trait, one Java trait, and representative pass-through interfaces before changing
-  built-in tile traits or either generator.
-
-Exit condition: every source-only constraint that can silently fail has an automated structural/behavioral guard,
-and the already-ported registry again supports Schematica.
+Status: **complete.** Every source-only constraint that can silently fail now has an automated structural or
+behavioral guard. Schematica's reflective `MultiPartRegistry$` type-map view is restored with its exact field name and
+Scala mutable-map shape over canonical Java state. Member-level guards cover GuideNH's `BlockMicroMaterial.block/meta`
+mixin fields, Et Futurum's mutable `ButtonPart.metaSideMap`/`sideMetaMap`, Iguana's `ItemSaw.harvestLevel` and
+Galacticraft's name-only `registerMaterial` lookup. `TileMultipart` order and lifecycle observations are frozen, as
+are compact mixed-part NBT/description-packet fixtures and one generated Scala trait, one Java trait and
+representative pass-through interfaces.
 
 ### Phase 4 — Convert measured hot paths
 
-- [x] Characterize result ordering, callback timing, early exits, and edge cases before changing traversal code.
-- [x] Rewrite `TileMultipart` update/operate traversal without per-call collection allocation.
-- [x] Rewrite redstone queries without closure allocation or `IntRef` boxing.
-- [x] Replace non-local returns in recipe scans with ordinary Java control flow.
-- [x] Replace the remaining non-local return in the generated `TSlottedTile` slot scan.
-- [x] Keep fastutil out of these paths because profiling did not justify another dependency or data structure.
-- [x] Re-profile the same scenarios and record both improvements and regressions.
+Status: **complete for the measured targets.** Traversal, redstone queries, recipe scans and the generated
+`TSlottedTile` slot scan were characterized, then rewritten without per-call collection allocation, closure
+allocation, `IntRef` boxing or non-local returns, and re-profiled. Fastutil stayed out of these paths because
+profiling did not justify another dependency.
 
-Status: complete for the measured targets. `operate` now preserves its captured-sequence mutation semantics without
+`operate` now preserves its captured-sequence mutation semantics without
 collection materialization,
 and the six-interface `IRedstonePart`/`RedstoneInteractions$` unit is ported with its class list and descriptors intact.
 The comparison proved its allocation was owned by the generated `TRedstoneTile`, which is now Java and allocation-free
@@ -481,7 +526,7 @@ represents an observed consumer path. Use actual client/pack runs to validate us
   Preserve ordering, snapshots, callback/override behavior, packets, NBT and generated-extension compatibility. Do not
   remove Scala shells or weaken an API contract just to improve a benchmark.
 - [ ] Publish absolute and relative before/after results, run variability, unchanged controls and regressions using
-  the [measurement protocol](JAVA_MIGRATION_PROFILE.md#broader-performance-pass-protocol-planned). Validate CPU wins
+  the measurement protocol below. Validate CPU wins
   against allocation/GC, retained memory, startup and client/server tails rather than trading one cost silently for another.
 - [ ] Repeat the representative pack scenarios after integrating the changes and relevant consumer migrations.
   Retain only justified improvements; record below-noise results and rejected candidates without claiming a speedup.
@@ -490,24 +535,77 @@ Exit condition: representative scenarios have repeatable before/after evidence, 
 declared criteria without unresolved correctness or material performance regressions, and consumer migration benefits
 are separately demonstrated where present. There is no preset percentage target or promised whole-pack TPS gain.
 
+#### Measurement protocol
+
+A workload manifest must identify the world/seed or reproducible snapshot, pack and mod versions, FMP/consumer
+commits, hardware, exact JVM/flags/heap, view distance and graphics settings, part/tile/trait counts, and the action
+sequence or replay command. Restore equivalent world state before each run.
+
+Use the pack's selected modern Java runtime for primary results; check the supported Java 8 artifact separately for
+behavior and regressions. Hold runtime and configuration fixed within every A/B comparison. Never attribute a JVM,
+renderer, pack-version or hardware change to the Java port.
+
+Measure fresh-process startup and cold first-use/class generation separately from warmed steady-state play. Per
+variant, start with at least five independent runs, alternate baseline/candidate order, use identical warm-up and
+measurement windows, and extend runs when results are noisy. Keep profiling overhead matched, and confirm end-to-end
+timing without profiling when overhead is material. Preserve raw reports under a named ignored evidence directory
+rather than overwriting the only baseline.
+
+Report median and variability across runs. Derive p95/p99 tick or frame times from enough samples within each run,
+not from five aggregate timings. Include absolute units and relative differences: CPU time, ms/tick, ms/frame,
+allocation bytes per operation or second, GC pause time, peak/retained heap, cold latency and network bytes where
+relevant. TPS alone can hide an improvement below the 50 ms tick budget. Separate CPU-bound and GPU-bound client
+scenes, and do not turn a helper microbenchmark ratio into an FPS/TPS claim.
+
+Use two controlled comparisons: baseline versus optimized FMP with consumer code unchanged, then legacy versus
+migrated consumer calls on the same FMP artifact. Where compatible, also compare with the Scala reference release on
+the same runtime and inputs. Compare equivalent results/world state, packet/NBT fixtures and callback behavior, and
+explicitly exclude scenarios whose behavior cannot be matched.
+
+Each accepted change records: hypothesis and targeted profile site; scenario/manifest and commands; before/after
+commits; raw evidence location; absolute/relative measurements with variability; correctness checks; controls,
+regressions and tradeoffs; and the acceptance decision. Define practical benefit above noise before editing. A
+below-noise result or a bottleneck outside FMP is a valid finding, not a reason to invent more optimization work.
+
+#### Running the focused harness
+
+The local server EULA must already contain `eula=true`. From PowerShell at the repository root:
+
+```powershell
+.\gradlew.bat runFunctionalTestServer "-Pforgemultipart.profileFunctionalTests=true"
+```
+
+The property is quoted because PowerShell otherwise splits the dotted Gradle property. Normal
+`runFunctionalTestServer` runs are unchanged. Profile mode overwrites these ignored files:
+
+- `run/server/forgemultipart-profile.txt` — exact timings and per-thread allocation counts;
+- `run/server/forgemultipart-baseline.jfr` — JFR CPU, allocation-site and GC events.
+
+```powershell
+jfr summary run/server/forgemultipart-baseline.jfr
+jfr view --width 220 hot-methods run/server/forgemultipart-baseline.jfr
+jfr view thread-allocation run/server/forgemultipart-baseline.jfr
+```
+
+The `startEpochMillis` and `nanos` values in the text file define the exact time window for each phase. Java 8
+recordings expose TLAB allocation events rather than `ObjectAllocationSample`, so `jfr view allocation-by-site` from a
+recent JDK is not a valid summary of this recording.
+
+The fixture uses Zulu OpenJDK 8, eight parts per tile, 1,000,000 warm-up iterations and 50,000,000 measured
+iterations per phase, covering `updateEntity`, `operate`, `lightValue`, `getTile` and `redstoneQueries`. The checksum
+consumes all observable work. Allocation bytes come from HotSpot's per-thread allocation counter, not from sampled
+JFR events; JFR remains the source for CPU samples and allocation-site ranking. Recorded results for the Phase 4
+focused baseline are in [the history](docs/migration/HISTORY.md).
+
 ### Phase 5 — Convert built-in tile traits through the existing Java path
 
-- [x] Characterize the direct class shape, generated interface, super dispatch, behavior, and class caching of a
-  no-field pilot.
-- [x] Port one simple built-in trait as a pilot using `registerJavaTrait`.
-- [x] Verify generated field accessors, initialization, copying, lifecycle callbacks, super bridges, and class caching
-  on the stateful `TSlottedTile` checkpoint.
-- [x] Characterize ProjectRed/Extra Utilities redstone calls and port `TRedstoneTile` with an immediate paired profile.
-- [x] Convert remaining traits in small related groups.
-- [x] Document or deliberately relax the Java trait restrictions only when a real trait requires it.
-- [x] Preserve pass-through interface behavior.
-- [x] Keep the completed OpenComputers `TSlottedTile.v_partMap` mutation/rebinding case green and cover ProjectRed/
-  Extra Utilities behavior before `TRedstoneTile`.
-- [x] Explicitly cover AE2's `TIInventoryTile.rebuildSlotMap` before the inventory trait.
+Status: **complete.** Traits were converted in small related groups behind characterization of the generated
+interface, super dispatch, field accessors, initialization, copying, lifecycle callbacks and class caching, starting
+from a no-field pilot and the stateful `TSlottedTile` checkpoint. Consumer behavior was covered before the risky
+ports: OpenComputers' `TSlottedTile.v_partMap` mutation/rebinding, ProjectRed and Extra Utilities redstone calls
+before `TRedstoneTile`, and AE2's `TIInventoryTile.rebuildSlotMap` before the inventory trait.
 
-Exit condition: built-in behavior is implemented in Java while the established runtime composition mechanism remains stable.
-
-Status: complete. All built-in tile traits are Java. The client pair required narrowly extending `registerJavaTrait`
+All built-in tile traits are Java. The client pair required narrowly extending `registerJavaTrait`
 for a registered Java trait extending another registered Java trait, explicit Java field accessors, and transient
 runtime-only fields that must not participate in generated `copyFrom`. The generated runtime interfaces and class
 cache remain reference-identical; pass-through-interface coverage remains green.

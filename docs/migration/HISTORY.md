@@ -8,6 +8,11 @@ The former detailed per-port handoff is also available with `git show cf8b2f9:JA
 Keep new findings here; summarize only current state and constraints in the handoff. Intentional compatibility
 differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.md).
 
+Per-entry green-build status was removed in a later pass: superseded intermediate test counts, generated-dump
+comparisons, formatting/checkstyle results and stale "X is next" pointers. Findings, decisions, rejected options and
+ABI observations were kept. A passing build was the baseline expectation for every entry, so its absence here does not
+mean a check was skipped. The last two sections hold records moved from the retired profile and downgrader documents.
+
 ### 2026-08-14
 
 - Confirmed that the codebase is feasible to migrate incrementally to Java.
@@ -35,7 +40,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Added a frozen Scala 2.11.5 consumer compiled against the reference dev jar. Its constructor and inherited default method call `JPartialOcclusion$class` directly, so it detects the linkage failure that freshly recompiled tests would miss.
 - Replaced `TPartialOcclusion.scala` with Java implementations of `PartialOcclusionTest` and `JPartialOcclusion`. The interface keeps its name and method descriptors, while `allowCompleteOcclusion()` is now a Java default method and the deprecated `$class` helper remains for old Scala binaries.
 - Passed all ten partial-occlusion behavior/API cases, the frozen Scala binary consumer, all 27 plain-JVM tests, a clean build, and both Java 8 Forge server checks. The existing marker-interface registration remains unchanged and continues to drive runtime tile generation.
-- Completed the downstream ABI inventory by constant-pool scan of 240 mod jars in GTNH daily `2026-08-14+678`, recorded in `JAVA_MIGRATION_ABI_INVENTORY.md` with the scanner in `tools/AbiScan.java` and the frozen baseline in `src/test/fixtures/abi/`. GitHub code search was rejected as an oracle because it indexes default branches only and cannot see reflection strings or closed-source consumers.
+- Completed the downstream ABI inventory by constant-pool scan of 240 mod jars in GTNH daily `2026-08-14+678`, recorded in `JAVA_MIGRATION_COMPATIBILITY.md` with the scanner in `tools/AbiScan.java` and the frozen baseline in `src/test/fixtures/abi/`. GitHub code search was rejected as an oracle because it indexes default branches only and cannot see reflection strings or closed-source consumers.
 - Found 27 consumer jars referencing 35 inherited types, 255 exact member descriptors, 76 other types, and 20 reflective string constants.
 - Answered open decision 2: third-party Scala traits are registered externally. ProjRed passes its own `LightMicroblock` Scala trait to `MicroblockGenerator.registerTrait`, so `registerScalaTrait` and ScalaSignature decoding must survive Phase 7.
 - Answered open decision 4: Scala runtime removal is not achievable for the first Java release. ProjRed, OpenComputers, ProjectBlue, and ForgeRelocationFMP link against 16 static methods on 8 trait `$class` helpers plus 17 companion `MODULE$` singletons.
@@ -43,7 +48,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Found zero downstream references to `IDWriter`, so its four retained Scala function accessors are not load-bearing and can be dropped.
 - Removed both speculative bridges the inventory proved dead: the four `IDWriter` Scala function accessors and the whole `JPartialOcclusion$class` helper, along with the `ReferenceScalaPartialOcclusion` fixture that only existed to verify the helper. `JPartialOcclusion` itself and both of its method descriptors are unchanged.
 - `IDWriter` now selects a carrier width instead of storing Scala closures, removing the per-call `Integer` boxing and `Function1`/`Function2` allocation that the first port had preserved. The nine encoding cases still pass unchanged.
-- Established the working rule for the remaining phases: check `JAVA_MIGRATION_ABI_INVENTORY.md` before writing a bridge, rather than writing one reflexively for every converted file.
+- Established the working rule for the remaining phases: check `JAVA_MIGRATION_COMPATIBILITY.md` before writing a bridge, rather than writing one reflexively for every converted file.
 - Ported `TCuboidPart`, `JCuboidPart` and `TCuboidPart$class` to Java, the first conversion of a trait whose `$class` helper is genuinely load-bearing. All reference descriptors are preserved, verified by diffing `javap -s` against the reference dev jar, and a frozen Scala 2.11.5 consumer whose forwarders call all four statics loads and runs against the port.
 - Found the first structural limit of the migration: Scala trait linearization cannot be reproduced by a Java interface, because a superclass method always beats an interface default on the JVM. Recompiled Scala consumers that mix `TCuboidPart` into a `TMultiPart` subclass now silently get `TMultiPart`'s empty implementations. Binary compatibility is unaffected, and `CuboidPartCharacterizationTest` carries the regression guard, but this applies to every remaining trait that overrides `TMultiPart` members and should be assumed for `TFacePart`, `TNormalOcclusion`, `TIconHitEffects` and `TItemMultiPart` as well.
 - Recorded the consequence for consumers: Scala code that recompiles must extend `JCuboidPart` or declare the overrides itself. This belongs in the release notes for the first Java release, not only in the divergence log.
@@ -87,7 +92,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Confirmed that erasure does not weaken `IPartTileConverter.convert`. The cast to `T` compiles away, but the `ClassCastException` a mismatched tile produces comes from the synthetic bridge on the subclass overriding `convertMulti(T)`, which is the same mechanism Scala's `asInstanceOf[T]` relied on. It is now pinned by a test, because the code reads as though the check was lost.
 - Added five Forge server tests, doubling that suite, because most of this class cannot run headless. They cover tile construction through the ASM generator, the NBT round trip through the save/load hooks, `registerTileConverter` appending to a Scala `MutableList` from Java, and `sendDescPacket` against a loaded chunk.
 - Dropped the two commented-out blocks the reference carried, the `PlayerInstance.playersInChunk` reflection and the multi-tile `sendDescPackets`, rather than reproducing dead Scala as dead Java. The reason they existed, a missing forge access transformer, is now in the class javadoc.
-- Read guidenh's actual source at `6137525` rather than inferring from its constant pool, and recorded the exact reflective member list in `JAVA_MIGRATION_ABI_INVENTORY.md`. The scan could see the 20 names; only the source shows which members are looked up on them, and none of it is visible to the ABI diff.
+- Read guidenh's actual source at `6137525` rather than inferring from its constant pool, and recorded the exact reflective member list in `JAVA_MIGRATION_COMPATIBILITY.md`. The scan could see the 20 names; only the source shows which members are looked up on them, and none of it is visible to the ABI diff.
 - Found that `MultipartGenerator$.MODULE$` is load-bearing through reflection. `generateCompositeTile` is `private[multipart]`, so no static forwarder exists and guidenh's static attempt always misses, leaving the companion as the only route. Phase 6/7 must keep it.
 - Found that `MicroblockGenerator$.create` is matched by exact parameter types, with `MicroblockClass`'s fully qualified name string-compared. Widening a parameter or renaming the class breaks the lookup while every call site still links.
 - Verified against the already-ported `TileMultipart` that `partList_$eq(scala.collection.Seq)`, `loadParts`, `notifyTileChange` and `markRender` all survived. `partList_$eq` is a Scala `var` setter with no Java-facing equivalent and is reflectively load-bearing, so dropping it for a list mutator would have broken guidenh invisibly. It was kept.
@@ -126,13 +131,13 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Restored the exact private field name and `scala.collection.mutable.Map` descriptor as Scala's live wrapper over the
   canonical Java registry map. The wrapper adds no copied state or synchronization path.
 - Proved through the reflected Scala view that Schematica can resolve a factory and that the Java registry immediately
-  sees the same entry. The focused registry suite and all 126 plain-JVM tests pass.
+  sees the same entry.
 - Added four source-consumer structural guards without adding downstream mods as test dependencies. They pin GuideNH's
   two `BlockMicroMaterial` mixin targets, Et Futurum's mutable static button-orientation arrays, and Iguana's reflected
   `ItemSaw.harvestLevel` field.
 - Reproduced Galacticraft's name-only method scan and froze its dangerous assumption: exactly one public
   `MicroMaterialRegistry.registerMaterial` method may exist, it must accept `(IMicroMaterial, String)`, and
-  `BlockMicroMaterial(Block, int)` must remain reflectively constructible. All 130 plain-JVM tests pass.
+  `BlockMicroMaterial(Block, int)` must remain reflectively constructible.
 - Accepted the dedicated-server EULA locally in ignored `run/server/eula.txt`, enabling the Forge characterization
   suite without adding a distributable acceptance file to the repository.
 - Froze tile NBT order with two different built-in parts: the outer tile `id`, ordered `parts` entries and per-part
@@ -155,7 +160,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Added an opt-in Forge/JFR workload and captured the first focused CPU/allocation baseline. With eight parts,
   `updateEntity` and `operate` allocate 184.0 and 183.9 bytes per call; generated redstone's three-query iteration
   allocates 80.5 bytes. CPU and allocation sites point to `TileMultipart.parts()` collection copies and Scala
-  redstone `IntRef`/closure traversal. Full methodology and rerun commands are in `JAVA_MIGRATION_PROFILE.md`.
+  redstone `IntRef`/closure traversal. Full methodology and rerun commands are in `JAVA_MIGRATION.md#phase-4b--measured-performance-pass`.
 - The expanded baseline is 130 plain-JVM tests and 28 Forge server tests, all passing.
 
 ### 2026-08-28
@@ -191,7 +196,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   generated field, super accessors, and class cache.
 - Ported `TSlottedTile` to a concrete Java mixin input with one public array field and ordinary loops. The runtime
   rewrite remains interface- and behavior-identical, while the four Scala range closures, `$class` artifact in the raw
-  jar, and `NonLocalReturnControl` slot rejection disappear. All 145 plain-JVM and 43 Forge tests pass.
+  jar, and `NonLocalReturnControl` slot rejection disappear.
 - Found a Phase 5 source-build constraint: shipping binaries still see the same runtime interface, but a consumer
   recompiled directly against the untransformed dev jar sees the Java mixin input as a class. Consumers that name a
   generated trait therefore need a transformed compile stub or must avoid direct trait invocations; record this before
@@ -212,7 +217,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   renderer, and scheduler paths. The public `jPartList()` bridge is unchanged; add/remove retain intentional mutable
   snapshots before publishing a replacement immutable `Seq`.
 - In the paired run, `getLightValue` fell from 183.9 B to 0.0 B per call with 11.42x throughput, and `getTile` fell
-  from 24.0 B to 0.0 B per call with 2.89x throughput. All 147 plain-JVM and 46 Forge tests pass.
+  from 24.0 B to 0.0 B per call with 2.89x throughput.
 
 ### 2026-08-30
 
@@ -227,16 +232,15 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Added three no-op client dispatch hooks to `TileMultipart`, allowing in-repo Java callers to invoke generated
   overrides through the stable superclass rather than emit class opcodes against types Forge rewrites to interfaces.
   The runtime trait surfaces remain exact; the raw dev-jar source-build limitation remains documented.
-- All 153 plain-JVM tests and all 77 Java 8 Forge dedicated-server tests pass. Actual static/dynamic rendering and
-  particle appearance remain client-only manual checks.
+- Actual static/dynamic rendering and particle appearance remain client-only manual checks.
 - Characterized `MultipartCompatiblity` and `MCPCCompatModule` against untouched Scala. Three plain-JVM cases freeze
   both static facades, both `MODULE$` companions, the private Scala `Function4` field, default allow behavior and
   callback identity; two Forge cases freeze non-MCPC loading and the logged missing-hook fallback.
 - Ported both singletons to four Java types with unchanged public names and descriptors. The callback still propagates
   reflection and cast failures unchanged, while the two Scala anonymous-function artifacts become private named Java
   callback classes. No frozen binary or audited source consumer names those implementation classes.
-- All 156 plain-JVM tests and all 79 Java 8 Forge dedicated-server tests pass. This initialization-only hook is not a
-  meaningful target for the focused allocation benchmark; successful MCPC integration remains environment-dependent.
+- This initialization-only hook is not a meaningful target for the focused allocation benchmark; successful MCPC
+  integration remains environment-dependent.
 - Characterized `MultipartMod` against untouched Scala. Two plain-JVM cases freeze both annotated singleton types,
   all ten lifecycle methods and annotations, plus the `MultipartPH.channel` companion descriptor and identity; two
   Forge cases freeze FML's companion mod instance, completed initialization and server-stop cleanup.
@@ -246,15 +250,14 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Found that the inherited `MultipartProxy.postInit` static forwarder carries `@SideOnly(CLIENT)` and is stripped on a
   dedicated server. The Java companion therefore invokes `MultipartProxy$.MODULE$` directly, matching the reference
   Scala bytecode and allowing virtual resolution to reach the server implementation.
-- All 158 plain-JVM tests and all 81 Java 8 Forge dedicated-server tests pass. Mod lifecycle dispatch is startup-only,
-  so it is not a meaningful focused throughput or allocation target.
+- Mod lifecycle dispatch is startup-only, so it is not a meaningful focused throughput or allocation target.
 - Characterized `MultipartEventHandler` against untouched Scala. Two plain-JVM cases freeze both singleton types, all
   twelve public event methods, priorities and the client-only highlight boundary; three Forge cases freeze companion
   registration on both buses, chunk load/unload cleanup, queued watches and END-phase tick dispatch.
 - Ported the singleton to a Java facade/companion pair with unchanged public names, descriptors and annotations. The
   proxy now names `MultipartEventHandler$.MODULE$` explicitly, preserving the exact object registered on both buses.
 - Server ticking still passes the configuration manager's live player list through Scala's Java-list buffer adapter;
-  no copy or new traversal was introduced. All 160 plain-JVM and all 84 Java 8 Forge dedicated-server tests pass.
+  no copy or new traversal was introduced.
 - Characterized `MicroblockMod` against untouched Scala. Two plain-JVM cases freeze both annotated singleton types,
   all ten lifecycle/IMC methods, the mutable `angelicaCompat` accessors and shared identity; one Forge case freezes
   FML's companion mod instance and the completed microblock lifecycle.
@@ -263,8 +266,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   forwarders that Forge strips on a dedicated server.
 - The internal client assignment now calls the preserved `angelicaCompat_$eq` method explicitly because recompiled
   Scala cannot apply property-assignment syntax to a Java-authored setter. The compiled accessor ABI is unchanged.
-- All 162 plain-JVM and all 85 Java 8 Forge dedicated-server tests pass. Startup and lifecycle dispatch are not a
-  meaningful focused throughput or allocation target; `MicroblockEventHandler.scala` is the next target.
+- Startup and lifecycle dispatch are not a meaningful focused throughput or allocation target.
 - Reproduced the reported stale incremental `@Mod(version)` failure immediately after a commit. Gradle reran
   `compileScala`, but Zinc retained the joint-compiled Java classes that had inlined the previous `Tags.VERSION`.
 - Configured `compileScala` to force Zinc recompilation whenever Gradle schedules the task. The focused version test
@@ -275,8 +277,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Ported the handler to a Java facade/companion pair and changed the one Scala registration to name `MODULE$`
   explicitly. Texture-atlas filtering, highlight guards, matrix/render sequence and cancellation behavior are
   unchanged; their actual rendering remains on the client manual checklist.
-- All 164 plain-JVM and all 86 Java 8 Forge dedicated-server tests pass. This event-only adapter is not a meaningful
-  focused performance target; `microblock/handler/packethandlers.scala` is next.
+- This event-only adapter is not a meaningful focused performance target.
 - Characterized the ForgeMicroblock packet-handler unit against untouched Scala. Seven plain-JVM cases freeze the
   shared channel base, both facade/companion surfaces and exact packet interfaces, the integrated-server registry
   skip, ordered missing-material disconnect, unknown-type `MatchError` and no-op server callback. One Forge case
@@ -284,8 +285,8 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Ported all five emitted packet-handler classes to Java and changed the two Scala proxy registrations to pass the
   companion singletons explicitly. Every callable public member and the emitted class list match the reference; the
   registry channel and wire format are unchanged.
-- All 171 plain-JVM tests pass. After the local EULA was accepted, all 87 Java 8 Forge dedicated-server tests pass,
-  including the new registry handshake.
+- After the local EULA was accepted, all 87 Java 8 Forge dedicated-server tests pass, including the new registry
+  handshake.
 - Characterized `MultipartSaveLoad` against untouched Scala. Three plain-JVM cases freeze the static facade,
   load-bearing companion, private fields and exact dummy class shape. Four Forge cases freeze ProjectRed-style binary
   linkage, both reflected vanilla maps, converter precedence/deletion and saved multipart reconstruction.
@@ -293,24 +294,21 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   `MultipartSaveLoad.TileNBTContainer`, which emits the literal `MultipartSaveLoad$TileNBTContainer` binary name.
   Nesting it under the companion would emit the wrong double dollar. Every callable public member matches the
   reference. Only the unreferenced compiler-generated `$$anonfun$1` closure disappeared.
-- All 174 plain-JVM tests and all 91 Java 8 Forge dedicated-server tests pass. The next medium-risk target is
-  `MissingMicroMaterial.scala`; its real icon/render paths remain client-manual work.
+- The next medium-risk target is `MissingMicroMaterial.scala`; its real icon/render paths remain client-manual work.
 - Characterized `MissingMicroMaterial` against untouched Scala. Three plain-JVM cases freeze the exact facade and
   companion surfaces, `MODULE$`, inert material values, interface defaults and all client-only boundaries. One Forge
   case freezes side stripping and the exact singleton registered under the missing-material name and ID.
 - Ported the singleton to a Java facade/companion pair and changed both Scala object-value uses to name `MODULE$`
   explicitly. The placeholder key, stone item, sound, strength, resistance and missing-texture render pipeline are
   unchanged; only the actual client rendering remains manual.
-- All 177 plain-JVM and all 92 Java 8 Forge dedicated-server tests pass. This inert singleton is not a meaningful
-  focused performance target; `DefaultContent.scala` is the next medium-risk target.
+- This inert singleton is not a meaningful focused performance target.
 - Characterized `DefaultContent` against untouched Scala. One plain-JVM case freezes its one-method static and
   companion surfaces. Two Forge cases freeze the five microblock factories and IDs, all 103 sorted built-in
   materials, their exact implementation types and the complete legacy-name remap table.
 - Ported the singleton to a Java facade/companion pair while continuing to use the existing `BlockMicroMaterial$`
   overloads and Scala ranges. Registration contents, ordering and the historical meta-0-only `log2`/`leaves2`
   overload behavior are unchanged.
-- All 178 plain-JVM and all 94 Java 8 Forge dedicated-server tests pass. Pre-init-only registration is not a meaningful
-  focused performance target; `GrassMicroMaterial.scala` is the next material unit.
+- Pre-init-only registration is not a meaningful focused performance target.
 - Characterized `GrassMicroMaterial` and `TopMicroMaterial` against untouched Scala. Five plain-JVM cases freeze both
   constructors, the grass overlay accessor used by UtilitiesInExcess, the top default-argument facade/companion,
   common-side boundaries and horizontal/side UV plus colour-pipeline routing. One Forge case freezes their registered
@@ -319,9 +317,8 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   coloured top and height-adjusted side overlay; `TopMicroMaterial` keeps coloured horizontal faces and translated
   side UVs. All three emitted binary names and every callable public descriptor match the Scala reference.
 - A clean compile was required to evict the deleted Scala classes before the unchanged characterization could test the
-  Java implementation. All 183 plain-JVM and all 95 Java 8 Forge dedicated-server tests pass. The render path retains
-  the same per-side transformation work, so no separate performance claim is made; `multipart/handler/proxies.scala`
-  is the next medium-risk target.
+  Java implementation. The render path retains the same per-side transformation work, so no separate performance claim
+  is made.
 
 ### 2026-08-31
 
@@ -359,8 +356,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Ported the hierarchy and facade to four Java types without changing their emitted names or callable public
   descriptors. Common generated-tile registration now names `MultipartProxy$.MODULE$` explicitly so it still reaches
   the inherited server method after Forge strips the client override and its static forwarder.
-- All 187 plain-JVM and all 96 Java 8 Forge dedicated-server tests pass. Startup registration and two bit-packing
-  helpers are not a meaningful focused performance target; `microblock/handler/proxies.scala` is next.
+- Startup registration and two bit-packing helpers are not a meaningful focused performance target.
 - Characterized `MicroblockProxy` against untouched Scala. Four plain-JVM cases freeze its four-type hierarchy,
   complete facade/companion ABI, eight mutable server fields, protected Scala saw list and exact lazy-renderer shape.
   Two Forge cases freeze side stripping, inherited server lifecycle resolution, item/ore/recipe registration and saw
@@ -368,42 +364,36 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Ported the hierarchy and facade to four Java types. The Scala `MutableList` remains for binary compatibility, the
   client renderer retains its field-only side annotation and lazy bitmap, and the saw-renderer closure becomes a
   direct iterator loop.
-- All 191 plain-JVM and all 98 Java 8 Forge dedicated-server tests pass. This startup-only proxy is not a meaningful
-  focused performance target; `multipart/handler/packethandlers.scala` is the last Scala handler unit and is next.
+- This startup-only proxy is not a meaningful focused performance target; `multipart/handler/packethandlers.scala` is
+  the last Scala handler unit and is next.
 - Characterized the ForgeMultipart packet-handler unit against untouched Scala. Eleven plain-JVM cases freeze all six
   emitted retained types, exact facade/companion interfaces, channel identity, private prefixed state accessors,
   ordered registry and desync disconnects, control-key packets, coordinate streams and both update terminators.
 - Ported the five top-level types and nested byte stream directly to Java. The three Scala mutable collection
   descriptors remain where reflection already observes them, while direct loops replace the anonymous `MultiMap` and
   thirteen closure classes without changing watcher, batching, framing or cleanup behavior.
-- A clean build passes all 202 plain-JVM tests and the Java 8 Forge server passes all 98 tests. All six retained public
-  surfaces match the reference by name and descriptor; only fourteen unreferenced compiler artifacts disappear.
-  `microblock/ItemMicroPart.scala` is next.
+- All six retained public surfaces match the reference by name and descriptor; only fourteen unreferenced compiler
+  artifacts disappear.
 - Characterized `ItemMicroPart` against untouched Scala. Six plain-JVM cases freeze its item, static facade and both
   companion surfaces, NBT/material semantics, creation overloads, invalid-class short circuits and a Scala 2.11.5
   binary consumer that calls all four `ItemMicroPart$.MODULE$` methods used by ProjectRed.
 - Ported the item and renderer to four Java types with every callable public name and descriptor retained. Creative
   enumeration is a direct loop, and the renderer crosses the transformed `MicroblockClient` boundary through one
   narrow Scala helper rather than emitting an invalid class-method call from Java.
-- A clean build passes all 208 plain-JVM tests and the Java 8 Forge server passes all 98 tests. The jar retains exactly
-  the four public ItemMicroPart types; three unreferenced Scala iteration closures disappear.
-  `microblock/MicroblockPlacement.scala` is next.
+- The jar retains exactly the four public ItemMicroPart types; three unreferenced Scala iteration closures disappear.
 - Characterized `MicroblockPlacement` against untouched Scala. Three plain-JVM cases freeze the exact six-type
   hierarchy, constructors, fields, callable descriptors, companion and defaults. Four Forge cases freeze external
   placement, internal/opposite-slot selection, in-place expansion, custom-placement precedence and consumption.
 - Ported the six retained types directly to Java. The only Scala source caller now names
   `MicroblockPlacement$.MODULE$` explicitly; no runtime class was added or removed and every callable public member
   matches the reference.
-- A clean build passes all 211 plain-JVM tests and the Java 8 Forge server passes all 102 tests.
-  `microblock/PlacementGrids.scala` is next.
 - Characterized `PlacementGrids` against untouched Scala. Five plain-JVM cases freeze the exact nine-class trait,
   helper, configurable-grid, facade and companion surface plus every face/corner/edge selection boundary on all six
   hit sides. The tests call ProjectBlue's load-bearing static facade directly.
 - Ported all nine retained types to Java, preserving `PlacementGrid$class` for old Scala forwarders and using safe
   Java defaults for the three concrete trait methods. The three remaining Scala object-value users now name their
   companions explicitly.
-- A clean build passes all 216 plain-JVM tests and the Java 8 Forge server passes all 102 tests. The jar class list is
-  unchanged and all callable public descriptors match the reference. `microblock/BlockMicroMaterial.scala` is next.
+- The jar class list is unchanged and all callable public descriptors match the reference.
 - Characterized `BlockMicroMaterial` against untouched Scala. Five plain-JVM cases freeze all five retained public
   types, exact methods/fields/client annotations, material delegation, thread-local render-helper state and inventory
   pipeline. A frozen Scala 2.11.5 consumer calls both load-bearing companions; one Forge case freezes registered block
@@ -411,17 +401,14 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Ported the material base, both facade/companion pairs and `ThreadState` to Java. The GuideNH-targeted private final
   `block`/`meta` fields, public `(Block, int)` constructor, Scala `Seq` registration overloads, historical meta-0-only
   overload behavior, render pipeline and Angelica override lifecycle are unchanged.
-- A clean build passes all 222 plain-JVM tests and the Java 8 Forge server passes all 103 tests. Every callable public
-  descriptor matches the reference; only three unreferenced Scala closure/anonymous classes disappear.
-  `microblock/ConfigContent.scala` is next.
+- Every callable public descriptor matches the reference; only three unreferenced Scala closure/anonymous classes
+  disappear.
 - Characterized `ConfigContent` against untouched Scala. Six plain-JVM cases freeze its facade, companion and exact
   mutable-map field, config-file generation and parsing, alias/range semantics, malformed-line recovery, block
   registration and IMC filtering/validation.
 - Ported the facade and companion directly to Java. Both retained runtime classes and every callable public descriptor
   match the reference; the seven Scala iteration/parser closure classes disappear. Public file helpers still throw the
   original `IOException` instances without adding checked exceptions to their descriptors or source declarations.
-- A clean build passes all 228 plain-JVM tests and the Java 8 Forge server passes all 103 tests.
-  `microblock/AngelicaCompat.scala` is next.
 - Added a dependent GitHub Actions job that accepts the EULA in its ephemeral runner and invokes the existing
   self-validating `runFunctionalTestServer` task after the shared GTNH build. The Forge suite now gates pull requests
   and pushes instead of being local-only.
@@ -430,23 +417,17 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   `ClassCastException` fallback.
 - Ported the sole class directly to Java while retaining `BoxedUnit.UNIT` on the normal path and `Unit$.MODULE$` on
   the fallback path. Both jars contain the same runtime class and every callable descriptor matches the reference.
-- A clean build passes all 230 plain-JVM tests and the Java 8 Forge server passes all 103 tests.
-  `microblock/ItemSaw.scala` is next.
 - Characterized `ItemSaw` and `ItemSawRenderer` against untouched Scala. Four plain-JVM cases freeze all three runtime
   types, the reflective private-final harvest field, default and explicit durability, container behavior, renderer
   gating and supported render-type selection.
 - Ported the item, static renderer facade and registered renderer companion directly to Java. All callable public
   descriptors, singleton/model fields and three runtime classes match the reference.
-- A clean build passes all 234 plain-JVM tests and the Java 8 Forge server passes all 103 tests.
-  `microblock/MicroblockRender.scala` is next.
 - Characterized `MicroblockRender` against untouched Scala. Four plain-JVM cases freeze its facade/companion surface,
   thread-local face state, cuboid face-mask traversal, no-placement highlight exit and exact transformed-client call
   opcodes.
 - Ported both retained types directly to Java. A clean compile preserves `invokevirtual Microblock.setShape` and
   `invokeinterface MicroblockClient.getBounds/render`; direct face iteration removes three unreferenced Scala
   anonymous/closure classes.
-- A clean build passes all 238 plain-JVM tests and the Java 8 Forge server passes all 103 tests.
-  `microblock/MicroblockClass.scala` is next.
 - Characterized `MicroblockClass`, `CommonMicroClass` and its companion against untouched Scala. Three plain-JVM
   cases freeze the exact hierarchy, constructors, public descriptors, private fields, side annotations, registry
   semantics and generator call descriptors. Constructor execution remains a Forge-only boundary because generator
@@ -454,9 +435,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Ported all three retained types directly to Java. Eager base-trait registration, synchronized one-time client-trait
   registration, part-factory registration order, class IDs, duplicate rejection and both create paths are unchanged.
   The GuideNH-pinned `MicroblockGenerator$.create(MicroblockClass, int, boolean)` descriptor remains exact.
-- A clean build passes all 241 plain-JVM tests and the Java 8 Forge server passes all 103 tests. The clean reference and
-  port jars contain the same three runtime types and every callable public descriptor matches. `microblock/Microblock.scala`
-  is the next deliberately high-risk target.
+- The clean reference and port jars contain the same three runtime types and every callable public descriptor matches.
 - Characterized the `Microblock` base, its default-argument companion and all three mixin traits against untouched
   Scala. Three plain-JVM cases freeze the eight retained type surfaces, fields, constructor/default, signed shape
   packing, material delegation, item conversion, description/update bytes and core NBT.
@@ -466,34 +445,30 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   assignments now call the same public field setters explicitly.
 - A clean build passes all 244 plain-JVM tests and the Java 8 Forge server passes all 103 tests, including generated
   face/hollow parts and the external Scala microblock trait fixture. All eight retained public surfaces match the
-  reference; only two private Scala iteration closures disappear. `microblock/FaceMicroblock.scala` is next.
+  reference; only two private Scala iteration closures disappear.
 - Characterized the face factory, placement singleton and both generated traits against untouched Scala. Two
   plain-JVM cases freeze all eight retained public surfaces and every placement rule; one Forge case freezes factory
   identity, all 42 populated bounds and generated face-part behavior.
 - Ported the four concrete facade/companion types directly to Java while retaining `FaceMicroblock` and
   `FaceMicroblockClient` unchanged in `FaceMicroblockTraits.scala`. All callable public descriptors match the
   reference; the two private Scala bounds-initializer closures disappear.
-- A clean build passes all 246 plain-JVM tests and the Java 8 Forge server passes all 104 tests. Recompiled Scala must
-  spell the Java array getter as `FaceMicroClass.aBounds()(index)`; existing binaries still link to the unchanged
-  `aBounds(): Cuboid6[]` descriptor. `microblock/CornerMicroblock.scala` is next.
+- Recompiled Scala must spell the Java array getter as `FaceMicroClass.aBounds()(index)`; existing binaries still link
+  to the unchanged `aBounds(): Cuboid6[]` descriptor.
 - Characterized the corner factory, placement singleton and generated trait against untouched Scala. Two plain-JVM
   cases freeze all six retained public surfaces and all 48 slot/side placement mappings; one Forge case freezes
   factory metadata, all 56 populated bounds and generated shape/slot behavior.
 - Ported the four concrete facade/companion types directly to Java while retaining `CornerMicroblock` in
   `CornerMicroblockTraits.scala`. ProjectRed's load-bearing `CornerMicroClass$.MODULE$.getClassId()` linkage and every
   callable public descriptor remain exact; the two private Scala bounds-initializer closures disappear.
-- A clean build passes all 248 plain-JVM tests and the Java 8 Forge server passes all 105 tests. Recompiled Scala must
-  spell the Java array getter as `CornerMicroClass.aBounds()(index)`; existing binaries still link unchanged.
-  `microblock/EdgeMicroblock.scala` is next as one Edge/Post source unit.
+- Recompiled Scala must spell the Java array getter as `CornerMicroClass.aBounds()(index)`; existing binaries still
+  link unchanged.
 - Characterized the combined Edge/Post unit against untouched Scala. Two plain-JVM cases freeze all twelve retained
   public surfaces, state/super accessors and edge-opposite mappings. Three Forge cases freeze both factories, all 84
   edge and 12 post bounds, generated behavior, even-size post placement and matching-post expansion.
 - Ported the six concrete facade/companion types directly to Java while retaining `EdgeMicroblock`,
   `PostMicroblock`, and stateful `PostMicroblockClient` in `EdgeMicroblockTraits.scala`. ProjectRed and
   UtilitiesInExcess class-ID linkage remains exact; the Post client traversal closure and all trait helpers remain.
-- A clean build passes all 250 plain-JVM tests and the Java 8 Forge server passes all 108 tests. All callable public
-  descriptors match the reference; only four private bounds-initializer closures disappear.
-  `microblock/HollowMicroblock.scala` is next.
+- All callable public descriptors match the reference; only four private bounds-initializer closures disappear.
 - Characterized the Hollow unit against untouched Scala. Two plain-JVM cases freeze all nine retained public
   surfaces, including the source-visible nested placement-grid relationship and both generated traits. Two Forge
   cases freeze both 42-entry tables, generated server behavior, every face, connected hollow sizes 1 through 11,
@@ -502,27 +477,23 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   `HollowMicroblock` and the large stateful `HollowMicroblockClient` in `HollowMicroblockTraits.scala`. The nested
   `HollowPlacement.HollowPlacementGrid$` remains a real public static nested class rather than merely keeping its
   binary name.
-- A clean build passes all 252 plain-JVM tests and the Java 8 Forge server passes all 110 tests. All nine supported
-  public surfaces match the reference; both retained trait helpers and all seven trait closures are bytecode-identical.
-  Only three private factory table-initializer closures disappear. `microblock/TMicroOcclusion.scala` is next.
+- All nine supported public surfaces match the reference; both retained trait helpers and all seven trait closures are
+  bytecode-identical. Only three private factory table-initializer closures disappear.
 - Characterized `MicroOcclusion` against untouched Scala. Five plain-JVM cases freeze the facade, companion, three
   generated-trait surfaces, all valid shrink-side mappings, exhaustive priority/size/transparency decisions, render
   masks, traversal ranges and the complete `TMicroOcclusion` decision matrix.
 - Ported only the concrete facade and companion to Java. `JMicroShrinkRender`, `TMicroOcclusion` and the stateful
   `TMicroOcclusionClient` remain Scala; both trait helpers and all five retained Scala types have bytecode-identical
   disassembly. Direct Java iteration removes the sole private shrink closure.
-- A clean build passes all 257 plain-JVM tests and the Java 8 Forge server passes all 110 tests. All seven supported
-  public surfaces and WR-CBE's static `recalcBounds` descriptor match the reference. `microblock/MicroblockGenerator.scala`
-  is next.
+- All seven supported public surfaces and WR-CBE's static `recalcBounds` descriptor match the reference.
 - Characterized `MicroblockGenerator` against untouched Scala. Three plain-JVM cases freeze its facade, companion,
   nested material interface, inherited `ASMMixinFactory`/`ScratchBitSet` shape, replaceable thread-local scratch state
   and load-bearing calls. One Forge case freezes the complete material-added external Scala-trait path.
 - Ported the facade, companion and real public static nested `IGeneratedMaterial` interface directly to Java while
   leaving the generator and ScalaSignature machinery unchanged. Scratch-bit reuse, base/client selection, material
   callback ordering, boxed constructor argument and the ProjectRed Scala-trait registration path are unchanged.
-- A clean build passes all 260 plain-JVM tests and the Java 8 Forge server passes all 111 tests. The same three runtime
-  classes and every callable public descriptor match the reference, including ProjectRed's companion registration
-  and GuideNH's exact companion `create` method. `multipart/MultipartGenerator.scala` is next.
+- The same three runtime classes and every callable public descriptor match the reference, including ProjectRed's
+  companion registration and GuideNH's exact companion `create` method.
 - Characterized `MultipartGenerator` against untouched Scala. Two plain-JVM cases freeze both public surfaces,
   private Scala-map descriptors and companion call opcodes. Five Forge cases freeze side-specific hierarchy caches,
   duplicate/failed registration, scratch clearing, class snapshots/reuse, tile upgrades/downgrades, vanilla-block
@@ -530,18 +501,14 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Ported the facade and companion directly to Java. All five Scala maps, both compiler-generated public accessors,
   the companion-only `generateCompositeTile` descriptor and side-safe proxy callback remain. Direct iteration removes
   six private closures; the ASM factory's sole source adjustment explicitly names `MultipartGenerator$.MODULE$`.
-- A clean build passes all 262 plain-JVM tests and the Java 8 Forge server passes all 116 tests. Both supported public
-  surfaces match the reference. `multipart/asm/ScratchBitSet.scala` is the next isolated support target; the generated
-  microblock traits still require the documented abstract-Java-mixin and side-only-member prerequisites.
+- Both supported public surfaces match the reference.
 - Characterized `ScratchBitSet` against untouched Scala. Four plain-JVM cases freeze the exact interface/helper
   surface, lazy allocation, repeated accessor calls, owner/thread isolation, bit preservation/clearing, storage
   replacement/reinitialization and `freshBitSet` dispatch through an overridden `getBitSet`.
 - Ported the interface and `$class` helper directly to Java without changing either generator. All seven callable
   methods, their abstract/static modifiers and both binary names remain exact; no new API or default methods are
   introduced. Neither downstream audit contains a reference to this support trait.
-- A clean build passes all 266 plain-JVM tests and the Java 8 Forge server passes all 116 tests. The two-type ABI and
-  both generator companions' disassembly match the reference. `multipart/asm/ByteCodecs.scala` is next as an isolated
-  codec port, leaving signature parsing and trait compilation for separate targets.
+- The two-type ABI and both generator companions' disassembly match the reference.
 - Condensed `JAVA_MIGRATION_DIVERGENCES.md` from 3,134 to 189 lines, keeping effective runtime, binary and source
   differences plus one shared classfile section. Removed repeated preservation claims, validation histories and
   superseded intermediate decisions; the original narrative remains in git history. The workflow now records test
@@ -556,7 +523,6 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   callable public names/descriptors. An additional one-off differential run compared all two-byte inputs across all
   six methods plus randomized lengths through 256, null and invalid decode lengths: all 450,790 cases matched on
   return values, exception types and full mutated arrays. No new difference needs a separate ledger entry.
-  `multipart/asm/ASMImplicits.scala` is next; compiler behavior changes remain separate work.
 - Characterized `ASMImplicits` against untouched Scala in five plain-JVM cases: all six runtime surfaces, identity
   conversions, node names, null handling, BitSet self-replacement and clear-before-failure, independent plain-BitSet
   copies, and boxed equality/hash behavior. Neither consumer audit identifies a direct external user.
@@ -606,8 +572,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   disassembly. Only the private annotation-search closure disappears, taking the packaged inventory from 463 to 462.
 - No tests were added, per the current user instruction. A clean formatting/checkstyle/build passes all 276 existing
   JVM tests; Java 8 Forge passes all 116 tests, including external Scala-trait generation. All 39 generated dump names
-  and SHA-256 hashes match the reference. No new ledger entry is needed. `multipart/asm/ASMMixinFactory.scala` is next
-  as a single factory port before the larger nested signature model and compiler.
+  and SHA-256 hashes match the reference. No new ledger entry is needed.
 
 ### 2026-09-02
 
@@ -619,12 +584,11 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   needs only an explicit empty parameter sequence and public override syntax. Its companion and five closure types
   have identical disassembly; Scala adds four static facade forwarders without changing any existing entry. The
   ledger records that additive surface and the Scala-source syntax changes.
-- No tests were added, per the current user instruction. Clean formatting/checkstyle/build passes all 276 existing
-  JVM tests; Java 8 Forge passes all 116 tests, including the external Scala-trait and generated-tile fixtures. All
-  39 generated dump names and SHA-256 hashes match the saved `f7be2b1` reference. Both generator companions and all
-  137 signature/compiler types have identical disassembly. Removing two private parent-traversal closures reduces
-  the packaged inventory from 462 to 460 classes. `multipart/asm/MultipartMixinFactory.scala` is next, with the
-  signature model and compiler algorithms still reserved for later targets.
+- No tests were added, per the current user instruction. Clean formatting/checkstyle/build passes all 276 existing JVM
+  tests; Java 8 Forge passes all 116 tests, including the external Scala-trait and generated-tile fixtures. All 39
+  generated dump names and SHA-256 hashes match the saved `f7be2b1` reference. Both generator companions and all 137
+  signature/compiler types have identical disassembly. Removing two private parent-traversal closures reduces the
+  packaged inventory from 462 to 460 classes.
 - Ported `MultipartMixinFactory` to a Java facade/companion pair, retaining all ten facade methods, the singleton,
   both public callback overrides and the two companion-only mangled helpers. No other production source needed an
   adjustment. The compiler, signature model and stack analyser remain unchanged.
@@ -638,8 +602,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   Both Java 8 public surfaces match the saved `13ec2f5` reference. All 39 generated dump names and SHA-256 hashes
   match, and all 185 retained compiler/model/base-factory/generator types have identical disassembly. Only five
   private closures disappear, reducing the packaged inventory from 460 to 455 classes. The existing ledger row now
-  describes the retained Java forwarders; no new divergence was added. `multipart/asm/ScalaSignature.scala` is next
-  as the remaining parser/nested-model unit, with ASM compiler algorithm changes still deferred.
+  describes the retained Java forwarders; no new divergence was added.
 - Extracted `ScalaSignature` table decoding, name and literal evaluation, collection and object/class lookup into one
   package-private Java helper. The Scala shell retains the complete nested model and five generic construction
   branches. That boundary is required: primitive literal case classes expose both primitive and erased `Object`
@@ -650,11 +613,10 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   interpretation. All 69 retained signature types' public names, descriptors and generic declarations match the saved
   `1ad2b0f` reference. The disassembly of 188 otherwise unchanged model, compiler, analyser, factory and generator
   types is identical; all 39 generated dump names and SHA-256 hashes also match.
-- No tests were added, per the current user instruction. Formatting/checkstyle/build passes all 276 existing JVM
-  tests and Java 8 Forge passes all 116 tests, including the external Scala-trait path. Four private parser/lookup
-  closures are replaced by one Java helper, reducing the packaged inventory from 455 to 452 classes and leaving 206
-  Java files plus 9 Scala files / 1,883 nonblank Scala lines. No new compatibility divergence needs a ledger entry.
-  `multipart/asm/StackAnalyser.scala` is the next bounded target; keep its control flow and nested model separable.
+- No tests were added, per the current user instruction. Formatting/checkstyle/build passes all 276 existing JVM tests
+  and Java 8 Forge passes all 116 tests, including the external Scala-trait path. Four private parser/lookup closures
+  are replaced by one Java helper, reducing the packaged inventory from 455 to 452 classes and leaving 206 Java files
+  plus 9 Scala files / 1,883 nonblank Scala lines. No new compatibility divergence needs a ledger entry.
 - Backfilled, on request, the characterization tests the six ports from `b45527e` to `8581d30` had skipped. Six new
   suites in `src/test/java/codechicken/multipart/asm/` add 32 plain-JVM tests, taking that suite from 276 to 308.
   `ByteCodeReader` and the signature parser are covered by behavior; `ScalaSigReader` by round trips, annotation
@@ -707,13 +669,12 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   preserving their serialized and Scala-facing behavior. All 199 retained ASM/generator disassemblies and all 39
   generated dump names/hashes match. An additional one-off comparison of 8,960 opcode/node/stack combinations matches
   expression trees, types, aliases, instruction bindings, locals, exceptions and partial mutation.
-- Formatting/checkstyle/build and Forge pass, including a clean build after stopping Gradle: 320 JVM / 122 Forge
-  tests, zero failures/errors/skips. All characterization tests remain unchanged after the port. The forced Scala
-  compilation version guard is retained, and all five `@Mod` version annotations match both clean packaged jars.
-  Two unreferenced traversal closures become one Java helper (452 to 451 packaged classes); sources now total 207
-  Java files and 9 Scala files / 1,726 nonblank Scala lines. No new compatibility divergence is introduced. Next is
-  `ASMMixinCompiler.scala`, bounded to `ClassInfo`/`MethodInfo` metadata lookup and traversal, with fresh characterization
-  before touching its Forge-initialized state and no trait-rewriting algorithm changes.
+- All characterization tests remain unchanged after the port. The forced Scala compilation version guard is retained,
+  and all five `@Mod` version annotations match both clean packaged jars. Two unreferenced traversal closures become
+  one Java helper (452 to 451 packaged classes); sources now total 207 Java files and 9 Scala files / 1,726 nonblank
+  Scala lines. No new compatibility divergence is introduced. Next is `ASMMixinCompiler.scala`, bounded to
+  `ClassInfo`/`MethodInfo` metadata lookup and traversal, with fresh characterization before touching its
+  Forge-initialized state and no trait-rewriting algorithm changes.
 - Characterized the compiler metadata unit before modification in `abdf0b0`: six JVM cases cover hierarchy order and
   diamond duplicates, parent-view capture/laziness, strict/view concatenation, virtual selection and short-circuiting,
   mutable node metadata, reflection order/descriptors/exceptions and case-class outer owners. Five Forge cases cover
@@ -763,11 +724,10 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   One private bridge closure is replaced by the Java helper, keeping 450 packaged classes. No new ledger entry is
   needed. Sources total 209 Java files and 9 Scala files / 1,689 nonblank Scala lines. Next: `ASMMixinCompiler.getSuper`
   recognition/lookup, with fresh characterization and no algorithm fixes mixed into its port.
-- Formatting/checkstyle/build and the full Forge suite pass, including a clean build after stopping Gradle:
-  326 JVM / 135 Forge, zero failures/errors/skips. The eight characterization tests are unchanged after the port,
-  and the clean jar repeats the API/disassembly/dump matches above. The forced Scala-compilation version guard is
-  retained; all five `@Mod` annotations match both packaged jar versions. External Scala-trait coverage remains green
-  and the existing manual client checks and Java-source bridge limitations remain outstanding.
+- The eight characterization tests are unchanged after the port, and the clean jar repeats the API/disassembly/dump
+  matches above. The forced Scala-compilation version guard is retained; all five `@Mod` annotations match both
+  packaged jar versions. External Scala-trait coverage remains green and the existing manual client checks and
+  Java-source bridge limitations remain outstanding.
 - Added six Forge characterization cases for `ASMMixinCompiler.getSuper`, passing on untouched Scala and committed
   separately as `c0df2e0`: owner/name filter short-circuiting, greedy Scala super-name stripping, exact inherited
   signature selection and visibility, receiver recognition, argument indexing, failure paths, stack preservation,
@@ -783,11 +743,10 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   and 143 other ASM/generator disassemblies match. All dump names/hashes match. One private Scala closure becomes a
   Java callback, leaving 450 packaged classes and no new divergence entry. Sources total 209 Java files and 9 Scala
   files / 1,675 nonblank Scala lines. Next: `ASMMixinCompiler.listSideOnly` annotation filtering, characterized first.
-- Formatting/checkstyle/build and Forge pass, including clean verification after stopping Gradle: 326 JVM / 141 Forge,
-  zero failures/errors/skips. Characterization tests remain unchanged. The clean jar repeats the API/disassembly/dump
-  matches, the local dev config is unchanged, and all five `@Mod` versions match both packaged jar versions with the
-  forced Scala-compilation guard retained. External Scala-trait tests remain green; existing manual client checks and
-  Java-source model-bridge limitations remain outstanding.
+- Characterization tests remain unchanged. The clean jar repeats the API/disassembly/dump matches, the local dev
+  config is unchanged, and all five `@Mod` versions match both packaged jar versions with the forced Scala-compilation
+  guard retained. External Scala-trait tests remain green; existing manual client checks and Java-source model-bridge
+  limitations remain outstanding.
 - Reviewed the reported `TileMultipart` compatibility findings against `cacc9a3^`. Confirmed all three equality
   changes and the dropped virtual light query. Restored null-safe Scala equality in change notifications and
   replacement/removal filtering, removed all equal entries, and retained Scala `contains`/`indexOf` behavior.
@@ -825,12 +784,11 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   names/hashes match exactly. Two private Scala closures become two Java callbacks, leaving 450 packaged classes;
   the shared compiler entry covers this and no new divergence entry is needed. Sources total 209 Java files and
   9 Scala files / 1,664 nonblank Scala lines.
-- Formatting/checkstyle/build and Forge pass, including clean verification after stopping Gradle: 333 JVM / 147 Forge,
-  zero failures/errors/skips. The six characterization tests are unchanged after the port. The clean jar repeats the
-  API/disassembly/dump matches; the local dev config and forced Scala-compilation guard are unchanged. All five `@Mod`
-  versions match both packaged jar versions. External Scala-trait tests remain green; existing manual client checks
-  and Java-source model-bridge limitations remain outstanding. Next: Scala-trait registration metadata,
-  `getAndRegisterParentTraits` and `registerScalaTrait`, characterized first with no registration algorithm changes.
+- The six characterization tests are unchanged after the port. The clean jar repeats the API/disassembly/dump matches;
+  the local dev config and forced Scala-compilation guard are unchanged. All five `@Mod` versions match both packaged
+  jar versions. External Scala-trait tests remain green; existing manual client checks and Java-source model-bridge
+  limitations remain outstanding. Next: Scala-trait registration metadata, `getAndRegisterParentTraits` and
+  `registerScalaTrait`, characterized first with no registration algorithm changes.
 - Added twelve Forge characterization tests for Scala-trait registration, passing against untouched Scala and
   committed separately as `d2276c4`. Real compiled Scala traits exercise parent/field/method/super metadata and side
   selection; synthetic signatures pin cached identity/nulls, lookup-before-registration ordering, duplicate parents,
@@ -853,12 +811,11 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   The Java helper/callbacks and retained Scala type bridges change the packaged inventory from 450 to 455 classes;
   private artifacts are covered by the shared compiler entry, so no new ledger entry is needed. Sources total 210
   Java files and 9 Scala files / 1,629 nonblank Scala lines.
-- Formatting/checkstyle/build and Forge pass, including clean verification after stopping Gradle: 333 JVM / 159 Forge,
-  zero failures/errors/skips. The twelve characterization tests are unchanged after extraction. The clean jar repeats
-  the API/disassembly/dump comparisons; the local dev config and forced Scala-compilation guard are unchanged. All
-  five `@Mod` versions match both packaged jar versions. External Scala-trait tests remain green; existing manual
-  client checks and Java-source model-bridge limitations remain. Next: `getBytes`, `classNode` and `internalDefine`
-  class-byte loading/cache helpers, characterized first and without loader/cache algorithm changes.
+- The twelve characterization tests are unchanged after extraction. The clean jar repeats the API/disassembly/dump
+  comparisons; the local dev config and forced Scala-compilation guard are unchanged. All five `@Mod` versions match
+  both packaged jar versions. External Scala-trait tests remain green; existing manual client checks and Java-source
+  model-bridge limitations remain. Next: `getBytes`, `classNode` and `internalDefine` class-byte loading/cache
+  helpers, characterized first and without loader/cache algorithm changes.
 - Investigated the 2026-09-03 ProjectRed placement crash on `60d060a`. The failure occurs in multipart TESR rendering,
   not registration: the earlier client-trait port (`970e888`) left an `INVOKEVIRTUAL` call to
   `TileMultipartClient.hasDynamicParts()Z` in `MultipartRenderer$`, while Forge exposes that type as an interface.
@@ -898,16 +855,15 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Saved pre-port source/jar, reports, 41 generated dumps and reproducible checks in ignored
   `run/migration-class-bytes-reference/`. All 423 non-closure class APIs match by names/descriptors/modifiers/generic
   signatures and private fields, including all 16 named compiler APIs. All 3,615 other method bodies and 30 other
-  compiler closures match after normalizing private closure numbering. All 41 generated dump names/hashes match
-  exactly. Two private Scala closures become two Java callbacks plus their helper, taking the packaged inventory
-  from 455 to 456 classes. The shared compiler ledger entry covers this, with no new effective divergence. Sources
-  total 211 Java files and 9 Scala files / 1,597 nonblank Scala lines.
-- Formatting/checkstyle/build and Forge pass, including a clean build after stopping Gradle: 333 JVM / 173 Forge,
-  zero failures/errors/skips. All ten characterization tests remain unchanged. Clean APIs and dumps repeat the
-  matches above; the dev config and forced Scala-compilation guard are unchanged. All five `@Mod` versions match
-  both packaged jar versions. External Scala-trait tests remain green; existing manual client checks and Java-source
-  model/trait limitations remain. Next: `ASMMixinCompiler.define`, characterized first for publication/debug
-  accounting, reflective definition and failure ordering, without algorithm changes.
+  compiler closures match after normalizing private closure numbering. Two private Scala closures become two Java
+  callbacks plus their helper, taking the packaged inventory from 455 to 456 classes. The shared compiler ledger entry
+  covers this, with no new effective divergence. Sources total 211 Java files and 9 Scala files / 1,597 nonblank Scala
+  lines.
+- All ten characterization tests remain unchanged. Clean APIs and dumps repeat the matches above; the dev config and
+  forced Scala-compilation guard are unchanged. All five `@Mod` versions match both packaged jar versions. External
+  Scala-trait tests remain green; existing manual client checks and Java-source model/trait limitations remain. Next:
+  `ASMMixinCompiler.define`, characterized first for publication/debug accounting, reflective definition and failure
+  ordering, without algorithm changes.
 - Added ten Forge characterization tests for `ASMMixinCompiler.define`, passing on untouched Scala and committed
   first as `4d59900`. They execute real JVM definitions in isolated LaunchClassLoaders and restore compiler caches,
   loader/reflection state and debug state. Tests freeze bytecode-name versus cache-key handling, delayed class
@@ -918,13 +874,12 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Moved only `define` into the existing Java `ClassBytes`, retaining its exact Scala entry point and the loader's
   startup initialization. Class composition, trait rewriting and external Scala-trait/model bridges are unchanged.
   Reference source/jar, reports, 42 dumps and verification scripts are in ignored `run/migration-define-reference/`.
-  The 456-class inventory is unchanged; all 426 non-closure APIs (including 16 named compiler APIs), 3,628 other method
-  bodies and 30 compiler closures match. All 42 generated dump names/hashes match exactly. No new divergence is needed.
-- Formatting/checkstyle/build and Forge pass, including clean verification after stopping Gradle: 333 JVM / 183 Forge,
-  zero failures/errors/skips. The characterization tests, dev config and forced Scala-compilation guard are unchanged;
-  all five `@Mod` versions match both packaged jar versions. Sources total 211 Java files and 9 Scala files / 1,583
-  nonblank Scala lines. Next: `ASMMixinCompiler.mixinClasses`, characterized for composition/constructor/dispatch and
-  generated output before extraction; keep compiler algorithm fixes separate.
+  The 456-class inventory is unchanged; all 426 non-closure APIs (including 16 named compiler APIs), 3,628 other
+  method bodies and 30 compiler closures match. No new divergence is needed.
+- The characterization tests, dev config and forced Scala-compilation guard are unchanged; all five `@Mod` versions
+  match both packaged jar versions. Sources total 211 Java files and 9 Scala files / 1,583 nonblank Scala lines. Next:
+  `ASMMixinCompiler.mixinClasses`, characterized for composition/constructor/dispatch and generated output before
+  extraction; keep compiler algorithm fixes separate.
 
 - Consolidated the active plan/handoff after the reflective-definition port. The dated findings remain intact in
   this history, duplicated completed-port handoff summaries were removed, and current phase/status text was refreshed.
@@ -944,11 +899,10 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   divergence.
 - Saved the pre-port source/jar, reports, 79 generated outputs and checks in ignored
   `run/migration-composition-reference/`. Clean verification after stopping Gradle matches all 426 non-closure APIs,
-  3,628 non-target method bodies, 13 other compiler closures and every generated output name/hash. Formatting,
-  checkstyle, build and Forge pass: 333 JVM / 191 Forge, zero failures/errors/skips. All five packaged `@Mod` versions,
-  the forced Scala-compilation guard and dev config remain correct. Sources total 212 Java files and 9 Scala files /
-  1,444 nonblank Scala lines. Next: `ASMMixinCompiler.registerJavaTrait`, characterized before extraction; abstract
-  mixins, side-only filtering and the wide-field defect remain separate compiler changes.
+  3,628 non-target method bodies, 13 other compiler closures and every generated output name/hash. All five packaged
+  `@Mod` versions, the forced Scala-compilation guard and dev config remain correct. Sources total 212 Java files and
+  9 Scala files / 1,444 nonblank Scala lines. Next: `ASMMixinCompiler.registerJavaTrait`, characterized before
+  extraction; abstract mixins, side-only filtering and the wide-field defect remain separate compiler changes.
 
 ### 2026-09-03 — Java trait rewriting
 
@@ -964,11 +918,10 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   added.
 - Saved the pre-port source/jar, reports, 102 generated outputs and checks in ignored
   `run/migration-java-trait-reference/`. Clean verification after stopping Gradle matches 428 non-target class APIs,
-  3,635 non-target method bodies, all five other compiler closures and every output name/hash. Formatting, checkstyle,
-  build and Forge pass: 333 JVM / 200 Forge, zero failures/errors/skips. All five packaged `@Mod` versions, the forced
-  Scala-compilation guard and dev config remain correct. Sources total 213 Java files and 9 Scala files / 1,196
-  nonblank Scala lines. Next: assess the remaining compiler startup/model shell before selecting another extraction;
-  retained ScalaSignature model bridges remain the Java-source limit.
+  3,635 non-target method bodies, all five other compiler closures and every output name/hash. All five packaged
+  `@Mod` versions, the forced Scala-compilation guard and dev config remain correct. Sources total 213 Java files and
+  9 Scala files / 1,196 nonblank Scala lines. Next: assess the remaining compiler startup/model shell before selecting
+  another extraction; retained ScalaSignature model bridges remain the Java-source limit.
 
 ### 2026-09-03 — compiler startup
 
@@ -981,10 +934,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   from 436 to 437 only for the helper; the shared classfile ledger covers it and no effective divergence was added.
 - Saved the reference source/jar, reports, 102 generated outputs and checks in ignored
   `run/migration-compiler-startup-reference/`. Clean verification after stopping Gradle matches 431 non-target class
-  APIs, 3,653 non-target method bodies, all five compiler closures and every output name/hash. Formatting, checkstyle,
-  build and Forge pass: 333 JVM / 207 Forge, zero failures/errors/skips. All five packaged `@Mod` versions, the forced
-  Scala-compilation guard and dev config remain correct. Sources total 214 Java files and 9 Scala files / 1,188
-  nonblank Scala lines.
+  APIs, 3,653 non-target method bodies, all five compiler closures and every output name/hash. All five packaged
+  `@Mod` versions, the forced Scala-compilation guard and dev config remain correct. Sources total 214 Java files and
+  9 Scala files / 1,188 nonblank Scala lines.
 - Audited the preserved Java-rewriter defects against current registrations and supplied consumers. The ABI inventory
   exposes only ProjectRed's external Scala-trait registration, which bypasses this path; current Java mixins have no
   wide state fields and the Forge registration suite remains green. Wide getter maxima, primitive-array analysis and
@@ -1006,12 +958,11 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   interface dispatch from the base and parent mixin, and final concrete instantiation. Existing Scala-trait
   registration and all current Java mixin outputs are unchanged.
 - Saved the pre-change jar/source, reports, 106 generated outputs and checks in ignored
-  `run/migration-abstract-java-reference/`. Clean verification after stopping Gradle matches all 432 class APIs,
-  3,643 non-target method bodies and all five compiler closures. The 106 existing dump names/hashes match exactly;
-  the abstract-layer fixture adds six outputs. Formatting, checkstyle, build and Forge pass: 333 JVM / 210 Forge,
-  zero failures/errors/skips. All five packaged `@Mod` versions, the forced Scala-compilation guard and dev config
-  remain correct. Sources stay at 214 Java files and 9 Scala files / 1,188 nonblank Scala lines. Next: Java-path
-  `@SideOnly` member filtering, characterized first as its own compiler behavior target.
+  `run/migration-abstract-java-reference/`. Clean verification after stopping Gradle matches all 432 class APIs, 3,643
+  non-target method bodies and all five compiler closures. The 106 existing dump names/hashes match exactly; the
+  abstract-layer fixture adds six outputs. All five packaged `@Mod` versions, the forced Scala-compilation guard and
+  dev config remain correct. Sources stay at 214 Java files and 9 Scala files / 1,188 nonblank Scala lines. Next:
+  Java-path `@SideOnly` member filtering, characterized first as its own compiler behavior target.
 
 ### 2026-09-03 — Java mixin side filtering
 
@@ -1031,10 +982,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   `run/migration-java-side-only-reference/`. Clean verification after stopping Gradle keeps all 437 packaged classes,
   matches 432 class APIs, 3,643 non-target method bodies and all five compiler closures. All 112 reference dump names
   remain: 109 hashes are exact and only the SideOnly fixture's trait, helper and composite change; four outputs are
-  new for the already-stripped-constructor fixture. Formatting, checkstyle, build and Forge pass: 333 JVM / 211 Forge,
-  zero failures/errors/skips. All five packaged `@Mod` versions, the forced
-  Scala-compilation guard and dev config remain correct. Sources stay at 214 Java files and 9 Scala files / 1,188
-  nonblank Scala lines. Next: `microblock/MicroblockTraits.scala`, characterized before conversion.
+  new for the already-stripped-constructor fixture. All five packaged `@Mod` versions, the forced Scala-compilation
+  guard and dev config remain correct. Sources stay at 214 Java files and 9 Scala files / 1,188 nonblank Scala lines.
+  Next: `microblock/MicroblockTraits.scala`, characterized before conversion.
 
 ### 2026-09-03 — Common microblock trait implementation
 
@@ -1053,11 +1003,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   The clean comparison preserves all 437 original class/member APIs, all 17 ScalaSignature payloads and 3,674 non-target
   method bodies; only the new helper raises the class inventory to 438. All 116 generated dump names/hashes are exact,
   including external Scala and pass-through fixtures. No new effective divergence is introduced.
-- Formatting, checkstyle, build and Forge pass both normally and after stopping Gradle for a clean rebuild:
-  340 JVM / 213 Forge tests, zero failures/errors/skips. The forced Scala-compilation guard and all five packaged
-  `@Mod` versions remain verified. Sources total 215 Java files and 9 Scala files / 1,170 nonblank Scala lines.
-  Next: `microblock/FaceMicroblockTraits.scala` implementation, with characterization before conversion. GPU rendering
-  and full client selection remain on the manual checklist.
+- The forced Scala-compilation guard and all five packaged `@Mod` versions remain verified. Sources total 215 Java
+  files and 9 Scala files / 1,170 nonblank Scala lines. Next: `microblock/FaceMicroblockTraits.scala` implementation,
+  with characterization before conversion. GPU rendering and full client selection remain on the manual checklist.
 
 ### 2026-09-03 — Face microblock trait implementation
 
@@ -1073,10 +1021,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   behavior was changed, and no new divergence entry is needed.
 - Saved the pre-port jar/source, reports and 116 generated dumps in ignored `run/migration-face-traits-reference/`.
   Clean verification preserves all 438 original class/member APIs, all 17 ScalaSignature payloads and 3,688 non-target
-  method bodies. All 116 generated names and SHA-256 hashes match; only the new helper increases the jar inventory
-  to 439 classes. Formatting, checkstyle, build and Forge pass normally and after stopping Gradle for a clean rebuild:
-  345 JVM / 216 Forge tests, zero failures/errors/skips. The forced Scala-compilation guard and all five packaged
-  `@Mod` versions remain verified. Sources total 216 Java files and 9 Scala files / 1,144 nonblank Scala lines.
+  method bodies. All 116 generated names and SHA-256 hashes match; only the new helper increases the jar inventory to
+  439 classes. The forced Scala-compilation guard and all five packaged `@Mod` versions remain verified. Sources total
+  216 Java files and 9 Scala files / 1,144 nonblank Scala lines.
 - Added a manual face-cover check using Stone, Glass and ProjectRed Inverted White Lamp materials. Headless tests
   prove per-face dispatch, not GPU output. Next: `microblock/CornerMicroblockTraits.scala` implementation, characterized
   before conversion.
@@ -1093,10 +1040,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   algorithm, validation or existing behavior changed; no new divergence entry is needed.
 - Saved reference jar/source, reports and 116 generated dumps under ignored `run/migration-corner-traits-reference/`.
   Clean verification preserves all 439 original class/member APIs, all 17 ScalaSignature payloads and 3,692 non-target
-  method bodies. All 116 generated names and SHA-256 hashes match; only the helper raises the inventory to 440 classes.
-  Formatting, checkstyle, build and Forge pass normally and after stopping Gradle for a clean rebuild: 348 JVM /
-  219 Forge tests, zero failures/errors/skips. The forced Scala-compilation guard and all five packaged `@Mod` versions
-  remain verified. Sources total 217 Java files and 9 Scala files / 1,144 nonblank Scala lines.
+  method bodies. All 116 generated names and SHA-256 hashes match; only the helper raises the inventory to 440
+  classes. The forced Scala-compilation guard and all five packaged `@Mod` versions remain verified. Sources total 217
+  Java files and 9 Scala files / 1,144 nonblank Scala lines.
 - Next: `EdgeMicroblock` in `microblock/EdgeMicroblockTraits.scala`; characterize and port the post traits separately.
   Client/GPU and full-pack validation remain on the existing manual checklist.
 
@@ -1113,9 +1059,8 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Saved the reference jar/source, reports and 116 generated dumps in ignored `run/migration-edge-trait-reference/`.
   Clean verification preserves all 440 original class/member APIs, all 17 ScalaSignature payloads and 3,696 non-target
   method bodies. All 116 generated dump names and hashes match; only the helper raises the inventory to 441 classes.
-  Formatting, checkstyle, build and Forge pass normally and after stopping Gradle for a clean rebuild: 351 JVM /
-  222 Forge tests, zero failures/errors/skips. The forced Scala-compilation guard and all five packaged `@Mod` versions
-  remain verified. Sources total 218 Java files and 9 Scala files / 1,144 nonblank Scala lines.
+  The forced Scala-compilation guard and all five packaged `@Mod` versions remain verified. Sources total 218 Java
+  files and 9 Scala files / 1,144 nonblank Scala lines.
 - Next: `PostMicroblock` in the same file; characterize its occlusion ordering, axis bounds, item identity, torch
   support and generated state before extraction. `PostMicroblockClient` follows separately. The existing manual
   Stone Strip / ProjectRed Red Alloy Wire and illuminated-strip checks cover the remaining client/full-pack gate.
@@ -1135,10 +1080,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   no compiler algorithm, existing behavior or effective compatibility difference changed.
 - Saved reference source/jar, reports and 116 generated dumps under ignored `run/migration-post-trait-reference/`.
   Clean verification preserves all 441 original class/member APIs, all 17 ScalaSignature payloads and 3,696 non-target
-  method bodies. All 116 generated names/hashes match; the helper alone raises the jar inventory to 442 classes.
-  Formatting, checkstyle, build and Forge pass normally and after stopping Gradle for a clean rebuild: 357 JVM /
-  226 Forge tests, zero failures/errors/skips. The forced Scala-compilation guard and all five packaged `@Mod`
-  versions remain verified. Sources total 219 Java files and 9 Scala files / 1,140 nonblank Scala lines.
+  method bodies. All 116 generated names/hashes match; the helper alone raises the jar inventory to 442 classes. The
+  forced Scala-compilation guard and all five packaged `@Mod` versions remain verified. Sources total 219 Java files
+  and 9 Scala files / 1,140 nonblank Scala lines.
 - Next: `PostMicroblockClient`; characterize render dispatch, lifecycle super ordering, shrink/split/reset behavior
   and size/transparency/axis tie-breaks before conversion. Client/GPU and full-pack checks remain manual.
 
@@ -1157,9 +1101,8 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Saved source/jar, reports and 116 generated dumps in ignored `run/migration-post-client-reference/`. Clean checks
   preserve all 441 retained class/member APIs, all 17 ScalaSignature payloads, 3,703 non-target method bodies and all
   116 generated names/hashes. Two Java classes replace one Scala callback, bringing the jar inventory to 443 classes.
-  Formatting, checkstyle, build and Forge pass normally and after stopping Gradle for a clean rebuild: 365 JVM /
-  227 Forge tests, zero failures/errors/skips. The forced Scala-compilation guard and all five packaged `@Mod` versions
-  remain verified. Sources total 220 Java files and 9 Scala files / 1,104 nonblank Scala lines.
+  The forced Scala-compilation guard and all five packaged `@Mod` versions remain verified. Sources total 220 Java
+  files and 9 Scala files / 1,104 nonblank Scala lines.
 - Expanded the existing manual post check with Stone, Glass and ProjectRed Inverted White Lamp examples. The
   dedicated server strips the client factory entry point; helper/geometry coverage does not establish actual client
   generation or GPU output. Next: `HollowMicroblock`, followed separately by `HollowMicroblockClient`.
@@ -1183,9 +1126,8 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   `run/migration-hollow-trait-reference/`. Normal and clean verification after stopping Gradle preserve all 441
   retained original class/member APIs, all 17 ScalaSignature payloads, 3,704 unrelated method bodies and all 116
   generated dump names/hashes. The helper and two callbacks replace two Scala callbacks: 443 -> 444 packaged classes.
-  Formatting, checkstyle, build and Forge pass with 370 JVM / 231 Forge tests, zero failures/errors/skips. The forced
-  Scala-compilation guard and all five packaged `@Mod` versions remain verified. Sources total 221 Java files and
-  9 Scala files / 1,051 nonblank Scala lines.
+  The forced Scala-compilation guard and all five packaged `@Mod` versions remain verified. Sources total 221 Java
+  files and 9 Scala files / 1,051 nonblank Scala lines.
 - Next: `HollowMicroblockClient`. Characterize render-mask initialization/recalculation and super ordering,
   pass/transparency dispatch, rim geometry/callback order, breaking and highlight behavior before extraction.
   Added a manual hollow-cover interaction/reload check with ProjectRed Framed Red Alloy Wire and Hollow Inverted
@@ -1209,10 +1151,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Saved source/reference jar, fixture compilation, reports and 116 generated dumps under ignored
   `run/migration-hollow-client-reference/`. Normal and clean verification after stopping Gradle preserve all 439
   retained class/member APIs, all 17 ScalaSignature payloads, 3,706 unrelated method bodies and all 116 generated
-  names/hashes. The helper and two callbacks replace five Scala callbacks: 444 -> 442 packaged classes. Formatting,
-  checkstyle, build and Forge pass with 378 JVM / 232 Forge tests, zero failures/errors/skips. The forced Scala
-  compilation guard and all five packaged `@Mod` versions remain verified. Sources total 222 Java files and
-  9 Scala files / 820 nonblank Scala lines.
+  names/hashes. The helper and two callbacks replace five Scala callbacks: 444 -> 442 packaged classes. The forced
+  Scala compilation guard and all five packaged `@Mod` versions remain verified. Sources total 222 Java files and 9
+  Scala files / 820 nonblank Scala lines.
 - Next: `TMicroOcclusion`; characterize super short-circuiting, size/material/slot constraints, repeated reads and
   edge/corner bit tests before extraction. Leave `TMicroOcclusionClient` for a separate target. Existing manual checks
   cover AE2 cables and ProjectRed Framed Red Alloy Wire through hollow covers. Recorded rendering commands and
@@ -1232,9 +1173,8 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   unrelated fix, compiler change or new effective divergence was introduced. `TMicroOcclusionClient` is untouched.
 - Evidence in ignored `run/migration-micro-occlusion-trait-reference/` includes source/jar, fixture compilation,
   reports and 116 generated dumps. Normal and clean checks after stopping Gradle preserve all 442 original
-  class/member APIs, all 17 ScalaSignature payloads, 3,721 unrelated method bodies and all 116 dump names/hashes.
-  Only the Java helper is added: 442 -> 443 packaged classes. Formatting, checkstyle, build and Forge pass with
-  386 JVM / 234 Forge tests, zero failures/errors/skips. The forced Scala-compilation guard and all five packaged
+  class/member APIs, all 17 ScalaSignature payloads, 3,721 unrelated method bodies and all 116 dump names/hashes. Only
+  the Java helper is added: 442 -> 443 packaged classes. The forced Scala-compilation guard and all five packaged
   `@Mod` versions remain verified. Sources total 223 Java files and 9 Scala files / 784 nonblank Scala lines.
 - Next: `TMicroOcclusionClient`; characterize lifecycle super/recalc ordering, packet propagation, bounds copying,
   mask updates and failures. Retain `JMicroShrinkRender` and required Scala metadata/state/super bridges. Actual
@@ -1254,13 +1194,12 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   Java source cannot call the synthetic Scala super accessors directly; those three super calls and subsequent
   virtual recalculation calls retain identical instructions and dispatch. The helper still calls the bounds setter
   and getter separately before mask publication. No compiler algorithm change or new effective divergence.
-- Evidence in ignored `run/migration-micro-occlusion-client-reference/` includes reference source/jar, frozen
-  fixture compilation, reports and 116 generated dumps. Normal and clean checks after stopping Gradle preserve
-  all 443 original class/member APIs, all 17 ScalaSignature payloads, 3,725 unrelated method bodies and all 116
-  generated names/hashes. Only the Java helper is added: 443 -> 444 packaged classes. Formatting, checkstyle,
-  build and Forge pass with 392 JVM / 235 Forge tests and zero failures/errors/skips. The forced Scala compilation
-  guard and all five packaged `@Mod` versions remain verified. Sources total 224 Java files and 9 Scala files /
-  782 nonblank Scala lines.
+- Evidence in ignored `run/migration-micro-occlusion-client-reference/` includes reference source/jar, frozen fixture
+  compilation, reports and 116 generated dumps. Normal and clean checks after stopping Gradle preserve all 443
+  original class/member APIs, all 17 ScalaSignature payloads, 3,725 unrelated method bodies and all 116 generated
+  names/hashes. Only the Java helper is added: 443 -> 444 packaged classes. The forced Scala compilation guard and all
+  five packaged `@Mod` versions remain verified. Sources total 224 Java files and 9 Scala files / 782 nonblank Scala
+  lines.
 - Next: extract `StackAnalyser` constructor initialization after characterizing receiver/parameter slot setup,
   virtual `pushL` order, malformed descriptors and duplicate exception-handler precedence. Retain its coordinated
   Scala shell/models; keep opcode fixes separate. The client manual row now names Stone/Glass covers and
@@ -1294,8 +1233,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   Existing explicit ticks keep their original timing.
 - Added three JVM regression cases for deduplication, promotion and retaining an existing explicit tick. All three
   failed before the fix. Together with the accessor and packet fixes, this adds six JVM and two Forge cases.
-- Formatting, test checkstyle, build and Forge pass with 398 JVM / 237 Forge tests and zero failures/errors/skips.
-  The four touched class surfaces retain their callable member names and descriptors. The packaged inventory grows
+- The four touched class surfaces retain their callable member names and descriptors. The packaged inventory grows
   from 444 to 445 classes solely for the packet traversal callback; no existing class is removed.
 
 ### 2026-09-04 — Scoped modern Java compilation
@@ -1308,7 +1246,7 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   398 frozen JVM consumer tests, and 237 Java 8 Forge tests. All 445 dev/release classes remain Java 8 compatible;
   with matching version metadata, only the helper changes and it exactly matches the isolated prototype. All
   retained Scala classes and 116 generated ASM dumps are identical. Source-jar contents, formatting, and checkstyle
-  pass. Evidence and reproduction commands are in `JVM_DOWNGRADER_HANDOFF.md` and ignored `run/jvmdg-trial/`.
+  pass. Evidence and reproduction commands are in `JAVA_MIGRATION.md#modern-java-readability-policy` and ignored `run/jvmdg-trial/`.
 - Prefer completing useful remaining Scala behavior extractions before broad Java syntax changes. Most remaining
   Scala declarations preserve model/trait binary contracts; zero Scala is a separate compatibility decision.
 
@@ -1351,10 +1289,10 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   checks and a second virtual accessor call only for failures. Scala retains the entire case class, companion,
   product/copy methods and serialization shape. The scoped modern Java build is reused without configuration or
   dependency changes; the only extra compiler method handles the failure string concatenation.
-- The build, formatting, checkstyle, frozen-consumer lane and Java 8 Forge tests pass, including verification from
-  a clean build after stopping the Gradle daemon: 415 JVM tests, 415 frozen JVM consumers and 237 Forge tests, with
-  zero failures/errors/skips. All 116 generated ASM dump names and hashes match. Both jars contain 444 Java 8
-  classes, their five `@Mod` versions match their filenames, and both edited sources match the source jar.
+- The build, formatting, checkstyle, frozen-consumer lane and Java 8 Forge tests pass, including verification from a
+  clean build after stopping the Gradle daemon: 415 JVM tests, 415 frozen JVM consumers and 237 Forge tests, with zero
+  failures/errors/skips. Both jars contain 444 Java 8 classes, their five `@Mod` versions match their filenames, and
+  both edited sources match the source jar.
 - Preserved all 443 retained class/member APIs, all 17 ScalaSignature payloads and 3,731 unrelated method bodies.
   The helper retains every previous member and adds only `constType` and its private synthetic concatenation
   method. No class is added or removed, no JVM Downgrader runtime-stub reference is introduced, and there is no new
@@ -1406,11 +1344,11 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   Deduplication stays in composite generation, after traversal. Model, companion, product and serialization APIs
   remain Scala. The unreferenced `MixinInfo$$anonfun$linearise$1` class disappears under the existing compiler-artifact
   ledger entry; no new effective divergence or dependency is introduced.
-- Normal and clean builds pass formatting/checkstyle, 429 JVM tests, all 429 frozen JVM consumers and 237 Java 8
-  Forge tests, with zero failures/errors/skips. All 116 generated dump names and hashes match. Checks preserve 442
-  retained class/member APIs, all 17 ScalaSignature payloads and 3,731 unrelated method bodies. Both jars contain
-  443 Java 8 classes, with matching packaged sources. Evidence, frozen consumers and reproducible comparison tools
-  are under ignored `run/migration-linearise-reference/`; use its `version.txt` for frozen version assertions.
+- Normal and clean builds pass formatting/checkstyle, 429 JVM tests, all 429 frozen JVM consumers and 237 Java 8 Forge
+  tests, with zero failures/errors/skips. Checks preserve 442 retained class/member APIs, all 17 ScalaSignature
+  payloads and 3,731 unrelated method bodies. Both jars contain 443 Java 8 classes, with matching packaged sources.
+  Evidence, frozen consumers and reproducible comparison tools are under ignored `run/migration-linearise-reference/`;
+  use its `version.txt` for frozen version assertions.
 - Source totals remain 224 Java files and nine Scala files / 765 nonblank lines. The next candidate is
   `ScalaSignature.Bytes.section`, preserving clamping, copy boundaries and virtual getter/failure ordering.
 
@@ -1424,11 +1362,11 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   copy remains between the `pos` and `len` reads: mutations from `pos` are visible, while mutations from `len` are
   excluded. This holds even for zero/negative positions. Scala retains the case class, companion, product/copy
   methods and serialization shape. Ordinary Java 8 joint compilation remains sufficient.
-- Normal and clean formatting/checkstyle/build/Forge checks pass: 435 JVM tests, all 435 frozen JVM consumers and
-  237 Java 8 Forge tests, with zero failures/errors/skips. All 116 generated dump names and hashes match. Both jars
-  contain 443 Java 8 classes; packaged sources match. The comparison preserves 442 retained class/member APIs,
-  all 17 ScalaSignature payloads and 3,732 unrelated method bodies. Only `Bytes.section` and the parser helper have
-  changed class bytes; the helper adds one package-private method. No new effective divergence is introduced.
+- Normal and clean formatting/checkstyle/build/Forge checks pass: 435 JVM tests, all 435 frozen JVM consumers and 237
+  Java 8 Forge tests, with zero failures/errors/skips. Both jars contain 443 Java 8 classes; packaged sources match.
+  The comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,732 unrelated method
+  bodies. Only `Bytes.section` and the parser helper have changed class bytes; the helper adds one package-private
+  method. No new effective divergence is introduced.
 - Evidence and rerun tools are saved under ignored `run/migration-bytes-section-reference/`, including baseline
   jar/sources, frozen tests/resources, reports, dumps and logs. Use its `version.txt` with `frozen-consumers.gradle`
   for the existing inlined-version tests. The prior linearisation reference remains independently reproducible.
@@ -1448,10 +1386,10 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   static helper/forwarder descriptors, SingleType's super shell and serialization shapes remain unchanged. The
   existing Java 8 joint-compilation path suffices; no dependency or build configuration changes are needed.
 - Normal and clean builds pass formatting/checkstyle, 442 JVM tests, all 442 frozen JVM consumers, and 237 Java 8
-  Forge tests, with zero failures/errors/skips. All 116 generated dump names and hashes match. Both jars contain
-  443 Java 8 classes, with matching packaged sources. Comparison preserves 442 retained class/member APIs, all 17
-  ScalaSignature payloads and 3,733 unrelated method bodies. The Java helper adds only one package-private method;
-  no class is added or removed and no new effective divergence is introduced.
+  Forge tests, with zero failures/errors/skips. Both jars contain 443 Java 8 classes, with matching packaged sources.
+  Comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,733 unrelated method
+  bodies. The Java helper adds only one package-private method; no class is added or removed and no new effective
+  divergence is introduced.
 - Evidence, frozen tests/resources and rerun tools are under ignored `run/migration-type-name-reference/`.
   Use its `version.txt` with `frozen-consumers.gradle` to retain the existing inlined-version assertions. Ordinary
   final builds use the committed Git version. Source totals are 224 Java files and nine Scala files / 762 nonblank
@@ -1467,10 +1405,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Extracted conversion into `ScalaSignatureParser.typeDescriptor(Object)`, keeping path-dependent types inside
   Java method bodies. Literal equality retains the null-name fallback, and `jName()` remains virtual and lazy.
   Scala declarations, array override, super dispatch and serialization shapes remain unchanged.
-- Normal and clean validation pass 449 JVM tests, 449 frozen consumers and 237 Java 8 Forge tests with zero
-  failures/errors/skips. Both jars contain 443 Java 8 classes and matching packaged sources. Comparison preserves
-  442 retained class/member APIs, all 17 ScalaSignature payloads, 3,734 unrelated method bodies and all 116 generated
-  dumps. Only one package-private helper method is added; there is no class inventory change or new divergence.
+- Both jars contain 443 Java 8 classes and matching packaged sources. Comparison preserves 442 retained class/member
+  APIs, all 17 ScalaSignature payloads, 3,734 unrelated method bodies and all 116 generated dumps. Only one
+  package-private helper method is added; there is no class inventory change or new divergence.
 - Evidence is under ignored `run/migration-type-descriptor-reference/`, including the reference jar, compiled tests,
   resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the committed version.
   Source totals are 224 Java files and nine Scala files / 751 nonblank lines. Next: `TMethodType.jDesc` assembly,
@@ -1487,12 +1424,11 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   Scala List builder, map and mkString semantics, using the existing TraversableLike bridge pattern to resolve
   javac's ambiguous Scala List map overloads. Path-dependent models stay inside method bodies; Scala trait/model
   declarations, forwarders, generic signatures and serialization shapes remain unchanged.
-- Normal and clean validation pass 456 JVM tests, 456 frozen consumers and 237 Java 8 Forge tests with zero
-  failures/errors/skips. All 116 generated dumps match the reference; both jars contain 443 Java 8 classes and
-  matching packaged sources. Comparison preserves 441 retained class/member APIs, all 17 ScalaSignature payloads
-  and 3,732 unrelated method bodies. The sole inventory replacement is `TMethodType$$anonfun$jDesc$1` with
-  `ScalaSignatureParser$1`, covered by the existing unreferenced compiler-artifact ledger entry. The helper gains
-  one package-private method; no new effective divergence is introduced.
+- All 116 generated dumps match the reference; both jars contain 443 Java 8 classes and matching packaged sources.
+  Comparison preserves 441 retained class/member APIs, all 17 ScalaSignature payloads and 3,732 unrelated method
+  bodies. The sole inventory replacement is `TMethodType$$anonfun$jDesc$1` with `ScalaSignatureParser$1`, covered by
+  the existing unreferenced compiler-artifact ledger entry. The helper gains one package-private method; no new
+  effective divergence is introduced.
 - Evidence is under ignored `run/migration-method-descriptor-reference/`, including the reference jar, frozen
   tests/resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the committed
   version. Sources remain 224 Java files and nine Scala files / 749 nonblank lines. Next: `ClassSymbolRef.jInterfaces`,
@@ -1511,11 +1447,10 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Extracted the mapping into `ScalaSignatureParser.interfaceNames(Object)`. The Java callback retains virtual
   lookup and Scala List map/builder behavior, using the existing TraversableLike bridge pattern. The helper returns
   `List<String>`; Scala retains inferred types, trait/model declarations, forwarders and serialization shapes.
-- Normal and clean validation pass 463 JVM tests, 463 frozen consumers and 237 Java 8 Forge tests with zero
-  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
-  comparison preserves 441 retained class/member APIs, all 17 ScalaSignature payloads and 3,733 unrelated method
-  bodies. The sole inventory replacement is `ClassSymbolRef$$anonfun$jInterfaces$1` with `ScalaSignatureParser$2`,
-  covered by the existing unreferenced compiler-artifact ledger entry. No new effective divergence is introduced.
+- Both jars contain 443 Java 8 classes and matching sources; comparison preserves 441 retained class/member APIs, all
+  17 ScalaSignature payloads and 3,733 unrelated method bodies. The sole inventory replacement is
+  `ClassSymbolRef$$anonfun$jInterfaces$1` with `ScalaSignatureParser$2`, covered by the existing unreferenced
+  compiler-artifact ledger entry. No new effective divergence is introduced.
 - Evidence is under ignored `run/migration-interface-names-reference/`, including the fixture/reference jars,
   frozen tests/resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the
   committed version. Sources remain 224 Java files and nine Scala files / 749 nonblank lines. Next:
@@ -1532,10 +1467,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   class-name regular expression, left-to-right virtual getter order, object-to-string conversion and hexadecimal
   representation. Scala keeps the inferred return type, trait/case-class declarations, forwarders, products and
   serialization shapes.
-- Normal and clean validation pass 470 JVM tests, 470 frozen consumers and 237 Java 8 Forge tests with zero
-  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
-  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,737 unrelated method
-  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Both jars contain 443 Java 8 classes and matching sources; comparison preserves 442 retained class/member APIs, all
+  17 ScalaSignature payloads and 3,737 unrelated method bodies. The helper adds one package-private method; no class
+  inventory or effective divergence changes.
 - Evidence is under ignored `run/migration-class-symbol-string-reference/`, including the reference jar, frozen
   tests/resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the committed
   version. Source totals are 224 Java files and nine Scala files / 748 nonblank lines. Next:
@@ -1550,10 +1484,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Extracted formatting into `ScalaSignatureParser.methodSymbolString(Object)`. Java retains left-to-right virtual
   getter order, object-to-string conversion and hexadecimal representation. Scala keeps the inferred return type,
   case-class declaration, symbol/flag bridges, product members and serialization shape.
-- Normal and clean validation pass 477 JVM tests, 477 frozen consumers and 237 Java 8 Forge tests with zero
-  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
-  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,738 unrelated method
-  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Both jars contain 443 Java 8 classes and matching sources; comparison preserves 442 retained class/member APIs, all
+  17 ScalaSignature payloads and 3,738 unrelated method bodies. The helper adds one package-private method; no class
+  inventory or effective divergence changes.
 - Evidence is under ignored `run/migration-method-symbol-string-reference/`, including the reference jar, frozen
   tests/resources, reports and comparison tools. Frozen runs use its `version.txt`; final builds use the committed
   version. Source totals are 224 Java files and nine Scala files / 747 nonblank lines. Next:
@@ -1572,10 +1505,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Extracted the applied-type branch into `ScalaSignatureParser.appliedTypeDescriptor(Object)`. The array path reads
   only the first type argument; the fallback reuses `typeDescriptor`, preserving its virtual name and `jName` order.
   Scala retains the inferred return type, case class, method-type mixin, product members and serialization shape.
-- Normal and clean validation pass 484 JVM tests, all 484 frozen consumers and 237 Java 8 Forge tests with zero
-  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
-  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,739 unrelated method
-  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Both jars contain 443 Java 8 classes and matching sources; comparison preserves 442 retained class/member APIs, all
+  17 ScalaSignature payloads and 3,739 unrelated method bodies. The helper adds one package-private method; no class
+  inventory or effective divergence changes.
 - Evidence is under ignored `run/migration-applied-type-descriptor-reference/`, including the reference/fixture jars,
   frozen tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
   committed version. Source totals are 224 Java files and nine Scala files / 744 nonblank lines. Next:
@@ -1593,10 +1525,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Extracted concatenation into `ScalaSignatureParser.classSymbolFull(Object)`. Java retains owner getter, virtual
   owner `full()` and name getter order plus Java/Scala null string conversion. Scala keeps the inferred return type,
   trait helper, case-class forwarders, path-dependent declarations, products and serialization shapes.
-- Normal and clean validation pass 491 JVM tests, all 491 frozen consumers and 237 Java 8 Forge tests with zero
-  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
-  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,740 unrelated method
-  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Both jars contain 443 Java 8 classes and matching sources; comparison preserves 442 retained class/member APIs, all
+  17 ScalaSignature payloads and 3,740 unrelated method bodies. The helper adds one package-private method; no class
+  inventory or effective divergence changes.
 - Evidence is under ignored `run/migration-class-symbol-full-reference/`, including the reference/fixture jars,
   frozen tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
   committed version. Sources remain 224 Java files and nine Scala files / 744 nonblank lines. Next:
@@ -1614,10 +1545,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Extracted concatenation into `ScalaSignatureParser.methodSymbolFull(Object)`. Java retains owner getter, virtual
   owner `full()` and name getter order plus Java/Scala null string conversion. Scala keeps the inferred return type,
   case class, path-dependent declaration, products and serialization shape.
-- Normal and clean validation pass 498 JVM tests, all 498 frozen consumers and 237 Java 8 Forge tests with zero
-  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
-  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,741 unrelated method
-  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Both jars contain 443 Java 8 classes and matching sources; comparison preserves 442 retained class/member APIs, all
+  17 ScalaSignature payloads and 3,741 unrelated method bodies. The helper adds one package-private method; no class
+  inventory or effective divergence changes.
 - Evidence is under ignored `run/migration-method-symbol-full-reference/`, including the reference/fixture jars,
   frozen tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
   committed version. Sources remain 224 Java files and nine Scala files / 744 nonblank lines. Next:
@@ -1636,10 +1566,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Extracted the lookup chain into `ScalaSignatureParser.classParentName(Object)`. Java retains virtual info, parent
   and `jName` order and passes through a null name. Scala keeps the inferred return type, trait helper, case-class
   forwarders, path-dependent declarations, products and serialization shapes.
-- Normal and clean validation pass 505 JVM tests, all 505 frozen consumers and 237 Java 8 Forge tests with zero
-  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
-  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,742 unrelated method
-  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Both jars contain 443 Java 8 classes and matching sources; comparison preserves 442 retained class/member APIs, all
+  17 ScalaSignature payloads and 3,742 unrelated method bodies. The helper adds one package-private method; no class
+  inventory or effective divergence changes.
 - Evidence is under ignored `run/migration-class-parent-reference/`, including the reference/fixture jars, frozen
   tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
   committed version. Sources remain 224 Java files and nine Scala files / 744 nonblank lines. Next:
@@ -1656,10 +1585,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Extracted the lookup into `ScalaSignatureParser.methodSymbolDescriptor(Object)`. Java retains virtual info and
   `jDesc` order and passes through a null descriptor. Scala keeps the inferred return type, case class, path-dependent
   declaration, products and serialization shape.
-- Normal and clean validation pass 512 JVM tests, all 512 frozen consumers and 237 Java 8 Forge tests with zero
-  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
-  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,743 unrelated method
-  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Both jars contain 443 Java 8 classes and matching sources; comparison preserves 442 retained class/member APIs, all
+  17 ScalaSignature payloads and 3,743 unrelated method bodies. The helper adds one package-private method; no class
+  inventory or effective divergence changes.
 - Evidence is under ignored `run/migration-method-symbol-descriptor-reference/`, including the reference/fixture jars,
   frozen tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
   committed version. Sources remain 224 Java files and nine Scala files / 744 nonblank lines. Next:
@@ -1676,10 +1604,9 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
 - Extracted evaluation into `ScalaSignatureParser.methodSymbolInfo(ScalaSignature, Object)`. Scala passes its enclosing
   signature explicitly because javac cannot call the synthetic outer accessor. Java retains virtual `infoId` then
   `evalT` dispatch; Scala retains the final `TMethodType` cast, case class, products and serialization shape.
-- Normal and clean validation pass 519 JVM tests, all 519 frozen consumers and 237 Java 8 Forge tests with zero
-  failures/errors/skips. All 116 generated dumps match. Both jars contain 443 Java 8 classes and matching sources;
-  comparison preserves 442 retained class/member APIs, all 17 ScalaSignature payloads and 3,744 unrelated method
-  bodies. The helper adds one package-private method; no class inventory or effective divergence changes.
+- Both jars contain 443 Java 8 classes and matching sources; comparison preserves 442 retained class/member APIs, all
+  17 ScalaSignature payloads and 3,744 unrelated method bodies. The helper adds one package-private method; no class
+  inventory or effective divergence changes.
 - Evidence is under ignored `run/migration-method-symbol-info-reference/`, including the reference/fixture jars,
   frozen tests/resources, reports, logs and comparison tools. Frozen runs use its `version.txt`; final builds use the
   committed version. Sources remain 224 Java files and nine Scala files / 747 nonblank lines. Next:
@@ -2224,3 +2151,214 @@ differences belong in the [divergence ledger](../../JAVA_MIGRATION_DIVERGENCES.m
   `run/migration-saw-strength-reference/`.
 - The identified FMP-side reflection gaps now have typed replacements. Next work moves to consumer source patches,
   releases and target-pack adoption, alongside the outstanding physical-client and measured-performance gates.
+
+## Phase 4 focused performance records (2026-08-27 / 2026-08-28)
+
+Recorded results from the focused pre-optimization baseline, moved here when `JAVA_MIGRATION.md#phase-4b--measured-performance-pass` was folded
+into the plan. Each result is scoped to its recorded workload and revision. The reusable protocol, harness commands
+and workload description are in [the plan](../../JAVA_MIGRATION.md#phase-4b--measured-performance-pass).
+
+## Baseline captured 2026-08-27
+
+Environment: Zulu 8.96 / OpenJDK `1.8.0_504-b01`, Windows 11, 16 hardware threads, `-Xms1G -Xmx4G`, JFR `profile`
+settings.
+
+| Phase | Elapsed | Operations/s | Allocated bytes | Bytes/operation | CPU samples |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `updateEntity` | 2.970 s | 16,835,622 | 9,198,500,864 | 184.0 | 209 |
+| `operate` | 3.004 s | 16,646,549 | 9,195,084,824 | 183.9 | 205 |
+| `redstoneQueries` | 3.689 s | 13,553,242 | 4,023,003,032 | 80.5 | 239 |
+
+Timing is machine- and JIT-sensitive; compare it only with the same workload and environment. Allocation per operation
+is the more stable regression metric.
+
+### CPU and allocation-site findings
+
+- `updateEntity` and `operate` are dominated by `TileMultipart.parts()`, `AbstractCollection.toArray`, Scala list
+  length/iteration, and Java-conversion wrappers. Their nearly identical 184-byte allocation cost shows that the
+  traversal snapshot, not the update callback itself, is the first target.
+- The current Java `parts()` constructs an `ArrayList` from the published Scala `Seq` on every traversal. The reference
+  Scala `operate` captured the immutable `Seq` and iterated it directly, so this cost is a port artifact rather than a
+  compatibility requirement.
+- Redstone CPU samples are concentrated in Scala `List.foreach` (118/239), `PartMap.edgeBetween` (46/239), iterator
+  `foreach` (35/239), and the generated strong-power closure (31/239). Allocation events identify
+  `scala.runtime.IntRef`, Scala iterators, and generated closures as the major sites.
+
+## Decision
+
+The first Phase 4 implementation targeted `TileMultipart` traversal after focused tests froze its mutation semantics:
+iteration observes the captured part order, skips a part whose tile was cleared before its turn, and does not visit a
+part added during the callback. The implementation retains the public Scala `Seq` and `operate(Function1)` ABI.
+
+## Traversal result captured 2026-08-27
+
+`operate` now captures `partList` directly. The normal immutable Scala `List` path walks its existing head/tail chain,
+which creates no iterator, Java wrapper, array, or copied collection. The published setter still accepts any Scala
+`Seq`; unusual implementations use the reference-style iterator fallback rather than being forced into the fast-path
+representation.
+
+The retained post-change report is from the same machine, JVM, arguments, warm-up, and 50,000,000-iteration workload:
+
+| Phase | Baseline elapsed | Result elapsed | Baseline B/op | Result B/op | Throughput change |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `updateEntity` | 2.970 s | 0.682 s | 184.0 | 0.05 | 4.36x |
+| `operate` | 3.004 s | 0.700 s | 183.9 | 0.0 | 4.29x |
+| `redstoneQueries` | 3.689 s | 7.286 s | 80.5 | 80.4 | control only |
+
+A repeat produced 0.732 s / 0.687 s for `updateEntity` / `operate`, with the same 0.05 / 0.0 B/op. The result therefore
+removes effectively all measured traversal allocation and raises throughput from roughly 16.7 million to 68–73
+million calls/s. The post-change JFR hot-method view no longer contains `TileMultipart.parts()`,
+`AbstractCollection.toArray`, or the Java-conversion wrappers in these paths.
+
+The unchanged redstone allocation is the useful control. Its timing was consistently slower in both post-change runs,
+but its code did not change and it now starts several seconds earlier because the preceding phases finish faster; do
+not attribute that timing difference to this traversal change. Re-baseline the redstone unit immediately before its
+own implementation comparison.
+
+## Redstone helper-unit comparison captured 2026-08-28
+
+Immediately before converting `IRedstonePart.scala`, the same workload measured `redstoneQueries` at 7.603 s,
+6,575,956 iterations/s, 4,022,151,064 allocated bytes, and 80.4 B/iteration. After its six interfaces and
+`RedstoneInteractions` were converted together, the retained report measured 3.880 s, 12,884,996 iterations/s,
+4,023,003,032 allocated bytes, and 80.5 B/iteration. Both runs produced checksum `3315999992`.
+
+The allocation result is unchanged. The elapsed-time difference is not treated as a port win: earlier unchanged
+Scala runs ranged from 3.689 to 7.603 s on this machine. More importantly, the post-port JFR has the same dominant
+sites: Scala `List.foreach`, `Iterator.foreach`, `PartMap.edgeBetween`, and
+`TRedstoneTile$$anonfun$strongPowerLevel$1`.
+
+That evidence corrects the earlier plan. `IRedstonePart.scala` owned the public interfaces and routing helpers, but the
+measured `IntRef`, iterator, and closure allocations are emitted by `scalatraits/TRedstoneTile.scala`. Removing them
+requires the Phase 5 `registerJavaTrait` path and must not be smuggled into this otherwise descriptor-identical port.
+
+`MicroRecipe.scala` was the next independent Phase 4 unit and is now Java. Its five recipe forms and precedence are
+characterized, and ordinary loops replaced its range/closure scans and exception-backed non-local returns. The focused
+server workload does not craft recipes, so no timing claim is made for that structural removal.
+
+The generated-trait checkpoints are complete. `TPartialOcclusionTile` proved the no-field path; `TSlottedTile` proved
+field/accessor generation, initialization, copying, lifecycle behavior, and caching. Its ordinary loops remove four
+Scala range closures and the exception-backed slot-scan return structurally, but the focused workload has no slotted
+placement phase, so no numeric performance claim is made for that port.
+
+## TRedstoneTile result captured 2026-08-28
+
+The port was measured immediately before and after with the same JVM, eight-part generated tile, warm-up, and
+50,000,000-iteration workload. Both runs produced checksum `3315999992`.
+
+| Implementation | Elapsed | Operations/s | Allocated bytes | Bytes/operation |
+| --- | ---: | ---: | ---: | ---: |
+| Scala trait | 7.534 s | 6,636,424 | 4,023,855,000 | 80.5 |
+| Java trait | 6.261 s | 7,986,213 | 0 | 0.0 |
+
+The Java trait removes all measured allocation from the three-query iteration and improves throughput by 20.3% in
+this paired run. The checksum and all characterization tests are unchanged. Normal immutable Scala `List` part
+storage is traversed through its existing head/tail chain; the published `partList` setter still accepts any `Seq`,
+so non-`List` implementations retain an iterator fallback.
+
+The existing Java-trait transformer cannot safely rewrite bytecode that directly reads inherited Minecraft fields or
+calls inherited `TileMultipart` methods. A package-private `TRedstoneTileAccess` shim keeps coordinate, `partList`, and
+virtual `partMap` access outside the transformed class. This changes no public facade or generated-trait member and
+required no generator change.
+
+The two focused steady-state allocation targets identified by this workload are now resolved: `TileMultipart.operate`
+and generated redstone queries are effectively allocation-free on their normal immutable-list paths. Further
+optimization should follow a new representative profile rather than extending this synthetic workload speculatively.
+
+## Multipart read-path baseline captured 2026-08-28
+
+A consumer-audit sanity check identified two Java-port allocations that the original three-phase workload did not
+exercise. Focused tests now pin empty/non-empty `BlockMultipart.getTile`, direct ordered `Seq` indexing, and read
+queries over the mutable `Seq` implementations accepted by the public setter. The two matching profile phases measured:
+
+| Phase | Elapsed | Operations/s | Allocated bytes | Bytes/operation |
+| --- | ---: | ---: | ---: | ---: |
+| `lightValue` | 3.170 s | 15,772,691 | 9,196,067,864 | 183.9 |
+| `getTile` | 0.271 s | 184,225,439 | 1,200,000,000 | 24.0 |
+
+`lightValue` pays for `TileMultipart.parts()`'s copied `ArrayList`; `getTile` pays for the Java list wrapper returned by
+`jPartList()`. Both are absent from the reference Scala implementation, which reads the published `Seq` directly.
+Mutation paths still require a snapshot before publishing a replacement immutable `Seq`.
+
+### Read-path result captured 2026-08-28
+
+The paired run used the same JVM, eight-part tiles, warm-up, iteration count, and checksum:
+
+| Phase | Baseline elapsed | Result elapsed | Baseline B/op | Result B/op | Throughput change |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `lightValue` | 3.170 s | 0.278 s | 183.9 | 0.0 | 11.42x |
+| `getTile` | 0.271 s | 0.094 s | 24.0 | 0.0 | 2.89x |
+
+Internal read paths now traverse or index the published Scala `Seq` directly. The normal immutable-list light query
+walks the existing head/tail chain; arbitrary `Seq` implementations retain an iterator fallback. The public
+`jPartList()` bridge remains unchanged for downstream ABI compatibility, and only add/remove paths take mutable
+snapshots before publishing a replacement immutable `Seq`.
+
+## JVM Downgrader integration records (2026-09-08 / 2026-09-09)
+
+Per-batch verification records from the scoped modern-Java integration, moved here when `JAVA_MIGRATION.md#modern-java-readability-policy`
+was folded into the plan. The build arrangement, eligibility rules, fastutil decision and limits are in
+[the plan](../../JAVA_MIGRATION.md#modern-java-readability-policy).
+
+### Per-batch results
+
+The completed `JavaTraitRegistration` batch passes a clean build with all 576 JVM tests and the Java 8 Forge run with
+all 289 functional tests. All 450 dev-jar classes remain version 52, the jar has no JVM Downgrader runtime API
+references, and all 134 generated ASM dump names and hashes match the pre-change manifest. The helper is absent from
+joint output and present only in the raw/downgraded modern directories. Its own class bytes changed as expected under
+modern javac/JVM Downgrader, but no source signature or consumer-facing class is changed.
+
+The completed `ClassInfoLookup` batch has the same clean-build, 576-test, Java 8 Forge, 450-class/version-52 and
+134-dump results. Its source signatures and package-private visibility are unchanged. JVM Downgrader records nest
+metadata as annotations for this helper's anonymous callbacks, but the packaged classes contain no executable JVM
+Downgrader API reference and the Java 8 runtime needs no added dependency.
+
+The completed `ScalaSignatureParser` batch also passes the clean compiler boundary, all 576 JVM tests, all 289 Java 8
+Forge tests and the 134-dump comparison; all 450 packaged classes remain version 52. Its non-private ABI is unchanged
+and it has no executable JVM Downgrader API reference. Modern string concatenation in the same internal class lowers
+to six private helper methods; these are compiler implementation details, not consumer entry points.
+
+The follow-up `StackAnalyserLogic` batch converts constant classification to a pattern switch expression and removes
+fall-through syntax from its opcode switches. It adds no build exclusion and preserves the same 576 JVM tests, 289
+Java 8 Forge tests and all 134 generated ASM hashes.
+
+The `HollowMicroblockTraitLogic` and `PostMicroblockClientLogic` batch passes a clean build, all 576 JVM tests, all 289
+Java 8 Forge tests and the 134-dump comparison. Their non-private ABI is unchanged, all 450 packaged classes remain
+version 52, and neither helper has an executable JVM Downgrader API reference. `PostMicroblockTraitLogic` was rejected
+from the batch: the retained Scala declaration does not expose `getShape()` through `PostMicroblock`, so its explicit
+`Microblock` cast is required and modern pattern syntax provides no useful replacement.
+
+The `HollowMicroblockClientLogic` slot-renderer batch has the same clean-build, 576-test, 289-test, version-52 and
+134-dump results. Its non-private ABI and callback ordering are unchanged, and its packaged classes have no executable
+JVM Downgrader API reference.
+
+The `TMicroOcclusionLogic` batch also passes the clean build, all 576 JVM tests, all 289 Java 8 Forge tests, and the
+134-dump comparison. Its package-private method descriptors are unchanged, all 450 packaged classes remain version 52,
+and the helper has no executable JVM Downgrader API reference.
+
+### Original integration checkpoint evidence
+
+The actual production patch passes normal and clean builds with 398 freshly compiled JVM tests, 398 frozen JVM
+consumer tests, and 237 Java 8 Forge tests, with zero failures/errors/skips. Forge's nested build includes both new
+tasks. Spotless and checkstyle pass.
+
+All 445 dev-jar classes remain version 52. With matching version metadata, only `StackAnalyserLogic.class` changes;
+all retained Scala classes, ScalaSignature payloads, bridges, models, and other classes are byte-for-byte identical.
+The helper itself exactly matches the isolated prototype. All 116 generated ASM dump names and hashes match.
+The helper has no JVM Downgrader runtime-stub references, and no runtime dependency was added.
+The release jar also contains 445 Java 8 classes, and the sources jar contains the exact modern helper source.
+
+Evidence and runnable checks are under ignored `run/jvmdg-trial/`:
+
+- `production-candidate.log`, `production-clean.log`: actual build/Forge verification.
+- `final-normal-build.log`: ordinary build and toolchain inventory without the frozen-version override.
+- `integrated-comparison.json`, `verify-integration.ps1`: bytecode, packaging, dump, and test-count checks.
+- `frozen-consumers.gradle`: tests using the original compiled JVM consumers.
+- `src/`, `reference/`, `artifacts/`: original prototype, frozen baseline, and experiment jars.
+- `artifacts/integrated/`, `integrated-test-results/`, `integrated-forge-test-results/`: preserved clean-build evidence.
+- `production-integration.patch`: the production changes captured for review.
+- `initial-root-handoff.md`: the original handoff before this takeover.
+
+
+At checkpoint `5f0e329b`, the installed GTNHGradle 2.0.24 build classloader used JVM Downgrader engine/plugin **1.3.5**.
+The earlier **1.3.6** number identifies the API dependency configured by global mode, not the engine observed in that
+build. The integrated helper's exact match with the original prototype confirmed that its transformation was preserved.

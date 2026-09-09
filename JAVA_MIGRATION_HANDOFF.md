@@ -6,13 +6,12 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 | Document | Purpose |
 | --- | --- |
-| [Plan](JAVA_MIGRATION.md) | Phase gates, API policy and upstream cleanup |
-| [Java API index](docs/API.md) | Consumer entry points, guides, compiling examples and remaining API gaps |
-| [ABI inventory](JAVA_MIGRATION_ABI_INVENTORY.md) | Shipping binary names/descriptors and reflective constraints |
-| [Consumer audit](JAVA_MIGRATION_CONSUMER_AUDIT.md) | Runtime behavior, data/lifecycle contracts and consumer source |
+| [Plan](JAVA_MIGRATION.md) | Phase gates, API/runtime/modern-Java policy, build arrangement and the performance protocol |
+| [Compatibility](JAVA_MIGRATION_COMPATIBILITY.md) | Binary ABI inventory plus the source-level consumer audit and adoption ledger |
 | [Divergences](JAVA_MIGRATION_DIVERGENCES.md) | Intentional effective compatibility differences |
 | [Manual checks](JAVA_MIGRATION_MANUAL_CHECKS.md) | Client/release checks with concrete item examples |
-| [Profile](JAVA_MIGRATION_PROFILE.md) | Measured workloads, results and rerun commands |
+| [Java API index](docs/API.md) | Consumer entry points, guides and compiling examples |
+| [Release notes](docs/RELEASE_NOTES.md) | What breaks for consumers who rebuild, and the supported replacements |
 | [History](docs/migration/HISTORY.md) | Dated completed-port findings and reference evidence; read as needed |
 
 ## Current state and next target
@@ -20,30 +19,9 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 **576 plain-JVM tests and 289 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **230 Java
 files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 450 classes.
 
-Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
-virtual tile accessor dispatch throughout `TMultiPart`, and null-safe equality for scheduled-tick deduplication.
-Six JVM and two Forge regression cases cover the fixes. Callable signatures remain unchanged; the packet traversal
-callback adds one anonymous class. See the latest history entries for the individual fixes and validation.
-
-Accessor review fixes: `TileMultipart`, `Microblock` and `BlockMicroMaterial` now use their virtual state accessors
-throughout the restored paths. Eleven new regression cases pass against the original Scala jar and the fixed port;
-all 519 archived consumers pass with their recorded version. The supplied consumer checkouts confirm extension/API
-use, but no override triggering these three regressions was found. All 443 class/member APIs, 17 ScalaSignature
-payloads and 116 generated dumps are retained. The agreed next milestone is the documented consumer-facing Java API,
-followed by consumer release/adoption and final Scala removal; see the plan's API migration design and Phases 8–10.
-
-Latest API work adds [supported multipart button orientation mapping](docs/api/BUTTON_ORIENTATIONS.md). Et Futurum
-Requiem `78a5744dfd33` currently reflects `ButtonPart.metaSideMap` and `sideMetaMap`, then writes the missing floor and
-ceiling pairs. Baseline commit `cd13ad6` freezes the default maps, those exact four writes and placement metadata on all
-six faces. `ButtonPart.setOrientation(int, ForgeDirection)` performs the same update through one validated public API,
-keeps both maps one-to-one when replacing a pair and rejects invalid input before mutation. Its compiling example uses
-two direct common-initialization calls without Scala or reflection.
-
-All 573 JVM / 289 Forge tests pass; 573 archived JVM and 287 archived Forge callers also pass. All 444 production
-classes and 17 ScalaSignature payloads remain. The 3,763 old methods are unchanged and one public static method is
-added; all 134 generated dumps match by name and hash. The mutable arrays retain their exact public static shape for
-old Et Futurum releases. Consumer patch/release/pack adoption and physical-client validation remain open. Evidence:
-`run/migration-button-orientation-reference/`.
+The agreed milestone order is the documented consumer-facing Java API, then consumer release and adoption, then final
+Scala removal; see the plan's API migration design and Phases 8-10. Per-change fixes, their regression cases and their
+recorded ABI evidence are in [the history](docs/migration/HISTORY.md); do not restate them here.
 
 Direct typed calls are the intended end state for supported integrations. Optional dependencies should isolate typed
 compatibility code behind presence/version checks; reflection snippets in earlier guides are temporary legacy
@@ -85,8 +63,8 @@ switch awaits approval and actual target-pack adoption. Retain existing contract
 A separate [Phase 4b performance pass](JAVA_MIGRATION.md#phase-4b--measured-performance-pass) is planned once the API
 and representative extension workloads are stable, alongside consumer migration. Use fresh realistic profiles and
 repeated paired runs; distinguish FMP implementation gains from migrated-consumer gains, covering hot paths plus
-startup, transitions, rendering, network and memory costs. Follow the [measurement protocol](JAVA_MIGRATION_PROFILE.md#broader-performance-pass-protocol-planned).
-The historical Phase 4 results do not replace that pass, and no new performance gain has been measured for this update.
+startup, transitions, rendering, network and memory costs, following the measurement protocol recorded there. The
+historical Phase 4 results do not replace that pass, and no new performance gain has been measured for this update.
 
 Pause mechanical extraction of retained Scala shells unless it enables that API, fixes a demonstrated issue or has
 a measured benefit. `ScalaSignature.ClassSymbolRef.info` remains an optional bounded extraction, not the default next
@@ -94,12 +72,12 @@ task. Keep case-class/product/serialization shapes and simple model accessors su
 The external ProjectRed Scala-trait fixture and ScalaSignature model bridges remain required. Actual client
 generation, GPU output and full-pack checks remain manual.
 
-Commit `5f0e329b` established Java 21 method-body syntax in `StackAnalyserLogic` through scoped compilation and
-Java 8 downgrading, while retaining Scala 2.11.5 on Java 8. Prefer modern syntax where it improves readability and
-the compilation boundary supports it; it need not wait for Scala removal. Defer a specific change if Scala parsing,
-compile order, ABI or downgrader/runtime support blocks it, recording the blocker and revisit condition. Keep the
-global modern-syntax setting disabled while it breaks Scala compilation. See the plan's modern Java readability
-policy and `JVM_DOWNGRADER_HANDOFF.md` for the original 398-test integration checkpoint and expansion constraints.
+Prefer modern syntax where it improves readability and the compilation boundary supports it; it need not wait for
+Scala removal. Defer a specific change if Scala parsing, compile order, ABI or downgrader/runtime support blocks it,
+recording the blocker and revisit condition. Keep the global modern-syntax setting disabled while it breaks Scala
+compilation. The build arrangement, eligibility rules and expansion constraints are in the plan's
+[modern Java readability policy](JAVA_MIGRATION.md#modern-java-readability-policy).
+
 The initial Java API can operate over retained Scala storage and compatibility shells. Record legacy FMP uses,
 replacements, consumer releases, target-pack adoption and verification in the consumer audit. Source patches alone
 do not permit removal. Once the adoption gates pass, replace or retire FMP's remaining internal Scala users before
