@@ -27,6 +27,91 @@ The bundled `DowngradeFiles` task initially declares outputs only for inputs tha
 `outputs.dirs(outputMap.values())` explicitly declares the directory for clean builds. Raw and downgraded output use
 separate directories and normal task dependencies. No stub sources or replacement Scala compiler are needed.
 
+## Modern Java policy and eligibility audit
+
+The consumer-migration checkpoint should follow a bounded modernization pass. The supported runtime goal is the
+preferred Java 25 build (2.9.0 beta 3 also supports Java 17 through 26) plus the extended-support Java 8
+build. Source modernization is for clearer, safer implementation code; the downgraded artifact remains Java 8
+bytecode, so newer syntax alone is not a performance feature.
+
+Use Java 21 as the source ceiling. JVM Downgrader 1.3.5 can accept Java 22 bytecode, but this build's validated
+`compileModernJava` task uses `--release 21`, and Java 22 does not add enough here to justify moving the boundary.
+
+Apply these rules:
+
+- Prefer modern syntax in implementation bodies when it removes casts, duplicated branches or error-prone control
+  flow. Do not rewrite working code solely for style.
+- Keep public descriptors, generic signatures and Scala-facing declarations Java-8-shaped. In particular, do not put
+  records, sealed declarations or modern JDK types on consumer or retained-Scala boundaries.
+- Continue using Java 8 library APIs unless a newer API has a concrete benefit and its JVM Downgrader stub/shading and
+  runtime-provider requirements are deliberately accepted and tested.
+- Add source files to the modern task in small independently reviewable batches. Each batch must compare ABI, class
+  inventory, generated ASM output and relevant behavior before accepting compiler-induced bytecode changes.
+- Before marking the branch ready for consumer migration, verify all packaged classes are version 52, no unexpected
+  JVM Downgrader API references exist, and run the JVM and Forge suites on Java 8 plus packaged smoke tests on the
+  preferred modern runtime.
+
+### Eligibility result
+
+A disposable clean-build experiment excluded all 224 Java files under `src/main/scala` from joint compilation and
+compiled them together through the Java 21 task. All nine retained Scala sources resolved their declarations, all 224
+Java sources compiled, JVM Downgrader completed, and packaging/checkstyle completed. This establishes broad technical
+eligibility for Java 21 *method bodies*; it does not establish bytecode or behavior equivalence.
+
+The experiment reached 575 passing tests out of 576. The remaining
+`MultipartMixinFactoryCharacterizationTest.namesAndFillsThePassThroughTrait` check reported a missing standalone `T`
+string constant after the newer javac/JVM Downgrader string-concatenation shape changed. That is exactly why moving all
+sources at once is rejected: even source-identical classes can acquire observable bytecode differences that require
+individual review. The normal production configuration remains unchanged.
+
+Recommended order:
+
+1. Start with new package-private implementation helpers. `RenderPartResolver.java` is the best immediate candidate:
+   pattern variables remove its checked casts, it is new rather than frozen consumer ABI, and its null/fallback
+   behavior already has a narrow surface to characterize. `StackAnalyserLogic.java` remains the proven example.
+2. Continue with internal ASM helpers that have real cast/control-flow gains, especially
+   `JavaTraitRegistration.java`, `ClassInfoLookup.java` and `ScalaTraitRegistration.java`, one behavior-preserving batch
+   at a time with generated-output comparison.
+3. Consider public core implementations such as `RedstoneInteractions$.java`, `TileMultipart.java` and the registries
+   only after the internal batches. Modern method bodies are technically possible, but their published ABI and frozen
+   behavior make the review cost higher.
+4. Defer registered Java trait inputs under `scalatraits/`. Their transformer forbids or rewrites several bytecode
+   shapes, including inner classes, lambdas, string switches and primitive-array allocation; syntax changes need
+   transformer-specific fixtures rather than ordinary compilation success.
+5. Defer the six `src/main/java` bootstrap/API sources and the separate `src/mixin/java` source. They are not currently
+   outputs of `downgradeModernJava`, and the simple API declarations have little modernization value. The mixin source
+   needs an explicit downgraded-output arrangement before using post-Java-8 syntax.
+6. Keep Scala companions, `$class` compatibility helpers and other descriptor-preservation facades conservative unless
+   a specific method body warrants the compiler move. Their binary shape is more valuable than stylistic uniformity.
+
+### fastutil audit
+
+GTNHLib 0.11.44 currently contributes `it.unimi.dsi:fastutil:8.5.18` to `compileClasspath`. It does **not** contribute
+fastutil to this project's declared `runtimeClasspath`, because GTNHLib is `compileOnly`. Using fastutil from ordinary
+FMP code would therefore turn the optional GTNHLib relationship into an undeclared runtime requirement. Do not do that
+implicitly; require GTNHLib/fastutil explicitly first if a measured core use justifies it.
+
+The present candidates do not justify that change:
+
+- `JInventoryTile` could replace its temporary `List<Integer>` with `IntArrayList`, but slot lists are small, the code
+  is a transformer-sensitive registered trait, and the dependency would cost more than the avoided boxing.
+- `MultiPartRegistry.nameMap` and `MicroMaterialRegistry.nameMap` could use `Object2IntOpenHashMap`, but they are small,
+  lifecycle-built registries. Their missing-key behavior is also deliberately characterized. Keep `HashMap`.
+- `ControlKeyModifer.map` could use a reference-to-boolean map, but it is publicly exposed as a live `Map` and normally
+  contains only the connected players. Keep `HashMap`.
+- `PacketScheduler` is the only plausible future candidate for an object-to-long map because it accumulates masks and
+  boxes `long` values. Its collection is private, so a later implementation change can preserve the existing consumer
+  ABI. Its Scala-map iteration and callback-mutation behavior are intentionally preserved. Defer this completely from
+  the Java conversion project; revisit only as separately profiled optimization work with a dedicated semantic test
+  and an explicit runtime dependency decision.
+- `TileCache` could only become primitive-keyed by replacing `BlockCoord` with an encoded coordinate. Its live map is
+  published and its recovery semantics are characterized, so that would be an API/behavior redesign rather than a
+  fastutil substitution.
+
+Fastutil remains appropriate for a future GTNHLib-gated implementation with a genuinely large or hot primitive
+collection, or after FMP deliberately makes it a direct runtime dependency. Its transitive compile availability alone
+is not sufficient, and fastutil adoption is out of scope for the Java conversion project.
+
 ## Evidence
 
 The actual production patch passes normal and clean builds with 398 freshly compiled JVM tests, 398 frozen JVM
@@ -57,8 +142,8 @@ Prefer modern syntax where it improves readability and the compilation path supp
 scoped path selectively; if parsing, compilation order, ABI or downgrade support blocks a source unit, retain its
 working syntax and record the blocker and revisit condition. Do not add fragile workarounds solely for syntax.
 
-At this checkpoint the bulk was already Java: 224 Java files and nine Scala files / 782 nonblank Scala lines. Of the
-221 Java sources in the Scala source tree, only this helper bypassed joint compilation. Retained models, trait
+The production source tree now contains 231 Java files and nine Scala files / 782 nonblank Scala lines. Of the 224 Java
+sources in the Scala source tree, only this helper bypasses joint compilation. Retained models, trait
 metadata, synthetic super accessors, and downstream Scala consumers prevent treating the last nine files as a
 mechanical deletion queue. Modern GTNH runtime support does not remove the retained Scala compiler's Java 8
 requirement. The main migration plan and working handoff carry the current API/adoption priorities and source counts.
