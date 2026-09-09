@@ -78,7 +78,7 @@ public class MultipartProxy_serverImpl {
                 null,
                 "codechicken.multipart.scalatraits.TTileChangeTile");
 
-        GameRegistry.registerBlock(new BlockMultipart().setBlockName("codechicken/multipart"), null, "block");
+        GameRegistry.registerBlock(new BlockMultipart().setBlockName("multipart"), null, "block");
         block = (BlockMultipart) Block.blockRegistry.getObject("ForgeMultipart:block");
 
         MultipartSaveLoad.hookLoader();
