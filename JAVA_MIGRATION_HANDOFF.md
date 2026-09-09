@@ -17,8 +17,8 @@ migration checkout; `codex/tile-compatibility-fixes` was deleted after its fixes
 
 ## Current state and next target
 
-**573 plain-JVM tests and 289 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **225 Java
-files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 444 classes.
+**576 plain-JVM tests and 289 Java 8 Forge tests pass, with zero failures/errors/skips.** Sources total **230 Java
+files and 9 Scala files / 747 nonblank Scala lines**. The packaged inventory has 450 classes.
 
 Review follow-up: restored packet-scheduler callback mutation behavior with the original Scala hash-map traversal,
 virtual tile accessor dispatch throughout `TMultiPart`, and null-safe equality for scheduled-tick deduplication.
