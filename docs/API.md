@@ -8,6 +8,10 @@ Consumers can use the Java surface without importing Scala types. FMP still reta
 compatibility bridges, and some extension contracts still need migration. A Scala-authored mod can adopt the Java API
 without converting the rest of its code to Java.
 
+**Rebuilding an existing mod against this branch? Read the [release notes](RELEASE_NOTES.md) first.** Shipped binaries
+keep working, but recompiling has three classes of break, and the trait-composition one compiles cleanly and changes
+behavior at runtime.
+
 ## Direct calls and optional integration
 
 The intended consumer API uses direct typed public calls, without reflection, private-field mixins or Scala
