@@ -5,10 +5,10 @@
 The scoped integration is implemented on `algent/java`, building on baseline `65d0cd0`. The three regression fixes
 are preserved. `build.gradle` adds two tasks; `StackAnalyserLogic` uses pattern and arrow-rule switches,
 `JavaTraitRegistration` and `ClassInfoLookup` use Java 21 pattern variables, and `ScalaSignatureParser` uses switch
-expressions. `HollowMicroblockTraitLogic` and `PostMicroblockClientLogic` use the same scoped path for internal
-microblock control flow, as does `HollowMicroblockClientLogic` for its slot renderer. The nine Scala sources, Scala
-2.11.5 dependency, source layout, and normal Gradle entry points remain in place. Production tasks do not read a frozen
-jar or any files under `run/jvmdg-trial/`.
+expressions. `HollowMicroblockTraitLogic`, `PostMicroblockClientLogic`, and `TMicroOcclusionLogic` use the same scoped
+path for internal microblock control flow, as does `HollowMicroblockClientLogic` for its slot renderer. The nine Scala
+sources and Scala 2.11.5 dependency remain in place, as do the source layout and normal Gradle entry points. Production
+tasks do not read a frozen jar or any files under `run/jvmdg-trial/`.
 
 The subsequent `StackAnalyser` initializer extraction is recorded in `JAVA_MIGRATION_HANDOFF.md`. The exact-byte
 comparisons and frozen-version reproduction below describe checkpoint `5f0e329`; later helper edits need their own
@@ -78,12 +78,13 @@ Recommended order:
    `ClassInfoLookup.java` are completed follow-ups; pattern variables remove their checked casts without changing the
    Scala-facing declarations. `StackAnalyserLogic.java` remains the original proven example.
 2. Continue only where modern syntax produces a concrete control-flow gain. `ScalaSignatureParser.java`, the remaining
-   opcode switches in `StackAnalyserLogic.java`, and the hollow/post-client microblock helper group are complete.
+   opcode switches in `StackAnalyserLogic.java`, and the hollow/post-client/occlusion microblock helper group are
+   complete.
    `ScalaTraitRegistration.java` should not move merely to restyle its erased `Some` checks.
-3. The next queue is dependency-closure audits for public implementation bodies: start with
-   `RedstoneInteractions$.java`, then `BlockMultipart.java`, then the previously deferred renderer group. Each has useful
-   cast/control-flow cleanup and focused characterization tests, but must bring any joint-compiled Java callers that
-   cannot resolve an excluded declaration. Do not assume one-file routing will work.
+3. The public implementation dependency-closure audit is complete. `RedstoneInteractions$.java` cannot move without its
+   facade and then the transformer-sensitive registered `TRedstoneTile.java` trait. `BlockMultipart.java` immediately
+   pulls its companion, cache, event handler, server proxy, and the renderer resolver. Reject both migrations: their
+   small cast cleanup does not justify widening the modern compiler boundary.
 4. Defer registered Java trait inputs under `scalatraits/`. Their transformer forbids or rewrites several bytecode
    shapes, including inner classes, lambdas, string switches and primitive-array allocation; syntax changes need
    transformer-specific fixtures rather than ordinary compilation success.
@@ -97,6 +98,11 @@ Recommended order:
 clean trial proved it cannot move alone: joint-compiled `MultipartRenderer$.java` calls it before the modern task runs.
 Moving that caller pulls in the public renderer and client-proxy chain. Defer this group until source-layout cleanup can
 move the dependency closure without turning one syntax improvement into a broad compiler migration.
+
+The bounded follow-up after those rejected public closures is `TMicroOcclusionLogic.java`: it is package-private, called
+directly by retained Scala, and its pattern binding removes a checked cast without changing the Scala-facing trait. No
+other current helper justifies a wider compiler migration solely for syntax. Resume the retained Scala conversion next;
+as that removes joint-compilation edges, migrate each newly freed Java closure and then collapse the per-file exclusions.
 
 The completed `JavaTraitRegistration` batch passes a clean build with all 576 JVM tests and the Java 8 Forge run with
 all 289 functional tests. All 450 dev-jar classes remain version 52, the jar has no JVM Downgrader runtime API
@@ -127,6 +133,10 @@ from the batch: the retained Scala declaration does not expose `getShape()` thro
 The `HollowMicroblockClientLogic` slot-renderer batch has the same clean-build, 576-test, 289-test, version-52 and
 134-dump results. Its non-private ABI and callback ordering are unchanged, and its packaged classes have no executable
 JVM Downgrader API reference.
+
+The `TMicroOcclusionLogic` batch also passes the clean build, all 576 JVM tests, all 289 Java 8 Forge tests, and the
+134-dump comparison. Its package-private method descriptors are unchanged, all 450 packaged classes remain version 52,
+and the helper has no executable JVM Downgrader API reference.
 
 ### fastutil audit
 
