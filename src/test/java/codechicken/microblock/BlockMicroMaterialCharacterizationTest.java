@@ -33,6 +33,7 @@ import codechicken.lib.render.CCRenderPipeline;
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.ColourMultiplier;
 import codechicken.lib.render.uv.MultiIconTransformation;
+import codechicken.lib.vec.BlockCoord;
 import codechicken.lib.vec.Cuboid6;
 import codechicken.lib.vec.Vector3;
 import codechicken.microblock.MicroMaterialRegistry.IMicroMaterial;
@@ -41,6 +42,59 @@ import cpw.mods.fml.relauncher.SideOnly;
 import scala.collection.JavaConversions;
 
 class BlockMicroMaterialCharacterizationTest {
+
+    @Test
+    void foliageTintUsesMaterialMetadataForParticlesAndFaces() {
+        Block leaves = new net.minecraft.block.BlockOldLeaf();
+        Block stone = new Block(Material.rock) {};
+        Block grassBlock = new net.minecraft.block.BlockGrass() {};
+        IBlockAccess world = (IBlockAccess) Proxy.newProxyInstance(
+                IBlockAccess.class.getClassLoader(),
+                new Class<?>[] { IBlockAccess.class },
+                (proxy, method, args) -> {
+                    if (method.getName().equals("getBlockMetadata")) return 0;
+                    if (method.getName().equals("getBlock")) return stone;
+                    if (method.getName().equals("getBiomeGenForCoords")) {
+                        return net.minecraft.world.biome.BiomeGenBase.plains;
+                    }
+                    throw new AssertionError(method);
+                });
+        CCRenderState state = CCRenderState.instance();
+        IBlockAccess previousAccess = state.lightMatrix.access;
+        BlockCoord previousPos = state.lightMatrix.pos.copy();
+        try {
+            state.lightMatrix.access = world;
+            state.lightMatrix.pos.set(3, 4, 5);
+            for (int meta : new int[] { 1, 2 }) {
+                BlockMicroMaterial material = new BlockMicroMaterial(leaves, meta);
+                int expected = leaves.getRenderColor(meta);
+                for (int side = 0; side < 6; side++) {
+                    assertEquals(expected, material.getBreakingColour(side, world, 3, 4, 5));
+                }
+                assertEquals((expected << 8) | 0xFF, material.getColour(0));
+                MaterialBlockAccess access = new MaterialBlockAccess(world, leaves, meta, 3, 4, 5);
+                assertSame(leaves, access.getBlock(3, 4, 5));
+                assertEquals(meta, access.getBlockMetadata(3, 4, 5));
+                assertSame(stone, access.getBlock(4, 4, 5));
+                assertEquals(0, access.getBlockMetadata(4, 4, 5));
+                assertSame(world.getBiomeGenForCoords(3, 5), access.getBiomeGenForCoords(3, 5));
+            }
+            GrassMicroMaterial grass = new GrassMicroMaterial() {
+
+                @Override
+                public Block block() {
+                    return grassBlock;
+                }
+            };
+            assertEquals(grassBlock.colorMultiplier(world, 3, 4, 5), grass.getBreakingColour(1, world, 3, 4, 5));
+            for (int side : new int[] { 0, 2, 3, 4, 5 }) {
+                assertEquals(0xFFFFFF, grass.getBreakingColour(side, world, 3, 4, 5));
+            }
+        } finally {
+            state.lightMatrix.access = previousAccess;
+            state.lightMatrix.pos.set(previousPos);
+        }
+    }
 
     @Test
     void publicMaterialAccessPreservesStoredBlockIdentityAndAllMetadataBits() throws Exception {

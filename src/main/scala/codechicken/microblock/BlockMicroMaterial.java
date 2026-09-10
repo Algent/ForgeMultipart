@@ -150,7 +150,15 @@ public class BlockMicroMaterial implements IMicroMaterial {
         }
         CCRenderState state = CCRenderState.instance();
         BlockCoord pos = state.lightMatrix.pos;
-        return (block().colorMultiplier(state.lightMatrix.access, pos.x, pos.y, pos.z) << 8) | 0xFF;
+        Block currentBlock = block();
+        IBlockAccess access = new MaterialBlockAccess(
+                state.lightMatrix.access,
+                currentBlock,
+                meta(),
+                pos.x,
+                pos.y,
+                pos.z);
+        return (currentBlock.colorMultiplier(access, pos.x, pos.y, pos.z) << 8) | 0xFF;
     }
 
     @Override
@@ -171,7 +179,8 @@ public class BlockMicroMaterial implements IMicroMaterial {
     @Override
     @SideOnly(Side.CLIENT)
     public int getBreakingColour(int side, IBlockAccess world, int x, int y, int z) {
-        return block().colorMultiplier(world, x, y, z);
+        Block currentBlock = block();
+        return currentBlock.colorMultiplier(new MaterialBlockAccess(world, currentBlock, meta(), x, y, z), x, y, z);
     }
 
     @Override
