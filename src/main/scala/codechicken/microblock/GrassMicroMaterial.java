@@ -2,9 +2,11 @@ package codechicken.microblock;
 
 import net.minecraft.block.BlockGrass;
 import net.minecraft.init.Blocks;
+import net.minecraft.world.IBlockAccess;
 
 import codechicken.lib.render.BlockRenderer.BlockFace;
 import codechicken.lib.render.CCRenderState;
+import codechicken.lib.render.EntityDigIconFX;
 import codechicken.lib.render.uv.IconTransformation;
 import codechicken.lib.render.uv.UVTransformation;
 import codechicken.lib.render.uv.UVTranslation;
@@ -31,6 +33,15 @@ public class GrassMicroMaterial extends BlockMicroMaterial {
     public void loadIcons() {
         super.loadIcons();
         sideIconT_$eq(new IconTransformation(BlockGrass.getIconSideOverlay()));
+    }
+
+    /**
+     * Only grass_top is greyscale and needs the biome tint. Side 0 is dirt and sides 2-5 are grass_side, both already
+     * coloured, so tinting them would double up. Matches the carve-out in vanilla EntityDiggingFX.
+     */
+    @Override
+    public int getBreakingColour(int side, IBlockAccess world, int x, int y, int z) {
+        return side == 1 ? super.getBreakingColour(side, world, x, y, z) : EntityDigIconFX.NO_TINT;
     }
 
     @Override

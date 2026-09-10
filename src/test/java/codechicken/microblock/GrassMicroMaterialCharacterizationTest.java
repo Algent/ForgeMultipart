@@ -39,6 +39,7 @@ class GrassMicroMaterialCharacterizationTest {
 
     private static final Set<String> GRASS_METHODS = new TreeSet<>(
             Arrays.asList(
+                    "getBreakingColour(ILnet/minecraft/world/IBlockAccess;III)I",
                     "loadIcons()V",
                     "renderMicroFace(Lcodechicken/lib/vec/Vector3;ILcodechicken/lib/vec/Cuboid6;)V",
                     "sideIconT()Lcodechicken/lib/render/uv/IconTransformation;",

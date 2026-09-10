@@ -7,6 +7,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
+import net.minecraft.world.IBlockAccess;
 
 import codechicken.lib.render.CCRenderState;
 import codechicken.lib.render.uv.MultiIconTransformation;
@@ -161,6 +162,16 @@ public class BlockMicroMaterial implements IMicroMaterial {
     @SideOnly(Side.CLIENT)
     public IIcon getBreakingIcon(int side) {
         return block().getIcon(side, meta());
+    }
+
+    /**
+     * The same tint {@link #getColour(int)} feeds the face renderer, so particles match the block they came off. Blocks
+     * with a greyscale texture (leaves) get all of their colour from here.
+     */
+    @Override
+    @SideOnly(Side.CLIENT)
+    public int getBreakingColour(int side, IBlockAccess world, int x, int y, int z) {
+        return block().colorMultiplier(world, x, y, z);
     }
 
     @Override
