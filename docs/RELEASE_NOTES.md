@@ -27,8 +27,9 @@ Source compiled against the untransformed dev jar is the problem. `javac` and `s
 | `scalatraits.TRandomDisplayTickTile` | `IncompatibleClassChangeError` |
 | `TileMultipartClient` | `IncompatibleClassChangeError` |
 
-**The fix is to target the stable capability interface instead of the raw dev-jar class.** These are supported, have
-unchanged binary shapes, and work on both the old and new FMP:
+**The fix is to target the stable capability interface instead of the raw dev-jar class.** The existing
+`IRedstoneTile.openConnections` and `TileMultipart.partMap` contracts work on both old and new FMP. The new
+`TileMultipart.refreshPartSlots` method requires an FMP release containing this Java API:
 
 Note the package: the types that break are in `codechicken.multipart.scalatraits`, the replacements are not.
 
